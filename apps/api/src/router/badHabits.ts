@@ -18,6 +18,12 @@ router.get("/", async (_req, res) => {
   res.json(items);
 });
 
+router.get("/:id", async (req, res) => {
+  const item = await prisma.badHabit.findUnique({ where: { id: req.params.id }, include: { area: true } });
+  if (!item) return res.status(404).json({ message: "Bad habit not found" });
+  res.json(item);
+});
+
 router.post("/", async (req, res) => {
   const parsed = badHabitSchema.safeParse(req.body);
   if (!parsed.success) return res.status(400).json(parsed.error.flatten());
@@ -46,4 +52,3 @@ router.delete("/:id", async (req, res) => {
 });
 
 export default router;
-

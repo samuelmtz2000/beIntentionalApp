@@ -18,6 +18,12 @@ router.get("/", async (_req, res) => {
   res.json(areas);
 });
 
+router.get("/:id", async (req, res) => {
+  const area = await prisma.area.findUnique({ where: { id: req.params.id } });
+  if (!area) return res.status(404).json({ message: "Area not found" });
+  res.json(area);
+});
+
 router.post("/", async (req, res) => {
   const parsed = areaSchema.safeParse(req.body);
   if (!parsed.success) return res.status(400).json(parsed.error.flatten());
@@ -46,4 +52,3 @@ router.delete("/:id", async (req, res) => {
 });
 
 export default router;
-

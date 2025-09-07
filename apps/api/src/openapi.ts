@@ -40,6 +40,11 @@ const spec = {
       },
     },
     "/areas/{id}": {
+      get: {
+        summary: "Get area by id",
+        parameters: [{ name: "id", in: "path", required: true, schema: { type: "string" } }],
+        responses: { "200": { description: "Area" }, "404": { description: "Not found" } },
+      },
       put: {
         summary: "Update area (partial)",
         parameters: [{ name: "id", in: "path", required: true, schema: { type: "string" } }],
@@ -94,6 +99,11 @@ const spec = {
       },
     },
     "/habits/{id}": {
+      get: {
+        summary: "Get good habit by id",
+        parameters: [{ name: "id", in: "path", required: true, schema: { type: "string" } }],
+        responses: { "200": { description: "Habit" }, "404": { description: "Not found" } },
+      },
       put: {
         summary: "Update good habit (partial)",
         parameters: [{ name: "id", in: "path", required: true, schema: { type: "string" } }],
@@ -150,6 +160,11 @@ const spec = {
       },
     },
     "/bad-habits/{id}": {
+      get: {
+        summary: "Get bad habit by id",
+        parameters: [{ name: "id", in: "path", required: true, schema: { type: "string" } }],
+        responses: { "200": { description: "Bad habit" }, "404": { description: "Not found" } },
+      },
       put: {
         summary: "Update bad habit (partial)",
         parameters: [{ name: "id", in: "path", required: true, schema: { type: "string" } }],
