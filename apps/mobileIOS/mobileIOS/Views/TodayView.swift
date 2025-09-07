@@ -48,8 +48,8 @@ struct TodayView: View {
             .toolbar { ToolbarItem(placement: .navigationBarTrailing) { Button { Task { await load() } } label: { Image(systemName: "arrow.clockwise") } } }
             .refreshable { await load() }
             .task { await load() }
-            .alert(item: $habitsVM.error) { err in Alert(title: Text("Error"), message: Text(err.message), dismissButton: .default(Text("OK"))) }
-            .alert(item: $profileVM.error) { err in Alert(title: Text("Error"), message: Text(err.message), dismissButton: .default(Text("OK"))) }
+            .alert(item: $habitsVM.apiError) { err in Alert(title: Text("Error"), message: Text(err.message), dismissButton: .default(Text("OK"))) }
+            .alert(item: $profileVM.apiError) { err in Alert(title: Text("Error"), message: Text(err.message), dismissButton: .default(Text("OK"))) }
         }
     }
 
@@ -57,4 +57,3 @@ struct TodayView: View {
 }
 
 #Preview { TodayView().environmentObject(AppModel()) }
-

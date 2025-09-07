@@ -1,5 +1,5 @@
 import XCTest
-@testable import mobileIOS
+@testable import HabitHero
 
 final class APITests: XCTestCase {
     func testAPIBase() throws {
@@ -8,4 +8,3 @@ final class APITests: XCTestCase {
         XCTAssertNotNil(client)
     }
 }
-

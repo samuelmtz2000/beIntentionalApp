@@ -39,7 +39,7 @@ struct HabitsView: View {
                 Task { await vm.create(areaId: areaId, name: name, xpReward: xp, coinReward: coins, cadence: cadence, isActive: active) }
             } }
             .task { await vm.refresh() }
-            .alert(item: $vm.error) { err in Alert(title: Text("Error"), message: Text(err.message), dismissButton: .default(Text("OK"))) }
+            .alert(item: $vm.apiError) { err in Alert(title: Text("Error"), message: Text(err.message), dismissButton: .default(Text("OK"))) }
         }
     }
 }
@@ -78,4 +78,3 @@ struct NewHabitSheet: View {
         .presentationDetents([.medium, .large])
     }
 }
-

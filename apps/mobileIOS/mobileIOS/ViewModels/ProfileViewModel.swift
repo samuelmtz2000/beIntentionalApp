@@ -5,7 +5,7 @@ import Combine
 final class ProfileViewModel: ObservableObject {
     @Published var profile: Profile?
     @Published var isLoading = false
-    @Published var error: APIError?
+    @Published var apiError: APIError?
 
     private let api: APIClient
 
@@ -15,8 +15,7 @@ final class ProfileViewModel: ObservableObject {
         isLoading = true
         defer { isLoading = false }
         do { profile = try await api.get("me") }
-        catch let e as APIError { error = e }
-        catch { error = APIError(message: error.localizedDescription) }
+        catch let e as APIError { apiError = e }
+        catch { apiError = APIError(message: error.localizedDescription) }
     }
 }
-

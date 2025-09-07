@@ -5,7 +5,7 @@ import Combine
 final class HabitsViewModel: ObservableObject {
     @Published var habits: [GoodHabit] = []
     @Published var isLoading = false
-    @Published var error: APIError?
+    @Published var apiError: APIError?
 
     private let api: APIClient
 
@@ -19,9 +19,9 @@ final class HabitsViewModel: ObservableObject {
         do {
             habits = try await api.get("habits")
         } catch let e as APIError {
-            error = e
+            apiError = e
         } catch {
-            error = APIError(message: error.localizedDescription)
+            apiError = APIError(message: error.localizedDescription)
         }
     }
 
@@ -32,7 +32,7 @@ final class HabitsViewModel: ObservableObject {
         do {
             let habit: GoodHabit = try await api.post("habits", body: Body(areaId: areaId, name: name, xpReward: xpReward, coinReward: coinReward, cadence: cadence, isActive: isActive))
             habits.append(habit)
-        } catch let e as APIError { error = e } catch { error = APIError(message: error.localizedDescription) }
+        } catch let e as APIError { apiError = e } catch { apiError = APIError(message: error.localizedDescription) }
     }
 
     func update(habit: GoodHabit) async {
@@ -40,14 +40,14 @@ final class HabitsViewModel: ObservableObject {
         do {
             let updated: GoodHabit = try await api.put("habits/\(habit.id)", body: Body(areaId: habit.areaId, name: habit.name, xpReward: habit.xpReward, coinReward: habit.coinReward, cadence: habit.cadence, isActive: habit.isActive))
             if let idx = habits.firstIndex(where: { $0.id == updated.id }) { habits[idx] = updated }
-        } catch let e as APIError { error = e } catch { error = APIError(message: error.localizedDescription) }
+        } catch let e as APIError { apiError = e } catch { apiError = APIError(message: error.localizedDescription) }
     }
 
     func delete(id: String) async {
         do {
             try await api.delete("habits/\(id)")
             habits.removeAll { $0.id == id }
-        } catch let e as APIError { error = e } catch { error = APIError(message: error.localizedDescription) }
+        } catch let e as APIError { apiError = e } catch { apiError = APIError(message: error.localizedDescription) }
     }
 
     func complete(id: String) async -> CompleteHabitResponse? {
@@ -59,4 +59,3 @@ final class HabitsViewModel: ObservableObject {
         return nil
     }
 }
-
