@@ -21,12 +21,14 @@ struct HabitHeroApp: App {
 }
 
 final class AppModel: ObservableObject {
-    @Published var apiBaseURL: URL = URL(string: UserDefaults.standard.string(forKey: "API_BASE_URL") ?? "http://localhost:4000")!
+    @Published var apiBaseURL: URL
     let api: APIClient
     let persistence: PersistenceController
 
     init() {
+        let base = URL(string: UserDefaults.standard.string(forKey: "API_BASE_URL") ?? "http://localhost:4000")!
+        self.apiBaseURL = base
         self.persistence = PersistenceController.shared
-        self.api = APIClient(baseURL: apiBaseURL)
+        self.api = APIClient(baseURL: base)
     }
 }
