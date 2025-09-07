@@ -35,9 +35,14 @@ router.post("/bad-habits/:id/record", async (req, res) => {
   let userAfter;
 
   if (bad.controllable) {
-    const owned = await prisma.userOwnedBadHabit.findUnique({ where: { userId_badHabitId: { userId: DEFAULT_USER_ID, badHabitId: bad.id } } });
-    if (owned) {
+    // Consume one purchased credit if available (multiple purchases allowed)
+    const credit = await prisma.userOwnedBadHabit.findFirst({
+      where: { userId: DEFAULT_USER_ID, badHabitId: bad.id },
+      orderBy: { purchasedAt: "asc" },
+    });
+    if (credit) {
       avoidedPenalty = true;
+      await prisma.userOwnedBadHabit.delete({ where: { id: credit.id } });
       userAfter = await prisma.user.findUnique({ where: { id: DEFAULT_USER_ID } });
     }
   }

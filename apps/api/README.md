@@ -54,7 +54,7 @@ All bodies are JSON. Validation errors: HTTP 400 with Zod error details. Missing
   - GET → `{ ok: true }`
 
 - Profile `/me`
-  - GET → `{ life, coins, areas: [{ areaId, name, level, xp, xpPerLevel }], ownedBadHabits: [{ id, name }] }`
+  - GET → `{ life, coins, areas: [{ areaId, name, level, xp, xpPerLevel }], ownedBadHabits: [{ id, name, count }] }`
 
 - Areas `/areas`
   - GET — list areas for default user
@@ -82,14 +82,15 @@ All bodies are JSON. Validation errors: HTTP 400 with Zod error details. Missing
     - Applies XP to the habit’s area, upserts AreaLevel for default user, increments user coins, creates `HabitLog` and `Transaction`.
     - Response: `{ areaLevel, user: { coins } }`
   - POST `/actions/bad-habits/:id/record`
-    - If the bad habit is controllable and the user has purchased it, the life penalty is avoided.
+    - If the bad habit is controllable and the user has at least one purchased credit, one credit is consumed and the life penalty is avoided.
     - Otherwise, reduce user `life` by `lifePenalty`.
     - Always creates `BadHabitLog` with `avoidedPenalty` flag.
     - Response: `{ user: { life }, avoidedPenalty }`
 
 - Store `/store`
-  - GET `/store/controlled-bad-habits` — list controllable bad habits (purchase price = `coinCost`)
-  - POST `/store/bad-habits/:id/buy` — buy a controlled bad habit (deducts coins; creates ownership + `Transaction`)
+  - Listing: use `GET /bad-habits` directly (no separate store listing). The store UI should display all (or just controllable) bad habits from `/bad-habits` with their `coinCost`.
+  - Inventory: use `GET /me` and read `ownedBadHabits[{ id, name, count }]` to show how many pre‑paid credits the user has per bad habit.
+  - POST `/store/bad-habits/:id/buy` — purchases one credit for that bad habit using `coinCost` (multiple purchases supported).
 
 - Docs `/docs`
   - Swagger UI interactive tester
@@ -100,19 +101,19 @@ All bodies are JSON. Validation errors: HTTP 400 with Zod error details. Missing
 ## Store Workflow (Frontend Notes)
 
 - Discover
-  - GET `/store/controlled-bad-habits` lists all controllable bad habits available for purchase.
-  - GET `/me` includes `ownedBadHabits` so the client can mark items as already owned.
+  - GET `/bad-habits` to list items (client can optionally filter to `controllable===true`).
+  - GET `/me` to read `ownedBadHabits` inventory with counts.
 
 - Purchase
-  - POST `/store/bad-habits/:id/buy` attempts a one‑time purchase using `coinCost` as the price.
+  - POST `/store/bad-habits/:id/buy` purchases one credit (duplicates allowed). Price is `coinCost`.
   - Success: `{ ok: true, coins }` with updated coin balance.
-  - Errors: `404` (invalid id), `400` (not purchasable or insufficient coins), `409` (already purchased).
-  - After purchase, refresh `/me` to reflect `ownedBadHabits` and updated coins.
+  - Errors: `404` (invalid id), `400` (not purchasable or insufficient coins).
+  - After purchase, refresh `/me` to reflect updated inventory counts and coins.
 
 - Record behavior
-  - POST `/actions/bad-habits/:id/record` checks ownership for controllable habits.
-  - If owned → no life loss and `avoidedPenalty=true`.
-  - If not owned (or non‑controllable) → life decreases by `lifePenalty`.
+  - POST `/actions/bad-habits/:id/record` checks inventory for controllable habits.
+  - If `count > 0` → consume 1 credit and set `avoidedPenalty=true`.
+  - Else (or if non‑controllable) → life decreases by `lifePenalty`.
   - Response: `{ user: { life }, avoidedPenalty }`.
 
 - Admin/config
@@ -120,9 +121,9 @@ All bodies are JSON. Validation errors: HTTP 400 with Zod error details. Missing
   - Toggle availability: set `isActive=false` to hide from the store.
 
 - UI tips
-  - Show a Buy button for controllable, not‑owned items; show an Owned state otherwise.
+  - Show a Buy button with a quantity selector; show available credits from `/me`.
   - On purchase, optimistically decrement coins or re‑fetch `/me` to stay authoritative.
-  - On record, you can optimistically show an “Avoided” state when owned; always reconcile with server.
+  - On record, if credits are available, animate “Used 1 credit”; otherwise, show life decrease.
 
 ## Example Requests
 
@@ -188,7 +189,7 @@ curl -X DELETE http://localhost:4000/bad-habits/bad-junk-food
 curl -X POST http://localhost:4000/actions/habits/habit-pushups/complete
 ```
 
- - Record Bad Habit (ownership avoids penalty)
+ - Record Bad Habit (consumes credit if owned)
 ```
 curl -X POST http://localhost:4000/actions/bad-habits/bad-doomscroll/record
 ```

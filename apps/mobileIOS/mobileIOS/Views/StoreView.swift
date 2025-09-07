@@ -16,46 +16,27 @@ struct StoreView: View {
                     LabeledContent("Coins", value: "\(vm.coins)")
                 }
 
-                Section("Cosmetics Store") {
-                    if vm.cosmetics.isEmpty { Text("No cosmetics available") }
-                    ForEach(vm.cosmetics) { cos in
-                        HStack {
-                            VStack(alignment: .leading) {
-                                Text(cos.key.capitalized).font(.headline)
-                                Text(cos.category.capitalized).font(.caption).foregroundStyle(.secondary)
-                            }
-                            Spacer()
-                            Text("\(cos.price)🪙").font(.subheadline)
-                            Button(vm.ownedKeys.contains(cos.key) ? "Owned" : "Buy") {
-                                Task { await vm.buy(cosmeticId: cos.id) }
-                            }
-                            .buttonStyle(.borderedProminent)
-                            .disabled(vm.ownedKeys.contains(cos.key))
-                        }
-                    }
-                }
-
-                Section("Your Items") {
-                    if vm.ownedKeys.isEmpty { Text("You don't own any cosmetics yet") }
-                    ForEach(Array(vm.ownedKeys), id: \.self) { key in
-                        HStack {
-                            Text(key.capitalized)
-                            Spacer()
-                            if vm.selectedKey == key { Image(systemName: "checkmark.circle.fill").foregroundStyle(.green) }
-                            Button(vm.selectedKey == key ? "Using" : "Use") { vm.use(key: key) }
-                                .buttonStyle(.bordered)
-                                .disabled(vm.selectedKey == key)
-                        }
-                    }
-                }
-
-                Section("Controlled Bad Habits") {
+                Section("Controlled Bad Habits Store") {
                     if vm.controlledBadHabits.isEmpty { Text("None available") }
                     ForEach(vm.controlledBadHabits) { b in
-                        VStack(alignment: .leading) {
-                            Text(b.name).font(.headline)
-                            Text("Cost: \(b.coinCost)🪙 • Penalty \(b.lifePenalty)").font(.caption).foregroundStyle(.secondary)
+                        HStack {
+                            VStack(alignment: .leading) {
+                                Text(b.name).font(.headline)
+                                Text("Penalty \(b.lifePenalty) • Cost \(b.coinCost)🪙").font(.caption).foregroundStyle(.secondary)
+                            }
+                            Spacer()
+                            let owned = vm.ownedBadHabits.contains(where: { $0.id == b.id })
+                            Button(owned ? "Owned" : "Buy") { Task { await vm.buy(cosmeticId: b.id) } }
+                                .buttonStyle(.borderedProminent)
+                                .disabled(owned)
                         }
+                    }
+                }
+
+                Section("Owned Bad Habits") {
+                    if vm.ownedBadHabits.isEmpty { Text("You don't own any yet") }
+                    ForEach(vm.ownedBadHabits, id: \.id) { obh in
+                        Text(obh.name)
                     }
                 }
             }

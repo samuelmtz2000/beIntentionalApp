@@ -114,5 +114,5 @@ model UserOwnedBadHabit {
   user     User     @relation(fields: [userId], references: [id])
   badHabit BadHabit @relation(fields: [badHabitId], references: [id])
 
-  @@unique([userId, badHabitId])
+  @@index([userId, badHabitId])
 }

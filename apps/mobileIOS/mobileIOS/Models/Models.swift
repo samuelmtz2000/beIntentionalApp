@@ -29,8 +29,8 @@ struct AreaLevel: Codable, Identifiable, Hashable {
 }
 
 struct ProfileArea: Codable, Hashable { let areaId: String; let name: String; let level: Int; let xp: Int; let xpPerLevel: Int }
-struct OwnedCosmetic: Codable, Hashable { let id: String; let category: String; let key: String }
-struct Profile: Codable { let life: Int; let coins: Int; let areas: [ProfileArea]; let cosmeticsOwned: [OwnedCosmetic]? }
+struct OwnedBadHabit: Codable, Hashable { let id: String; let name: String }
+struct Profile: Codable { let life: Int; let coins: Int; let areas: [ProfileArea]; let ownedBadHabits: [OwnedBadHabit]? }
 
 struct CompleteHabitResponse: Codable { let areaLevel: AreaLevel; let user: UserCoins }
 struct UserCoins: Codable { let coins: Int }
@@ -45,9 +45,4 @@ struct BadHabit: Codable, Identifiable, Hashable {
     var isActive: Bool
 }
 
-struct Cosmetic: Codable, Identifiable, Hashable {
-    let id: String
-    let category: String
-    let key: String
-    let price: Int
-}
+// No cosmetics in the new store model; purchases are for controllable bad habits

@@ -23,12 +23,16 @@ router.get("/", async (_req, res) => {
     xp: byArea.get(a.id)?.xp ?? 0,
   }));
 
-  res.json({
-    life: user.life,
-    coins: user.coins,
-    areas: areasView,
-    ownedBadHabits: owned.map((u) => ({ id: u.badHabit.id, name: u.badHabit.name })),
-  });
+  // Aggregate owned bad habits into counts
+  const counts = new Map<string, { id: string; name: string; count: number }>();
+  for (const u of owned) {
+    const key = u.badHabit.id;
+    const curr = counts.get(key);
+    if (curr) curr.count += 1;
+    else counts.set(key, { id: u.badHabit.id, name: u.badHabit.name, count: 1 });
+  }
+
+  res.json({ life: user.life, coins: user.coins, areas: areasView, ownedBadHabits: Array.from(counts.values()) });
 });
 
 export default router;

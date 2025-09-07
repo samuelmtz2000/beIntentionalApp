@@ -2,10 +2,8 @@ import Foundation
 
 @MainActor
 final class StoreViewModel: ObservableObject {
-    @Published var cosmetics: [Cosmetic] = []
     @Published var controlledBadHabits: [BadHabit] = []
-    @Published var ownedKeys: Set<String> = []
-    @Published var selectedKey: String? = UserDefaults.standard.string(forKey: "SELECTED_COSMETIC")
+    @Published var ownedBadHabits: [OwnedBadHabit] = []
     @Published var coins: Int = 0
     @Published var isLoading = false
     @Published var apiError: APIError?
@@ -18,16 +16,9 @@ final class StoreViewModel: ObservableObject {
         isLoading = true
         defer { isLoading = false }
         await withTaskGroup(of: Void.self) { group in
-            group.addTask { await self.loadCosmetics() }
             group.addTask { await self.loadControlledBadHabits() }
             group.addTask { await self.loadProfile() }
         }
-    }
-
-    private func loadCosmetics() async {
-        do { cosmetics = try await api.get("store/cosmetics") }
-        catch let e as APIError { apiError = e }
-        catch let err { apiError = APIError(message: err.localizedDescription) }
     }
 
     private func loadControlledBadHabits() async {
@@ -40,7 +31,7 @@ final class StoreViewModel: ObservableObject {
         do {
             let profile: Profile = try await api.get("me")
             self.coins = profile.coins
-            self.ownedKeys = Set((profile.cosmeticsOwned ?? []).map { $0.key })
+            self.ownedBadHabits = profile.ownedBadHabits ?? []
         } catch let e as APIError { apiError = e } catch let err { apiError = APIError(message: err.localizedDescription) }
     }
 
@@ -48,14 +39,9 @@ final class StoreViewModel: ObservableObject {
         struct Empty: Encodable {}
         struct BuyResp: Decodable { let ok: Bool; let coins: Int }
         do {
-            let resp: BuyResp = try await api.post("store/cosmetics/\(cosmeticId)/buy", body: Empty())
+            let resp: BuyResp = try await api.post("store/bad-habits/\(cosmeticId)/buy", body: Empty())
             self.coins = resp.coins
             await loadProfile()
         } catch let e as APIError { apiError = e } catch let err { apiError = APIError(message: err.localizedDescription) }
-    }
-
-    func use(key: String) {
-        selectedKey = key
-        UserDefaults.standard.set(key, forKey: "SELECTED_COSMETIC")
     }
 }

@@ -193,7 +193,8 @@ const spec = {
         responses: { "200": { description: "Life updated (or avoided penalty)" }, "404": { description: "Not found" } },
       },
     },
-    "/store/controlled-bad-habits": { get: { summary: "List purchasable (controllable) bad habits (uses coinCost as price)", responses: { "200": { description: "OK" } } } },
+    // Store listing now uses /bad-habits directly; this path is deprecated
+    "/store/controlled-bad-habits": { get: { summary: "[Deprecated] Use /bad-habits to list; store shows inventory via /me", responses: { "200": { description: "OK" } } } },
     "/store/bad-habits/{id}/buy": {
       post: {
         summary: "Buy a controlled bad habit (one-time purchase)",
