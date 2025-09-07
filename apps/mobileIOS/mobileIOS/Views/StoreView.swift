@@ -12,33 +12,11 @@ struct StoreView: View {
     var body: some View {
         NavigationStack {
             List {
-                Section("Wallet") {
-                    LabeledContent("Coins", value: "\(vm.coins)")
+                WalletSection(coins: vm.coins)
+                StoreBadHabitsSection(items: vm.controlledBadHabits, ownedCount: { id in ownedCount(id) }) { id in
+                    Task { await vm.buy(cosmeticId: id) }
                 }
-
-                Section("Controlled Bad Habits Store") {
-                    if vm.controlledBadHabits.isEmpty { Text("None available") }
-                    ForEach(vm.controlledBadHabits) { b in
-                        HStack {
-                            VStack(alignment: .leading) {
-                                Text(b.name).font(.headline)
-                                Text("Penalty \(b.lifePenalty) • Cost \(b.coinCost)🪙").font(.caption).foregroundStyle(.secondary)
-                            }
-                            Spacer()
-                            let owned = vm.ownedBadHabits.contains(where: { $0.id == b.id })
-                            Button(owned ? "Owned" : "Buy") { Task { await vm.buy(cosmeticId: b.id) } }
-                                .buttonStyle(.borderedProminent)
-                                .disabled(owned)
-                        }
-                    }
-                }
-
-                Section("Owned Bad Habits") {
-                    if vm.ownedBadHabits.isEmpty { Text("You don't own any yet") }
-                    ForEach(vm.ownedBadHabits, id: \.id) { obh in
-                        Text(obh.name)
-                    }
-                }
+                OwnedBadHabitsSection(items: vm.ownedBadHabits)
             }
             .navigationTitle("Store")
             .toolbar { ToolbarItem(placement: .navigationBarTrailing) { Button { Task { await vm.refresh() } } label: { Image(systemName: "arrow.clockwise") } } }
@@ -47,5 +25,62 @@ struct StoreView: View {
             .alert(item: $vm.apiError) { err in Alert(title: Text("Error"), message: Text(err.message), dismissButton: .default(Text("OK"))) }
         }
     }
+
+    private func ownedCount(_ id: String) -> Int { vm.ownedBadHabits.first(where: { $0.id == id })?.count ?? 0 }
 }
 
+private struct WalletSection: View {
+    let coins: Int
+    var body: some View {
+        Section("Wallet") { LabeledContent("Coins", value: "\(coins)") }
+    }
+}
+
+private struct StoreBadHabitsSection: View {
+    let items: [BadHabit]
+    let ownedCount: (String) -> Int
+    let onBuy: (String) -> Void
+    var body: some View {
+        Section("Bad Habits Store") {
+            if items.isEmpty {
+                Text("None available")
+            } else {
+                ForEach(items) { b in
+                    BadHabitStoreRow(item: b, ownedCount: ownedCount(b.id)) { onBuy(b.id) }
+                }
+            }
+        }
+    }
+}
+
+private struct BadHabitStoreRow: View {
+    let item: BadHabit
+    let ownedCount: Int
+    let onBuy: () -> Void
+    var body: some View {
+        HStack {
+            VStack(alignment: .leading) {
+                Text(item.name).font(.headline)
+                Text("Penalty \(item.lifePenalty) • Cost \(item.coinCost)🪙").font(.caption).foregroundStyle(.secondary)
+            }
+            Spacer()
+            if ownedCount > 0 { Text("Owned: \(ownedCount)").font(.caption) }
+            Button("Buy", action: onBuy).buttonStyle(.borderedProminent)
+        }
+    }
+}
+
+private struct OwnedBadHabitsSection: View {
+    let items: [OwnedBadHabit]
+    var body: some View {
+        Section("Owned Bad Habits (Credits)") {
+            if items.isEmpty {
+                Text("You don't own any yet")
+            } else {
+                ForEach(items, id: \.id) { obh in
+                    HStack { Text(obh.name); Spacer(); Text("x\(obh.count)").font(.caption) }
+                }
+            }
+        }
+    }
+}
