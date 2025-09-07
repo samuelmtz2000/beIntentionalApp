@@ -4,6 +4,7 @@
   "packageManager": "pnpm@10.0.0",
   "scripts": {
     "dev:api": "pnpm --filter @habit-hero/api dev",
+    "dev:docs": "pnpm --filter @habit-hero/docs start",
     "dev:mobile": "pnpm --filter @habit-hero/mobile start",
     "db:migrate": "pnpm --filter @habit-hero/api prisma migrate dev",
     "db:seed": "pnpm --filter @habit-hero/api exec node --import tsx/esm prisma/seed.ts",
