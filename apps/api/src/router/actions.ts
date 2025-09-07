@@ -27,9 +27,8 @@ router.post("/habits/:id/complete", async (req, res) => {
   res.json({ areaLevel: updatedLevel, user: { coins: updatedUser.coins } });
 });
 
-router.post("/bad-habits/:id/record", async (_req, res) => {
-  const { id } = ((res as any).req?.params || {}) as { id?: string };
-  const bad = await prisma.badHabit.findUnique({ where: { id: id as string } });
+router.post("/bad-habits/:id/record", async (req, res) => {
+  const bad = await prisma.badHabit.findUnique({ where: { id: req.params.id } });
   if (!bad) return res.status(404).json({ message: "Bad habit not found" });
 
   let avoidedPenalty = false;

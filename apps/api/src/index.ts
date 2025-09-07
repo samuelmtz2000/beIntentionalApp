@@ -8,6 +8,13 @@ import areas from "./router/areas.js";
 import { exec } from "node:child_process";
 import { createRequire } from "node:module";
 import spec from "./openapi.js";
+import { createRequire as createReq2 } from "node:module";
+const req2 = createReq2(import.meta.url);
+try {
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
+  const resolved = req2.resolve("@prisma/client");
+  console.log("Using Prisma client from:", resolved);
+} catch {}
 
 export const app = express();
 app.use(express.json());
@@ -47,6 +54,12 @@ app.get("/__routes", (req, res) => {
   // @ts-ignore
   print((app as any)._router?.stack || []);
   res.json({ routes });
+});
+
+// Dev-only: allow clean shutdown to avoid orphaned processes during automation
+app.get("/__shutdown", (_req, res) => {
+  res.json({ ok: true, shuttingDown: true });
+  setTimeout(() => process.exit(0), 50);
 });
 
 // Dev tester UI: simple page to explore routes and try POST actions

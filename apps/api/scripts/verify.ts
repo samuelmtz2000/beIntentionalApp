@@ -11,12 +11,11 @@ async function main() {
   const habits = await request(app).get("/habits");
   console.log("/habits:", habits.status, Array.isArray(habits.body) ? habits.body.length : habits.body);
 
-  const cosmetics = await request(app).get("/store/cosmetics");
-  console.log("/store/cosmetics:", cosmetics.status, Array.isArray(cosmetics.body) ? cosmetics.body.length : cosmetics.body);
+  const store = await request(app).get("/store/controlled-bad-habits");
+  console.log("/store/controlled-bad-habits:", store.status, Array.isArray(store.body) ? store.body.length : store.body);
 }
 
 main().catch((e) => {
   console.error(e);
   process.exit(1);
 });
-
