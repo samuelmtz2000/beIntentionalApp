@@ -97,6 +97,33 @@ All bodies are JSON. Validation errors: HTTP 400 with Zod error details. Missing
 - Dev Tester `/tester`
   - Lightweight HTML page with quick forms (dev convenience)
 
+## Store Workflow (Frontend Notes)
+
+- Discover
+  - GET `/store/controlled-bad-habits` lists all controllable bad habits available for purchase.
+  - GET `/me` includes `ownedBadHabits` so the client can mark items as already owned.
+
+- Purchase
+  - POST `/store/bad-habits/:id/buy` attempts a one‑time purchase using `coinCost` as the price.
+  - Success: `{ ok: true, coins }` with updated coin balance.
+  - Errors: `404` (invalid id), `400` (not purchasable or insufficient coins), `409` (already purchased).
+  - After purchase, refresh `/me` to reflect `ownedBadHabits` and updated coins.
+
+- Record behavior
+  - POST `/actions/bad-habits/:id/record` checks ownership for controllable habits.
+  - If owned → no life loss and `avoidedPenalty=true`.
+  - If not owned (or non‑controllable) → life decreases by `lifePenalty`.
+  - Response: `{ user: { life }, avoidedPenalty }`.
+
+- Admin/config
+  - Update price: `PUT /bad-habits/:id` with new `coinCost` (visible immediately in the store list).
+  - Toggle availability: set `isActive=false` to hide from the store.
+
+- UI tips
+  - Show a Buy button for controllable, not‑owned items; show an Owned state otherwise.
+  - On purchase, optimistically decrement coins or re‑fetch `/me` to stay authoritative.
+  - On record, you can optimistically show an “Avoided” state when owned; always reconcile with server.
+
 ## Example Requests
 
 - Create Area
