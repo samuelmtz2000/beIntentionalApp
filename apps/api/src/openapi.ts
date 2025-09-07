@@ -194,7 +194,7 @@ const spec = {
       },
     },
     // Store listing now uses /bad-habits directly; this path is deprecated
-    "/store/controlled-bad-habits": { get: { summary: "[Deprecated] Use /bad-habits to list; store shows inventory via /me", responses: { "200": { description: "OK" } } } },
+    "/store/controlled-bad-habits": { get: { summary: "[Deprecated] Use /bad-habits for catalog; inventory via /me", responses: { "200": { description: "OK" } } } },
     "/store/bad-habits/{id}/buy": {
       post: {
         summary: "Buy a controlled bad habit (one-time purchase)",

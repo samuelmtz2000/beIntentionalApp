@@ -73,7 +73,8 @@ All bodies are JSON. Validation errors: HTTP 400 with Zod error details. Missing
 - Bad Habits `/bad-habits`
   - GET — list (includes `area` relation)
   - POST — create
-    - Body: `{ areaId?, name, lifePenalty>=1, controllable, coinCost>=0, isActive }`
+    - Body: `{ areaId?, name, lifePenalty>=1, controllable?, coinCost>=0, isActive }`
+      - Note: `controllable` is ignored by the store logic; ALL bad habits can be purchased. `coinCost` is the purchase price for one credit.
   - PUT `/:id` — update (partial)
   - DELETE `/:id` — delete
 
@@ -82,13 +83,13 @@ All bodies are JSON. Validation errors: HTTP 400 with Zod error details. Missing
     - Applies XP to the habit’s area, upserts AreaLevel for default user, increments user coins, creates `HabitLog` and `Transaction`.
     - Response: `{ areaLevel, user: { coins } }`
   - POST `/actions/bad-habits/:id/record`
-    - If the bad habit is controllable and the user has at least one purchased credit, one credit is consumed and the life penalty is avoided.
+    - If the user has at least one purchased credit for that bad habit, one credit is consumed and the life penalty is avoided (applies to ALL bad habits).
     - Otherwise, reduce user `life` by `lifePenalty`.
     - Always creates `BadHabitLog` with `avoidedPenalty` flag.
     - Response: `{ user: { life }, avoidedPenalty }`
 
 - Store `/store`
-  - Listing: use `GET /bad-habits` directly (no separate store listing). The store UI should display all (or just controllable) bad habits from `/bad-habits` with their `coinCost`.
+  - Listing: use `GET /bad-habits` directly (no separate store listing). The store UI should display all bad habits from `/bad-habits` with their `coinCost`.
   - Inventory: use `GET /me` and read `ownedBadHabits[{ id, name, count }]` to show how many pre‑paid credits the user has per bad habit.
   - POST `/store/bad-habits/:id/buy` — purchases one credit for that bad habit using `coinCost` (multiple purchases supported).
 

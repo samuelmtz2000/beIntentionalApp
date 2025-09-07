@@ -8,7 +8,7 @@ const router = Router();
 router.post("/bad-habits/:id/buy", async (req, res) => {
   const bad = await prisma.badHabit.findUnique({ where: { id: req.params.id } });
   if (!bad) return res.status(404).json({ message: "Bad habit not found" });
-  if (!bad.controllable) return res.status(400).json({ message: "Bad habit is not purchasable" });
+  // All bad habits are purchasable; controllable flag is ignored
 
   const user = await prisma.user.findUnique({ where: { id: DEFAULT_USER_ID } });
   if (!user) return res.status(404).json({ message: "User not found" });
