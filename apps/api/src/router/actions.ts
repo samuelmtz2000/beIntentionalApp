@@ -27,29 +27,27 @@ router.post("/habits/:id/complete", async (req, res) => {
   res.json({ areaLevel: updatedLevel, user: { coins: updatedUser.coins } });
 });
 
-router.post("/bad-habits/:id/record", async (req, res) => {
-  const { payWithCoins } = (req.body || {}) as { payWithCoins?: boolean };
+router.post("/bad-habits/:id/record", async (_req, res) => {
   const bad = await prisma.badHabit.findUnique({ where: { id: req.params.id } });
   if (!bad) return res.status(404).json({ message: "Bad habit not found" });
 
-  let paidWithCoins = false;
-  let newUser;
-  if (bad.controllable && payWithCoins) {
-    const user = await prisma.user.findUnique({ where: { id: DEFAULT_USER_ID } });
-    if (user && user.coins >= bad.coinCost) {
-      paidWithCoins = true;
-      newUser = await prisma.user.update({ where: { id: DEFAULT_USER_ID }, data: { coins: { decrement: bad.coinCost } } });
-      await prisma.transaction.create({ data: { userId: DEFAULT_USER_ID, amount: -bad.coinCost, type: "spend", meta: { source: "badHabit", badHabitId: bad.id } } });
+  let avoidedPenalty = false;
+  let userAfter;
+
+  if (bad.controllable) {
+    const owned = await prisma.userOwnedBadHabit.findUnique({ where: { userId_badHabitId: { userId: DEFAULT_USER_ID, badHabitId: bad.id } } });
+    if (owned) {
+      avoidedPenalty = true;
+      userAfter = await prisma.user.findUnique({ where: { id: DEFAULT_USER_ID } });
     }
   }
 
-  if (!paidWithCoins) {
-    newUser = await prisma.user.update({ where: { id: DEFAULT_USER_ID }, data: { life: { decrement: bad.lifePenalty } } });
+  if (!avoidedPenalty) {
+    userAfter = await prisma.user.update({ where: { id: DEFAULT_USER_ID }, data: { life: { decrement: bad.lifePenalty } } });
   }
 
-  await prisma.badHabitLog.create({ data: { userId: DEFAULT_USER_ID, badHabitId: bad.id, paidWithCoins } });
-  res.json({ user: { life: newUser!.life }, paidWithCoins });
+  await prisma.badHabitLog.create({ data: { userId: DEFAULT_USER_ID, badHabitId: bad.id, avoidedPenalty } });
+  res.json({ user: { life: userAfter!.life }, avoidedPenalty });
 });
 
 export default router;
-

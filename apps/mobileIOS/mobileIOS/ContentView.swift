@@ -12,8 +12,12 @@ struct MainTabView: View {
         TabView {
             TodayView()
                 .tabItem { Label("Today", systemImage: "sun.max.fill") }
+            AreasView()
+                .tabItem { Label("Areas", systemImage: "square.grid.2x2") }
             HabitsView()
                 .tabItem { Label("Habits", systemImage: "checklist") }
+            StoreView()
+                .tabItem { Label("Store", systemImage: "bag") }
             StatsView()
                 .tabItem { Label("Stats", systemImage: "chart.bar.doc.horizontal") }
             SettingsView()

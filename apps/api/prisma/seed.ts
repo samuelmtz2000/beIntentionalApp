@@ -58,17 +58,6 @@ async function main() {
     create: { id: "bad-doomscroll", areaId: learning.id, name: "Doomscrolling", lifePenalty: 4, controllable: true, coinCost: 3 },
   });
 
-  await prisma.cosmetic.upsert({
-    where: { id: "cos-badge-starter" },
-    update: {},
-    create: { id: "cos-badge-starter", category: "badge", key: "starter", price: 5 },
-  });
-  await prisma.cosmetic.upsert({
-    where: { id: "cos-badge-hero" },
-    update: {},
-    create: { id: "cos-badge-hero", category: "badge", key: "hero", price: 15 },
-  });
-
   console.log("Seed complete");
 }
 

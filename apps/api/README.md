@@ -40,10 +40,9 @@ Express + TypeScript + Prisma (SQLite). Strict ESM, Zod‑validated routes. Ship
 - BadHabit(id, areaId?, name, lifePenalty=5, controllable=false, coinCost=0, isActive=true)
 - AreaLevel(id, userId, areaId, level=1, xp=0) with unique (userId, areaId)
 - HabitLog(id, userId, habitId, timestamp)
-- BadHabitLog(id, userId, badHabitId, timestamp, paidWithCoins)
+- BadHabitLog(id, userId, badHabitId, timestamp, avoidedPenalty)
 - Transaction(id, userId, amount, type, meta?, timestamp)
-- Cosmetic(id, category, key, price)
-- UserCosmetic(id, userId, cosmeticId, ownedAt)
+- UserOwnedBadHabit(id, userId, badHabitId, purchasedAt)
 
 Default user for v1 (no auth): `seed-user-1`.
 
@@ -55,7 +54,7 @@ All bodies are JSON. Validation errors: HTTP 400 with Zod error details. Missing
   - GET → `{ ok: true }`
 
 - Profile `/me`
-  - GET → `{ life, coins, areas: [{ areaId, name, level, xp, xpPerLevel }], cosmeticsOwned: [...] }`
+  - GET → `{ life, coins, areas: [{ areaId, name, level, xp, xpPerLevel }], ownedBadHabits: [{ id, name }] }`
 
 - Areas `/areas`
   - GET — list areas for default user
@@ -82,16 +81,15 @@ All bodies are JSON. Validation errors: HTTP 400 with Zod error details. Missing
   - POST `/actions/habits/:id/complete`
     - Applies XP to the habit’s area, upserts AreaLevel for default user, increments user coins, creates `HabitLog` and `Transaction`.
     - Response: `{ areaLevel, user: { coins } }`
-  - POST `/actions/bad-habits/:id/record` body `{ payWithCoins?: boolean }`
-    - If controllable + payWithCoins + enough coins → deduct coins, add `Transaction`, `paidWithCoins=true`, no life loss.
-    - Else reduce user `life` by `lifePenalty`.
-    - Always creates `BadHabitLog`.
-    - Response: `{ user: { life }, paidWithCoins }`
+  - POST `/actions/bad-habits/:id/record`
+    - If the bad habit is controllable and the user has purchased it, the life penalty is avoided.
+    - Otherwise, reduce user `life` by `lifePenalty`.
+    - Always creates `BadHabitLog` with `avoidedPenalty` flag.
+    - Response: `{ user: { life }, avoidedPenalty }`
 
 - Store `/store`
-  - GET `/store/controlled-bad-habits` — list controllable bad habits
-  - GET `/store/cosmetics` — list cosmetics
-  - POST `/store/cosmetics/:id/buy` — buy cosmetic if enough coins; creates `UserCosmetic` and `Transaction`
+  - GET `/store/controlled-bad-habits` — list controllable bad habits (purchase price = `coinCost`)
+  - POST `/store/bad-habits/:id/buy` — buy a controlled bad habit (deducts coins; creates ownership + `Transaction`)
 
 - Docs `/docs`
   - Swagger UI interactive tester
@@ -163,16 +161,14 @@ curl -X DELETE http://localhost:4000/bad-habits/bad-junk-food
 curl -X POST http://localhost:4000/actions/habits/habit-pushups/complete
 ```
 
-- Record Bad Habit (pay with coins)
+ - Record Bad Habit (ownership avoids penalty)
 ```
-curl -X POST http://localhost:4000/actions/bad-habits/bad-doomscroll/record \
-  -H 'Content-Type: application/json' \
-  -d '{"payWithCoins":true}'
+curl -X POST http://localhost:4000/actions/bad-habits/bad-doomscroll/record
 ```
 
-- Buy Cosmetic
+- Buy Controlled Bad Habit
 ```
-curl -X POST http://localhost:4000/store/cosmetics/cos-badge-starter/buy
+curl -X POST http://localhost:4000/store/bad-habits/bad-doomscroll/buy
 ```
 
 ## Leveling Helpers
@@ -188,7 +184,7 @@ Shared logic in `src/lib/leveling.ts`:
 - Areas: `area-health`, `area-learning`, `area-finance`
 - Habits: `habit-pushups`, `habit-reading`, `habit-budget`
 - Bad Habits: `bad-junk-food`, `bad-doomscroll`
-- Cosmetics: `cos-badge-starter`, `cos-badge-hero`
+- (No cosmetics; purchase controllable bad habits instead)
 
 ## Errors & Conventions
 

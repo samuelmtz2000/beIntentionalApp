@@ -86,7 +86,7 @@ app.get("/tester", (_req, res) => {
       <div class="card"><div><span class="pill">GET</span> <code>/habits</code></div><a href="/habits" target="_blank">Open</a></div>
       <div class="card"><div><span class="pill">GET</span> <code>/bad-habits</code></div><a href="/bad-habits" target="_blank">Open</a></div>
       <div class="card"><div><span class="pill">GET</span> <code>/store/controlled-bad-habits</code></div><a href="/store/controlled-bad-habits" target="_blank">Open</a></div>
-      <div class="card"><div><span class="pill">GET</span> <code>/store/cosmetics</code></div><a href="/store/cosmetics" target="_blank">Open</a></div>
+      
     </div>
 
     <h2>POST Actions</h2>
@@ -102,15 +102,14 @@ app.get("/tester", (_req, res) => {
         <div><span class="pill">POST</span> <code>/actions/bad-habits/:id/record</code></div>
         <label>Bad Habit ID</label>
         <input id="badHabitId" type="text" placeholder="bad habit id" />
-        <div class="row"><input id="payCoins" type="checkbox" /> <label for="payCoins">payWithCoins</label></div>
         <button onclick="recordBadHabit()">Record</button>
       </div>
 
       <div class="card">
-        <div><span class="pill">POST</span> <code>/store/cosmetics/:id/buy</code></div>
-        <label>Cosmetic ID</label>
-        <input id="cosmeticId" type="text" placeholder="cosmetic id" />
-        <button onclick="buyCosmetic()">Buy</button>
+        <div><span class="pill">POST</span> <code>/store/bad-habits/:id/buy</code></div>
+        <label>Bad Habit ID</label>
+        <input id="buyBadHabitId" type="text" placeholder="bad habit id" />
+        <button onclick="buyBadHabit()">Buy Controlled Bad Habit</button>
       </div>
     </div>
 
@@ -180,17 +179,15 @@ app.get("/tester", (_req, res) => {
       }
       async function recordBadHabit(){
         const el = document.getElementById('badHabitId');
-        const payEl = document.getElementById('payCoins');
         const id = el && 'value' in el ? String(el.value).trim() : '';
-        const pay = !!(payEl && 'checked' in payEl ? payEl.checked : false);
         if(!id) return show('Enter a bad habit id');
-        await postJson('/actions/bad-habits/' + encodeURIComponent(id) + '/record', { payWithCoins: !!pay });
+        await postJson('/actions/bad-habits/' + encodeURIComponent(id) + '/record', {});
       }
-      async function buyCosmetic(){
-        const el = document.getElementById('cosmeticId');
+      async function buyBadHabit(){
+        const el = document.getElementById('buyBadHabitId');
         const id = el && 'value' in el ? String(el.value).trim() : '';
-        if(!id) return show('Enter a cosmetic id');
-        await postJson('/store/cosmetics/' + encodeURIComponent(id) + '/buy', {});
+        if(!id) return show('Enter a bad habit id');
+        await postJson('/store/bad-habits/' + encodeURIComponent(id) + '/buy', {});
       }
       async function createArea(){
         const nameEl = document.getElementById('areaName');

@@ -13,7 +13,7 @@ const spec = {
       get: { summary: "Health check", responses: { "200": { description: "OK" } } },
     },
     "/me": {
-      get: { summary: "Profile snapshot", responses: { "200": { description: "Profile" } } },
+      get: { summary: "Profile snapshot", responses: { "200": { description: "Profile (includes ownedBadHabits)" } } },
     },
     "/areas": {
       get: { summary: "List areas", responses: { "200": { description: "Areas" } } },
@@ -188,21 +188,17 @@ const spec = {
     },
     "/actions/bad-habits/{id}/record": {
       post: {
-        summary: "Record bad habit",
+        summary: "Record bad habit (checks ownership of controllable habits to avoid penalty)",
         parameters: [{ name: "id", in: "path", required: true, schema: { type: "string" } }],
-        requestBody: {
-          content: { "application/json": { schema: { type: "object", properties: { payWithCoins: { type: "boolean" } } } } },
-        },
-        responses: { "200": { description: "Life updated (or pay with coins)" }, "404": { description: "Not found" } },
+        responses: { "200": { description: "Life updated (or avoided penalty)" }, "404": { description: "Not found" } },
       },
     },
-    "/store/controlled-bad-habits": { get: { summary: "List controllable bad habits", responses: { "200": { description: "OK" } } } },
-    "/store/cosmetics": { get: { summary: "List cosmetics", responses: { "200": { description: "OK" } } } },
-    "/store/cosmetics/{id}/buy": {
+    "/store/controlled-bad-habits": { get: { summary: "List purchasable (controllable) bad habits (uses coinCost as price)", responses: { "200": { description: "OK" } } } },
+    "/store/bad-habits/{id}/buy": {
       post: {
-        summary: "Buy cosmetic",
+        summary: "Buy a controlled bad habit (one-time purchase)",
         parameters: [{ name: "id", in: "path", required: true, schema: { type: "string" } }],
-        responses: { "200": { description: "Purchased" }, "400": { description: "Insufficient coins" } },
+        responses: { "200": { description: "Purchased" }, "400": { description: "Invalid or insufficient coins" }, "409": { description: "Already purchased" } },
       },
     },
   },

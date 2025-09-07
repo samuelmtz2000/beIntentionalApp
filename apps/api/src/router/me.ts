@@ -11,7 +11,7 @@ router.get("/", async (_req, res) => {
   const [areas, levels, owned] = await Promise.all([
     prisma.area.findMany({ where: { userId: DEFAULT_USER_ID } }),
     prisma.areaLevel.findMany({ where: { userId: DEFAULT_USER_ID } }),
-    prisma.userCosmetic.findMany({ where: { userId: DEFAULT_USER_ID }, include: { cosmetic: true } }),
+    prisma.userOwnedBadHabit.findMany({ where: { userId: DEFAULT_USER_ID }, include: { badHabit: true } }),
   ]);
 
   const byArea = new Map(levels.map((l) => [l.areaId, l]));
@@ -27,9 +27,8 @@ router.get("/", async (_req, res) => {
     life: user.life,
     coins: user.coins,
     areas: areasView,
-    cosmeticsOwned: owned.map((u) => ({ id: u.cosmetic.id, category: u.cosmetic.category, key: u.cosmetic.key })),
+    ownedBadHabits: owned.map((u) => ({ id: u.badHabit.id, name: u.badHabit.name })),
   });
 });
 
 export default router;
-

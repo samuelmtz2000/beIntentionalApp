@@ -18,7 +18,7 @@ model User {
   transactions Transaction[]
   habitLogs    HabitLog[]
   badHabitLogs BadHabitLog[]
-  cosmetics    UserCosmetic[]
+  ownedBadHabits UserOwnedBadHabit[]
   createdAt    DateTime      @default(now())
 }
 
@@ -87,7 +87,7 @@ model BadHabitLog {
   userId        String
   badHabitId    String
   timestamp     DateTime @default(now())
-  paidWithCoins Boolean  @default(false)
+  avoidedPenalty Boolean  @default(false)
 
   user     User     @relation(fields: [userId], references: [id])
   badHabit BadHabit @relation(fields: [badHabitId], references: [id])
@@ -104,22 +104,14 @@ model Transaction {
   user User @relation(fields: [userId], references: [id])
 }
 
-model Cosmetic {
-  id       String  @id @default(cuid())
-  category String
-  key      String
-  price    Int
-  ownedBy  UserCosmetic[]
-}
-
-model UserCosmetic {
-  id         String   @id @default(cuid())
-  userId     String
-  cosmeticId String
-  ownedAt    DateTime @default(now())
+model UserOwnedBadHabit {
+  id          String   @id @default(cuid())
+  userId      String
+  badHabitId  String
+  purchasedAt DateTime @default(now())
 
   user     User     @relation(fields: [userId], references: [id])
-  cosmetic Cosmetic @relation(fields: [cosmeticId], references: [id])
+  badHabit BadHabit @relation(fields: [badHabitId], references: [id])
 
-  @@unique([userId, cosmeticId])
+  @@unique([userId, badHabitId])
 }

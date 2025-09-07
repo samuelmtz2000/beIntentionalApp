@@ -9,31 +9,28 @@ router.get("/controlled-bad-habits", async (_req, res) => {
   res.json(items);
 });
 
-router.get("/cosmetics", async (_req, res) => {
-  const items = await prisma.cosmetic.findMany();
-  res.json(items);
-});
-
-router.post("/cosmetics/:id/buy", async (req, res) => {
-  const cosmetic = await prisma.cosmetic.findUnique({ where: { id: req.params.id } });
-  if (!cosmetic) return res.status(404).json({ message: "Cosmetic not found" });
+// Purchase a controlled bad habit so future records avoid life penalty
+router.post("/bad-habits/:id/buy", async (req, res) => {
+  const bad = await prisma.badHabit.findUnique({ where: { id: req.params.id } });
+  if (!bad) return res.status(404).json({ message: "Bad habit not found" });
+  if (!bad.controllable) return res.status(400).json({ message: "Bad habit is not purchasable" });
 
   const user = await prisma.user.findUnique({ where: { id: DEFAULT_USER_ID } });
   if (!user) return res.status(404).json({ message: "User not found" });
 
-  const owned = await prisma.userCosmetic.findUnique({ where: { userId_cosmeticId: { userId: DEFAULT_USER_ID, cosmeticId: cosmetic.id } } });
-  if (owned) return res.status(409).json({ message: "Already owned" });
+  const owned = await prisma.userOwnedBadHabit.findUnique({ where: { userId_badHabitId: { userId: DEFAULT_USER_ID, badHabitId: bad.id } } });
+  if (owned) return res.status(409).json({ message: "Already purchased" });
 
-  if (user.coins < cosmetic.price) return res.status(400).json({ message: "Insufficient coins" });
+  const price = bad.coinCost || 0;
+  if (user.coins < price) return res.status(400).json({ message: "Insufficient coins" });
 
-  const [uc] = await prisma.$transaction([
-    prisma.user.update({ where: { id: DEFAULT_USER_ID }, data: { coins: { decrement: cosmetic.price } } }),
-    prisma.transaction.create({ data: { userId: DEFAULT_USER_ID, amount: -cosmetic.price, type: "spend", meta: { source: "cosmetic", cosmeticId: cosmetic.id } } }),
-    prisma.userCosmetic.create({ data: { userId: DEFAULT_USER_ID, cosmeticId: cosmetic.id } }),
+  const [updatedUser] = await prisma.$transaction([
+    prisma.user.update({ where: { id: DEFAULT_USER_ID }, data: { coins: { decrement: price } } }),
+    prisma.transaction.create({ data: { userId: DEFAULT_USER_ID, amount: -price, type: "spend", meta: { source: "badHabitPurchase", badHabitId: bad.id } } }),
+    prisma.userOwnedBadHabit.create({ data: { userId: DEFAULT_USER_ID, badHabitId: bad.id } }),
   ]);
 
-  res.json({ ok: true, coins: uc.coins });
+  res.json({ ok: true, coins: updatedUser.coins });
 });
 
 export default router;
-
