@@ -1,0 +1,11 @@
+# Expo / React Native
+.expo/
+.expo-shared/
+*.expo*
+android/
+ios/
+web-build/
+dist/
+build/
+node_modules/
+*.log
