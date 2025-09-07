@@ -1,0 +1,19 @@
+{
+  "name": "habit-hero",
+  "private": true,
+  "packageManager": "pnpm@10.0.0",
+  "scripts": {
+    "dev:api": "pnpm --filter @habit-hero/api dev",
+    "dev:mobile": "pnpm --filter @habit-hero/mobile start",
+    "db:migrate": "pnpm --filter @habit-hero/api prisma migrate dev",
+    "db:seed": "pnpm --filter @habit-hero/api exec node --import tsx/esm prisma/seed.ts",
+    "lint": "pnpm dlx eslint . --ext .ts,.tsx",
+    "format": "pnpm dlx prettier -w .",
+    "test": "pnpm --filter @habit-hero/api test"
+  },
+  "devDependencies": {
+    "eslint": "^9.11.0",
+    "prettier": "^3.3.3",
+    "typescript": "^5.6.3"
+  }
+}

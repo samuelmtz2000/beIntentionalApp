@@ -1,0 +1,5 @@
+# API-specific ignores (root .gitignore already covers most)
+.env
+prisma/dev.db
+prisma/dev.db-journal
+dist/

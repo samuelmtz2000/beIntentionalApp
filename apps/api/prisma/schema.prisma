@@ -1,0 +1,125 @@
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model User {
+  id           String        @id @default(cuid())
+  name         String?
+  life         Int           @default(100)
+  coins        Int           @default(0)
+  avatar       Json?
+  areas        Area[]
+  areaLevels   AreaLevel[]
+  transactions Transaction[]
+  habitLogs    HabitLog[]
+  badHabitLogs BadHabitLog[]
+  cosmetics    UserCosmetic[]
+  createdAt    DateTime      @default(now())
+}
+
+model Area {
+  id          String      @id @default(cuid())
+  userId      String
+  user        User        @relation(fields: [userId], references: [id])
+  name        String
+  icon        String?
+  xpPerLevel  Int         @default(100)
+  levelCurve  String      @default("linear")
+  habits      GoodHabit[]
+  badHabits   BadHabit[]
+  areaLevels  AreaLevel[]
+}
+
+model GoodHabit {
+  id         String     @id @default(cuid())
+  areaId     String
+  area       Area       @relation(fields: [areaId], references: [id])
+  name       String
+  xpReward   Int        @default(10)
+  coinReward Int        @default(5)
+  cadence    String?
+  logs       HabitLog[]
+  isActive   Boolean    @default(true)
+}
+
+model BadHabit {
+  id            String       @id @default(cuid())
+  areaId        String?
+  area          Area?        @relation(fields: [areaId], references: [id])
+  name          String
+  lifePenalty   Int          @default(5)
+  controllable  Boolean      @default(false)
+  coinCost      Int          @default(0)
+  logs          BadHabitLog[]
+  isActive      Boolean      @default(true)
+}
+
+model AreaLevel {
+  id     String @id @default(cuid())
+  userId String
+  areaId String
+  level  Int    @default(1)
+  xp     Int    @default(0)
+
+  user User @relation(fields: [userId], references: [id])
+  area Area @relation(fields: [areaId], references: [id])
+
+  @@unique([userId, areaId])
+}
+
+model HabitLog {
+  id        String   @id @default(cuid())
+  userId    String
+  habitId   String
+  timestamp DateTime @default(now())
+
+  user  User      @relation(fields: [userId], references: [id])
+  habit GoodHabit @relation(fields: [habitId], references: [id])
+}
+
+model BadHabitLog {
+  id            String   @id @default(cuid())
+  userId        String
+  badHabitId    String
+  timestamp     DateTime @default(now())
+  paidWithCoins Boolean  @default(false)
+
+  user     User     @relation(fields: [userId], references: [id])
+  badHabit BadHabit @relation(fields: [badHabitId], references: [id])
+}
+
+model Transaction {
+  id        String   @id @default(cuid())
+  userId    String
+  amount    Int
+  type      String
+  meta      Json?
+  timestamp DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id])
+}
+
+model Cosmetic {
+  id       String  @id @default(cuid())
+  category String
+  key      String
+  price    Int
+  ownedBy  UserCosmetic[]
+}
+
+model UserCosmetic {
+  id         String   @id @default(cuid())
+  userId     String
+  cosmeticId String
+  ownedAt    DateTime @default(now())
+
+  user     User     @relation(fields: [userId], references: [id])
+  cosmetic Cosmetic @relation(fields: [cosmeticId], references: [id])
+
+  @@unique([userId, cosmeticId])
+}
