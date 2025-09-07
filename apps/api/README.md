@@ -58,6 +58,7 @@ All bodies are JSON. Validation errors: HTTP 400 with Zod error details. Missing
 
 - Areas `/areas`
   - GET — list areas for default user
+  - GET `/:id` — get by id
   - POST — create
     - Body: `{ name, icon?, xpPerLevel>=10, levelCurve: "linear"|"exp" }`
   - PUT `/:id` — update (partial)
@@ -65,6 +66,7 @@ All bodies are JSON. Validation errors: HTTP 400 with Zod error details. Missing
 
 - Good Habits `/habits`
   - GET — list (includes `area` relation)
+  - GET `/:id` — get by id (includes `area`)
   - POST — create
     - Body: `{ areaId, name, xpReward>=1, coinReward>=0, cadence?, isActive }`
   - PUT `/:id` — update (partial)
@@ -72,6 +74,7 @@ All bodies are JSON. Validation errors: HTTP 400 with Zod error details. Missing
 
 - Bad Habits `/bad-habits`
   - GET — list (includes `area` relation)
+  - GET `/:id` — get by id (includes `area`)
   - POST — create
     - Body: `{ areaId?, name, lifePenalty>=1, controllable?, coinCost>=0, isActive }`
       - Note: `controllable` is ignored by the store logic; ALL bad habits can be purchased. `coinCost` is the purchase price for one credit.
