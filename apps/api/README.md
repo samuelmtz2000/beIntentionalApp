@@ -108,6 +108,18 @@ curl -X POST http://localhost:4000/areas \
   -d '{"name":"Wellness","icon":"💆","xpPerLevel":120,"levelCurve":"linear"}'
 ```
 
+- Update Area
+```
+curl -X PUT http://localhost:4000/areas/area-health \
+  -H 'Content-Type: application/json' \
+  -d '{"name":"Health+","xpPerLevel":150}'
+```
+
+- Delete Area
+```
+curl -X DELETE http://localhost:4000/areas/area-learning
+```
+
 - Create Habit
 ```
 curl -X POST http://localhost:4000/habits \
@@ -115,11 +127,35 @@ curl -X POST http://localhost:4000/habits \
   -d '{"areaId":"area-health","name":"Stretch 5m","xpReward":10,"coinReward":4,"cadence":"daily","isActive":true}'
 ```
 
+- Update Habit
+```
+curl -X PUT http://localhost:4000/habits/habit-pushups \
+  -H 'Content-Type: application/json' \
+  -d '{"xpReward":12,"coinReward":6,"isActive":true}'
+```
+
+- Delete Habit
+```
+curl -X DELETE http://localhost:4000/habits/habit-reading
+```
+
 - Create Bad Habit
 ```
 curl -X POST http://localhost:4000/bad-habits \
   -H 'Content-Type: application/json' \
   -d '{"areaId":"area-learning","name":"Doomscroll","lifePenalty":4,"controllable":true,"coinCost":3,"isActive":true}'
+```
+
+- Update Bad Habit
+```
+curl -X PUT http://localhost:4000/bad-habits/bad-doomscroll \
+  -H 'Content-Type: application/json' \
+  -d '{"coinCost":5,"controllable":true,"isActive":true}'
+```
+
+- Delete Bad Habit
+```
+curl -X DELETE http://localhost:4000/bad-habits/bad-junk-food
 ```
 
 - Complete Habit
