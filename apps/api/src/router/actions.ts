@@ -28,7 +28,8 @@ router.post("/habits/:id/complete", async (req, res) => {
 });
 
 router.post("/bad-habits/:id/record", async (_req, res) => {
-  const bad = await prisma.badHabit.findUnique({ where: { id: req.params.id } });
+  const { id } = ((res as any).req?.params || {}) as { id?: string };
+  const bad = await prisma.badHabit.findUnique({ where: { id: id as string } });
   if (!bad) return res.status(404).json({ message: "Bad habit not found" });
 
   let avoidedPenalty = false;

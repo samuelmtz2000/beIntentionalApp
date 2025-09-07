@@ -57,6 +57,7 @@ model BadHabit {
   coinCost      Int          @default(0)
   logs          BadHabitLog[]
   isActive      Boolean      @default(true)
+  ownedBy       UserOwnedBadHabit[]
 }
 
 model AreaLevel {
