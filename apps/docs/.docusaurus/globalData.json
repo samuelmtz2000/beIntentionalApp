@@ -1,0 +1,63 @@
+{
+  "docusaurus-plugin-content-docs": {
+    "default": {
+      "path": "/",
+      "versions": [
+        {
+          "name": "current",
+          "label": "Next",
+          "isLast": true,
+          "path": "/",
+          "mainDocId": "intro",
+          "docs": [
+            {
+              "id": "api/actions",
+              "path": "/api/actions",
+              "sidebar": "docs"
+            },
+            {
+              "id": "api/data-model",
+              "path": "/api/data-model",
+              "sidebar": "docs"
+            },
+            {
+              "id": "api/endpoints",
+              "path": "/api/endpoints",
+              "sidebar": "docs"
+            },
+            {
+              "id": "api/overview",
+              "path": "/api/overview",
+              "sidebar": "docs"
+            },
+            {
+              "id": "api/quick-start",
+              "path": "/api/quick-start",
+              "sidebar": "docs"
+            },
+            {
+              "id": "api/store",
+              "path": "/api/store",
+              "sidebar": "docs"
+            },
+            {
+              "id": "intro",
+              "path": "/intro",
+              "sidebar": "docs"
+            }
+          ],
+          "draftIds": [],
+          "sidebars": {
+            "docs": {
+              "link": {
+                "path": "/intro",
+                "label": "intro"
+              }
+            }
+          }
+        }
+      ],
+      "breadcrumbs": true
+    }
+  }
+}

@@ -1,0 +1,25 @@
+{
+  "id": "api/actions",
+  "title": "Actions",
+  "description": "Complete habit",
+  "source": "@site/docs/api/actions.md",
+  "sourceDirName": "api",
+  "slug": "/api/actions",
+  "permalink": "/api/actions",
+  "draft": false,
+  "unlisted": false,
+  "tags": [],
+  "version": "current",
+  "frontMatter": {
+    "title": "Actions"
+  },
+  "sidebar": "docs",
+  "previous": {
+    "title": "Endpoints",
+    "permalink": "/api/endpoints"
+  },
+  "next": {
+    "title": "Store & Credits",
+    "permalink": "/api/store"
+  }
+}

@@ -23,7 +23,7 @@ const config: Config = {
           editUrl: undefined,
         },
         blog: false,
-        theme: { customCss: require.resolve('./src/css/custom.css') },
+        theme: { customCss: ['./src/css/custom.css'] },
       },
     ],
   ],
@@ -59,4 +59,3 @@ const config: Config = {
 };
 
 export default config;
-

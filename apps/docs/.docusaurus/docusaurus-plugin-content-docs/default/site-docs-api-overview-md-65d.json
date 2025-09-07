@@ -1,0 +1,25 @@
+{
+  "id": "api/overview",
+  "title": "Overview",
+  "description": "The Habit Hero API powers the gamified habit manager. It exposes JSON endpoints for Areas, Good Habits, Bad Habits, level progression, store purchases (credits), and logs.",
+  "source": "@site/docs/api/overview.md",
+  "sourceDirName": "api",
+  "slug": "/api/overview",
+  "permalink": "/api/overview",
+  "draft": false,
+  "unlisted": false,
+  "tags": [],
+  "version": "current",
+  "frontMatter": {
+    "title": "Overview"
+  },
+  "sidebar": "docs",
+  "previous": {
+    "title": "Welcome",
+    "permalink": "/intro"
+  },
+  "next": {
+    "title": "Quick Start",
+    "permalink": "/api/quick-start"
+  }
+}

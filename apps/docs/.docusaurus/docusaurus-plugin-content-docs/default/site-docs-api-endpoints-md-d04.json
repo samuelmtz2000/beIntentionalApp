@@ -1,0 +1,25 @@
+{
+  "id": "api/endpoints",
+  "title": "Endpoints",
+  "description": "Health",
+  "source": "@site/docs/api/endpoints.md",
+  "sourceDirName": "api",
+  "slug": "/api/endpoints",
+  "permalink": "/api/endpoints",
+  "draft": false,
+  "unlisted": false,
+  "tags": [],
+  "version": "current",
+  "frontMatter": {
+    "title": "Endpoints"
+  },
+  "sidebar": "docs",
+  "previous": {
+    "title": "Data Model",
+    "permalink": "/api/data-model"
+  },
+  "next": {
+    "title": "Actions",
+    "permalink": "/api/actions"
+  }
+}
