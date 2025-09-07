@@ -33,3 +33,8 @@ apps/api/prisma/dev.db-journal
 .vercel/
 tmp/
 *.log
+
+# Xcode user data (iOS project)
+**/*.xcuserdatad/
+**/*.xcuserstate
+**/*.xcworkspace/xcuserdata/
