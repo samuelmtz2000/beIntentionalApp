@@ -16,8 +16,24 @@ const sidebars: SidebarsConfig = {
         'api/store',
       ],
     },
+    {
+      type: 'category',
+      label: 'Frontend (iOS)',
+      collapsed: false,
+      items: [
+        'frontend/overview',
+        'frontend/architecture',
+        'frontend/networking',
+        'frontend/models',
+        'frontend/ui',
+        'frontend/state',
+        'frontend/testing',
+        'frontend/build-release',
+        'frontend/configuration',
+        'frontend/troubleshooting',
+      ],
+    },
   ],
 };
 
 export default sidebars;
-

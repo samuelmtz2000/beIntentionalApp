@@ -1,11 +1,12 @@
 # Habit Hero Monorepo
 
-Gamified habit manager that turns personal growth into an RPG. Monorepo managed by pnpm with an Express + Prisma API and an Expo + React Native mobile app.
+Gamified habit manager that turns personal growth into an RPG. Monorepo managed by pnpm with an Express + Prisma API and a native iOS app (SwiftUI). A React Native app exists but is currently paused.
 
 ## Packages
 
 - `apps/api` — Express 5 + TypeScript + Prisma (SQLite), Zod validation, Swagger UI at `/docs`.
-- `apps/mobile` — Expo + React Native + Expo Router, React Query, Zustand.
+- `apps/mobileIOS` — Native iOS app (SwiftUI, MVVM, async/await). Open `apps/mobileIOS/mobileIOS.xcodeproj` in Xcode 15+.
+- `apps/mobile` — Expo + React Native (paused for now).
 
 ## Quick Start
 
@@ -20,7 +21,8 @@ Prereqs: Node 18+ (or 20+), pnpm.
 
 3) Run
 - API: pnpm dev:api (http://localhost:4000, docs at /docs)
-- Mobile: pnpm dev:mobile (Expo dev server)
+- iOS: open `apps/mobileIOS/mobileIOS.xcodeproj` in Xcode, select an iOS 17+ simulator, Run.
+- React Native (paused): pnpm dev:mobile (Expo dev server)
 
 ## Scripts (root)
 
@@ -46,23 +48,23 @@ Prereqs: Node 18+ (or 20+), pnpm.
 
 Key behavior
 - Completing a good habit: adds XP to its area and rewards coins.
-- Recording a bad habit: decreases life unless controllable and paid with coins.
+- Recording a bad habit: decreases life unless a credit is available for a controllable bad habit (inventory model).
 - Areas level up based on configurable XP curves.
-- Store supports cosmetic purchases; logs track actions and transactions.
+- Store: purchase credits for controllable bad habits; logs track actions and transactions.
 
 ## Mobile
 
-- Expo Router tabs: Dashboard, Habits, Bad Habits, Store, Avatar.
-- React Query for server state, Zustand for light UI prefs.
-- To point to a non-default API URL, set `EXPO_PUBLIC_API_URL` in `apps/mobile/app.config.js` (optional in v1).
+Primary frontend is the iOS app in `apps/mobileIOS` (SwiftUI). Configure API Base URL in the app’s Settings tab (stored in `UserDefaults` as `API_BASE_URL`, default `http://localhost:4000`).
+
+The React Native app in `apps/mobile` is paused; do not modify unless explicitly requested.
 
 ## Acceptance Checklist
 
 1. `pnpm db:migrate && pnpm db:seed && pnpm dev:api` → `/health` returns `{ ok: true }`.
-2. `pnpm dev:mobile` → Dashboard shows Life=100, Coins=0, Areas level 1.
+2. iOS app builds and runs in simulator → Dashboard shows Life=100, Coins=0, Areas level 1.
 3. Habits: "I did it" increases coins and area progress; Dashboard updates.
 4. Bad Habits: "I slipped" reduces Life. If controllable + pay, Life doesn’t drop and Coins decrease.
-5. Store: buying a cosmetic reduces Coins and shows as owned on Avatar.
+5. Store: buying a controllable bad habit credit reduces Coins and increments inventory; related screens reflect updated counts.
 6. No runtime TS errors; basic level-up animation plays.
 
 ## Contributing
@@ -75,3 +77,8 @@ Key behavior
 ## License
 
 Proprietary (do not distribute). Contact the author for usage.
+
+## Agent Docs
+
+- General agent instructions: `agents/agents.md`
+- Habit Hero (iOS-first) agent guide: `agents/habit-hero-agent.md`

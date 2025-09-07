@@ -1,27 +1,65 @@
-# HabitHero (iOS)
+# Habit Hero — iOS App (SwiftUI)
 
-Native SwiftUI iOS client for Habit Hero. Uses Swift 5.9+, SwiftUI, MVVM, async/await, Combine.
+Native iOS client for Habit Hero, built with Swift 5.9+, SwiftUI, MVVM, async/await, and Combine. It connects to the local backend API for live data and actions (XP, coins, logs, etc.).
+
+## Requirements
+
+- Xcode 15 or newer
+- iOS 17+ Simulator or device
+- Backend running locally (recommended): `pnpm dev:api` from the repo root
+
+## Features
 
 - Tabs: Today, Habits, Stats, Settings
-- API: connects to the local backend at `http://localhost:4000` (configurable in Settings)
-- Features: Habits CRUD, quick completion (awards XP/coins), profile stats
+- Habits CRUD, quick completion (awards XP/coins)
+- Profile: life, coins, and per‑area progress
+- Settings: editable API base URL
 
-## Run
+## Getting Started
 
-1) Open Xcode and select the project in `apps/mobileIOS/mobileIOS.xcodeproj`
-2) Select a simulator (iOS 17+) and Run
+1) Start the backend API (from repo root):
+   - `pnpm db:migrate && pnpm db:seed`
+   - `pnpm dev:api` (defaults to `http://localhost:4000`)
+2) Open the project in Xcode: `apps/mobileIOS/mobileIOS.xcodeproj`
+3) Choose an iOS 17+ simulator and Run (Product → Run)
 
-Or from Xcode: Product → Run
+## Configuration
 
-## Configure API base URL
+- API base URL: open the app → Settings → set `API Base URL`.
+  - Default: `http://localhost:4000`
+  - Make sure the simulator can reach your machine’s localhost. For real devices, use your machine’s LAN IP.
 
-In the Settings tab, set the `API Base URL` (default `http://localhost:4000`).
+## Project Structure
 
-## Tests
+- `mobileIOS/` — Swift sources (SwiftUI views, view models, services)
+- `mobileIOS.xcodeproj/` — Xcode project
+- `mobileIOSTests/` — Unit tests
+- `mobileIOSUITests/` — UI tests
 
-Targets include unit tests. From Xcode, run Product → Test.
+Common modules:
+- Networking layer (API service) using async/await to call the backend routes.
+- Models aligned with the API (areas, habits, bad habits, logs, transactions).
+- View models (MVVM) orchestrating API calls and local UI state.
 
-## Notes
+## API Integration
 
-- The client mirrors the backend API routes documented at `apps/api/README.md`.
-- Quick actions use `POST /actions/habits/:id/complete` to create logs, update area levels, and coin balance.
+The app targets the backend routes documented in the API docs and OpenAPI (Swagger):
+- Profile: `GET /me`
+- Habits list: `GET /habits`
+- Complete habit: `POST /actions/habits/:id/complete`
+- Bad habits list: `GET /bad-habits`
+- Record bad habit: `POST /actions/bad-habits/:id/record`
+- Store endpoints as applicable
+
+Ensure the backend is running and seeded so the app has demo data.
+
+## Testing
+
+- From Xcode: Product → Test (runs unit and UI test targets).
+- Prefer testing view models and API service in isolation; stub network where useful.
+
+## Troubleshooting
+
+- White screen or empty data: verify the API is running and reachable from the simulator/device.
+- 404/validation errors: confirm routes match the current backend version and input payloads.
+- CORS not applicable for native iOS networking; connection issues are usually base URL or network reachability.

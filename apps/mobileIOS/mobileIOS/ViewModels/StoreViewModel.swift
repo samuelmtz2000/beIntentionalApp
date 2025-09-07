@@ -22,7 +22,7 @@ final class StoreViewModel: ObservableObject {
     }
 
     private func loadControlledBadHabits() async {
-        do { controlledBadHabits = try await api.get("store/controlled-bad-habits") }
+        do { controlledBadHabits = try await api.get("bad-habits") }
         catch let e as APIError { apiError = e }
         catch let err { apiError = APIError(message: err.localizedDescription) }
     }
