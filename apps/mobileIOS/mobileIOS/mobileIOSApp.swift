@@ -6,12 +6,27 @@
 //
 
 import SwiftUI
+import Combine
 
 @main
-struct mobileIOSApp: App {
+struct HabitHeroApp: App {
+    @StateObject private var appModel = AppModel()
+
     var body: some Scene {
         WindowGroup {
-            ContentView()
+            MainTabView()
+                .environmentObject(appModel)
         }
+    }
+}
+
+final class AppModel: ObservableObject {
+    @Published var apiBaseURL: URL = URL(string: UserDefaults.standard.string(forKey: "API_BASE_URL") ?? "http://localhost:4000")!
+    let api: APIClient
+    let persistence: PersistenceController
+
+    init() {
+        self.persistence = PersistenceController.shared
+        self.api = APIClient(baseURL: apiBaseURL)
     }
 }

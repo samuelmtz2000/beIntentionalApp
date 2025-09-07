@@ -7,18 +7,21 @@
 
 import SwiftUI
 
-struct ContentView: View {
+struct MainTabView: View {
     var body: some View {
-        VStack {
-            Image(systemName: "globe")
-                .imageScale(.large)
-                .foregroundStyle(.tint)
-            Text("Hello, world!")
+        TabView {
+            TodayView()
+                .tabItem { Label("Today", systemImage: "sun.max.fill") }
+            HabitsView()
+                .tabItem { Label("Habits", systemImage: "checklist") }
+            StatsView()
+                .tabItem { Label("Stats", systemImage: "chart.bar.doc.horizontal") }
+            SettingsView()
+                .tabItem { Label("Settings", systemImage: "gearshape") }
         }
-        .padding()
     }
 }
 
 #Preview {
-    ContentView()
+    MainTabView()
 }
