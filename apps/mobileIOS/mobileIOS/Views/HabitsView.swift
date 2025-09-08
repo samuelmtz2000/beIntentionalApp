@@ -27,12 +27,29 @@ struct HabitsView: View {
 
     var body: some View {
         NavigationStack {
-            ScrollView {
-                VStack(alignment: .leading, spacing: 16) {
-                    PlayerHeader(profile: profileVM.profile, onLogToday: { selected = .habits }, onOpenStore: { selected = .store })
-                    TileNav(selected: $selected)
-                    content
-                }.padding()
+            Group {
+                if selected == .habits {
+                    VStack(alignment: .leading, spacing: 16) {
+                        PlayerHeader(profile: profileVM.profile, onLogToday: { selected = .habits }, onOpenStore: { selected = .store })
+                        TileNav(selected: $selected)
+                    }
+                    .padding(.horizontal)
+                    CombinedHabitsListPanel(
+                        goodVM: goodVM,
+                        badVM: badVM,
+                        onRefresh: { await refreshAll() },
+                        onAddGood: { showingAddGood = true },
+                        onAddBad: { showingAddBad = true }
+                    )
+                } else {
+                    ScrollView {
+                        VStack(alignment: .leading, spacing: 16) {
+                            PlayerHeader(profile: profileVM.profile, onLogToday: { selected = .habits }, onOpenStore: { selected = .store })
+                            TileNav(selected: $selected)
+                            content
+                        }.padding()
+                    }
+                }
             }
             .navigationTitle("Habits")
             .toolbar {
@@ -244,6 +261,94 @@ private struct CombinedHabitsPanel: View {
     }
 }
 
+private struct CombinedHabitsListPanel: View {
+    @ObservedObject var goodVM: HabitsViewModel
+    @ObservedObject var badVM: BadHabitsViewModel
+    var onRefresh: () async -> Void
+    var onAddGood: () -> Void
+    var onAddBad: () -> Void
+
+    @State private var editingGood: GoodHabit? = nil
+    @State private var editingBad: BadHabit? = nil
+    @State private var confirmDelete: (id: String, name: String)? = nil
+
+    var body: some View {
+        List {
+            Section(header: headerView) {
+                EmptyView()
+            }
+            .listRowInsets(EdgeInsets())
+            .frame(height: 0.1)
+
+            Section("Good") {
+                ForEach(goodVM.habits) { habit in
+                    VStack(alignment: .leading, spacing: 6) {
+                        HStack { Text(habit.name).font(.headline); Spacer(); Text("XP +\\(habit.xpReward) • Coins +\\(habit.coinReward)").font(.caption).foregroundStyle(.secondary) }
+                    }
+                    .swipeActions(edge: .leading, allowsFullSwipe: true) {
+                        Button {
+                            Task { _ = await goodVM.complete(id: habit.id); await onRefresh() }
+                        } label: { Label("Record", systemImage: "checkmark.circle.fill") }
+                        .tint(.green)
+                    }
+                    .swipeActions(edge: .trailing, allowsFullSwipe: true) {
+                        Button { editingGood = habit } label: { Label("Edit", systemImage: "pencil") }.tint(.blue)
+                        Button(role: .destructive) { confirmDelete = (habit.id, habit.name) } label: { Label("Delete", systemImage: "trash") }
+                    }
+                }
+            }
+            Section("Bad") {
+                ForEach(badVM.items) { item in
+                    VStack(alignment: .leading, spacing: 6) {
+                        HStack { Text(item.name).font(.headline); Spacer(); Text("Penalty \\(item.lifePenalty)").font(.caption).foregroundStyle(.secondary) }
+                    }
+                    .swipeActions(edge: .leading, allowsFullSwipe: true) {
+                        Button { Task { await badVM.record(id: item.id); await onRefresh() } } label: { Label("Record", systemImage: "exclamationmark.circle") }.tint(.red)
+                    }
+                    .swipeActions(edge: .trailing, allowsFullSwipe: true) {
+                        Button { editingBad = item } label: { Label("Edit", systemImage: "pencil") }.tint(.blue)
+                        Button(role: .destructive) { confirmDelete = (item.id, item.name) } label: { Label("Delete", systemImage: "trash") }
+                    }
+                }
+            }
+        }
+        .listStyle(.insetGrouped)
+        .alert(item: Binding(get: {
+            confirmDelete.map { ConfirmWrapper(id: $0.id, name: $0.name) }
+        }, set: { newVal in
+            if newVal == nil { confirmDelete = nil }
+        })) { wrap in
+            Alert(title: Text("Delete \\(wrap.name)?"), message: Text("Are you sure you want to delete \\(wrap.name)?"), primaryButton: .destructive(Text("Delete")) {
+                Task {
+                    if goodVM.habits.contains(where: { $0.id == wrap.id }) { await goodVM.delete(id: wrap.id) }
+                    else if badVM.items.contains(where: { $0.id == wrap.id }) { await badVM.delete(id: wrap.id) }
+                    await onRefresh()
+                }
+            }, secondaryButton: .cancel())
+        }
+        .sheet(item: $editingGood) { h in
+            HabitDetailView(habit: h, onSave: { updated in Task { await goodVM.update(habit: updated); await onRefresh() } }, onDelete: { Task { await goodVM.delete(id: h.id); await onRefresh() } })
+        }
+        .sheet(item: $editingBad) { b in
+            BadHabitDetailView(item: b, onSave: { updated in Task { await badVM.update(item: updated); await onRefresh() } }, onDelete: { Task { await badVM.delete(id: b.id); await onRefresh() } })
+        }
+        .refreshable { await onRefresh() }
+    }
+
+    private var headerView: some View {
+        HStack {
+            Text("Habits").font(.headline)
+            Spacer()
+            Menu {
+                Button("New Good Habit", action: onAddGood)
+                Button("New Bad Habit", action: onAddBad)
+            } label: {
+                Image(systemName: "plus")
+            }
+        }
+        .padding(.horizontal)
+    }
+}
 private struct ConfirmWrapper: Identifiable, Equatable {
     var id: String
     var name: String
