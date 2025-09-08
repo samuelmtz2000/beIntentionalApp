@@ -14,7 +14,7 @@ Native iOS client for Habit Hero, built with Swift 5.9+, SwiftUI, MVVM, async/aw
 - Habits CRUD, quick completion (awards XP/coins)
 - Global profile stats: life, coins, and global Level/XP derived from your activity
 - Clear progress: Habits header shows “XP to next → {current} from {required}” with correct per‑level requirement (linear or exponential)
-- User Config sheet (gear icon in Habits): edit XP per Level, Level curve (linear/exp), exponential multiplier, and XP computation mode (logs vs stored)
+- User Config sheet (Config pill in Habits chip bar): edit XP per Level, Level curve (linear/exp), exponential multiplier, and XP computation mode (logs vs stored)
 - Settings: editable API base URL
 
 ## Getting Started
@@ -55,6 +55,13 @@ The app targets the backend routes documented in the API docs and OpenAPI (Swagg
 - Store endpoints as applicable
 
 Ensure the backend is running and seeded so the app has demo data.
+
+## UI Patterns
+
+- Tab navigation: primary screens via bottom tabs.
+- Pill navigation: horizontal chip bar for local sections (Player / Habits / Areas / Store) and a Config pill.
+- Spotify‑like actions: leading full swipe = Record; trailing full swipe = Edit (full), Delete (with confirm).
+- Forms: Good/Bad create & edit forms use Area pickers sourced from the Areas catalog. Bad can be “None (Global)”.
 
 ## Testing
 
