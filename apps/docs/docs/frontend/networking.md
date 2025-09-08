@@ -42,6 +42,7 @@ enum APIError: Error {
 
 Endpoints
 - Profile: `GET /me`
+- User config: `GET /users/:id/config`, `PUT /users/:id/config`
 - Habits: `GET /habits`, `POST /actions/habits/:id/complete`
 - Bad Habits: `GET /bad-habits`, `POST /actions/bad-habits/:id/record`
 - Store: `GET /store/*`, `POST /store/cosmetics/:id/buy` (if applicable)
@@ -50,4 +51,3 @@ Tips
 - Prefer small request/response DTOs and map to domain models
 - Use `JSONDecoder.keyDecodingStrategy = .convertFromSnakeCase` if needed
 - Log non‑PII failures in debug builds
-

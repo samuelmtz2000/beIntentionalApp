@@ -54,6 +54,10 @@ EXECUTION MECHANICS
 DOCUMENTATION FIRST POLICY
 - Consult repo docs BEFORE coding.
 - If docs are missing/outdated, propose doc updates and add them as part of the change (include examples, run commands, and troubleshooting).
+ - When API or UI behavior changes, update the docs site under `apps/docs` (Docusaurus) in addition to in-repo READMEs:
+   - API: add/update pages under `apps/docs/docs/api/*` (endpoints, overview, store).
+   - Frontend: reflect UI/UX in `apps/docs/docs/frontend/*` (screens, networking, configuration).
+   - Keep `/me` payloads, new routes (e.g., `/users/:id/config`), and UI affordances (e.g., Habits header XP text, config gear) documented.
 
 QUALITY & SAFETY BARS
 - All changes must compile, pass type-checks, pass linters/formatters, and pass tests.
