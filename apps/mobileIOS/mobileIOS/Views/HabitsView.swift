@@ -100,10 +100,7 @@ private struct PlayerHeader: View {
                     Text("Loading...")
                 }
             }
-            HStack(spacing: 12) {
-                Button("Log today", action: onLogToday).buttonStyle(.borderedProminent)
-                Button("Open Store", action: onOpenStore).buttonStyle(.bordered)
-            }
+            // Removed quick action buttons to simplify header; navigation chips below handle section switching
         }
         .accessibilityElement(children: .contain)
     }
@@ -123,15 +120,20 @@ private struct TileNav: View {
     @Binding var selected: HabitsView.SectionKind
     var body: some View {
         ScrollView(.horizontal, showsIndicators: false) {
-            HStack(spacing: 12) {
+            HStack(spacing: 10) {
                 ForEach(HabitsView.SectionKind.allCases, id: \.self) { kind in
+                    let isSelected = (selected == kind)
                     Button(action: { selected = kind }) {
-                        VStack(alignment: .leading) {
-                            Text(kind.rawValue).font(.headline).foregroundStyle(selected == kind ? .white : .primary)
-                        }
-                        .frame(width: 140, height: 64, alignment: .leading)
-                        .padding()
-                        .background(RoundedRectangle(cornerRadius: 12).fill(selected == kind ? Color.blue : Color.gray.opacity(0.15)))
+                        Text(kind.rawValue)
+                            .font(.callout)
+                            .fontWeight(.semibold)
+                            .foregroundStyle(isSelected ? .white : .primary)
+                            .padding(.horizontal, 16)
+                            .padding(.vertical, 9)
+                            .background(
+                                Capsule()
+                                    .fill(isSelected ? Color.blue : Color.gray.opacity(0.15))
+                            )
                     }
                     .accessibilityLabel(Text(kind.rawValue))
                     .accessibilityAddTraits(.isButton)
