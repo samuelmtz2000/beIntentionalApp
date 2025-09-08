@@ -40,7 +40,11 @@ struct HabitsView: View {
                         badVM: badVM,
                         onRefresh: { await refreshAll() },
                         onToast: { text, color in
-                            withAnimation(.spring(response: 0.35, dampingFraction: 0.8)) { toast = ToastData(text: text, color: color) }
+                            // If a toast is already visible, do not stack another — keep only the top banner
+                            guard toast == nil else { return }
+                            withAnimation(.spring(response: 0.35, dampingFraction: 0.8)) {
+                                toast = ToastData(text: text, color: color)
+                            }
                             DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
                                 withAnimation(.easeInOut(duration: 0.25)) { toast = nil }
                             }
