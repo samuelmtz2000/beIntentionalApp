@@ -29,7 +29,7 @@ struct AreaLevel: Codable, Identifiable, Hashable {
 }
 
 struct ProfileArea: Codable, Hashable { let areaId: String; let name: String; let level: Int; let xp: Int; let xpPerLevel: Int }
-struct OwnedBadHabit: Codable, Hashable { let id: String; let name: String }
+struct OwnedBadHabit: Codable, Hashable { let id: String; let name: String; let count: Int }
 struct Profile: Codable { let life: Int; let coins: Int; let areas: [ProfileArea]; let ownedBadHabits: [OwnedBadHabit]? }
 
 struct CompleteHabitResponse: Codable { let areaLevel: AreaLevel; let user: UserCoins }

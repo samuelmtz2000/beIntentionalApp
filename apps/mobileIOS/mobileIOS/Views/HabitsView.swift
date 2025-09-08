@@ -1,72 +1,232 @@
 import SwiftUI
 
 struct HabitsView: View {
+    enum SectionKind: String, CaseIterable { case player = "Player", habits = "Habits", areas = "Areas", store = "Store" }
+
     @EnvironmentObject private var app: AppModel
-    @StateObject private var vm: HabitsViewModel
+    @StateObject private var profileVM: ProfileViewModel
+    @StateObject private var goodVM: HabitsViewModel
     @StateObject private var badVM: BadHabitsViewModel
+    @StateObject private var areasVM: AreasViewModel
+    @StateObject private var storeVM: StoreViewModel
+
     @State private var showingAddGood = false
     @State private var showingAddBad = false
+    @State private var showingAddArea = false
+    @State private var selected: SectionKind = .habits
 
     init() {
         let app = AppModel()
-        _vm = StateObject(wrappedValue: HabitsViewModel(api: app.api))
+        _profileVM = StateObject(wrappedValue: ProfileViewModel(api: app.api))
+        _goodVM = StateObject(wrappedValue: HabitsViewModel(api: app.api))
         _badVM = StateObject(wrappedValue: BadHabitsViewModel(api: app.api))
+        _areasVM = StateObject(wrappedValue: AreasViewModel(api: app.api))
+        _storeVM = StateObject(wrappedValue: StoreViewModel(api: app.api))
     }
 
     var body: some View {
         NavigationStack {
-            List {
-                Section("Good Habits") {
-                    ForEach(vm.habits) { habit in
-                        NavigationLink(destination: HabitDetailView(habit: habit) { updated in
-                            Task { await vm.update(habit: updated) }
-                        } onDelete: {
-                            Task { await vm.delete(id: habit.id) }
-                        }) {
-                            VStack(alignment: .leading) {
-                                Text(habit.name).font(.headline)
-                                Text("XP +\(habit.xpReward) • Coins +\(habit.coinReward)").font(.caption).foregroundStyle(.secondary)
-                            }
-                        }
-                        .contextMenu { Button(role: .destructive) { Task { await vm.delete(id: habit.id) } } label: { Label("Delete", systemImage: "trash") } }
-                        .swipeActions { Button(role: .destructive) { Task { await vm.delete(id: habit.id) } } label: { Label("Delete", systemImage: "trash") } }
-                    }
-                }
-                Section("Bad Habits") {
-                    ForEach(badVM.items) { item in
-                        NavigationLink(destination: BadHabitDetailView(item: item) { updated in
-                            Task { await badVM.update(item: updated) }
-                        } onDelete: {
-                            Task { await badVM.delete(id: item.id) }
-                        }) {
-                            VStack(alignment: .leading) {
-                                Text(item.name).font(.headline)
-                                Text(item.controllable ? "Controllable • Cost \(item.coinCost)" : "Penalty \(item.lifePenalty)").font(.caption).foregroundStyle(.secondary)
-                            }
-                        }
-                        .swipeActions { Button(role: .destructive) { Task { await badVM.delete(id: item.id) } } label: { Label("Delete", systemImage: "trash") } }
-                    }
-                }
+            ScrollView {
+                VStack(alignment: .leading, spacing: 16) {
+                    PlayerHeader(profile: profileVM.profile, onLogToday: { selected = .habits }, onOpenStore: { selected = .store })
+                    TileNav(selected: $selected)
+                    content
+                }.padding()
             }
             .navigationTitle("Habits")
-            .toolbar {
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    Menu {
-                        Button { showingAddGood = true } label: { Label("New Good Habit", systemImage: "plus") }
-                        Button { showingAddBad = true } label: { Label("New Bad Habit", systemImage: "bolt.slash") }
-                    } label: { Image(systemName: "plus") }
-                }
-                ToolbarItem(placement: .navigationBarTrailing) { Button { Task { await vm.refresh(); await badVM.refresh() } } label: { Image(systemName: "arrow.clockwise") } }
+            .toolbar { ToolbarItem(placement: .navigationBarTrailing) { Button { Task { await refreshAll() } } label: { Image(systemName: "arrow.clockwise") } } }
+            .task { await refreshAll() }
+            .refreshable { await refreshAll() }
+            .sheet(isPresented: $showingAddGood) { NewHabitSheet { areaId, name, xp, coins, cadence, active in Task { await goodVM.create(areaId: areaId, name: name, xpReward: xp, coinReward: coins, cadence: cadence, isActive: active); await refreshAll() } } }
+            .sheet(isPresented: $showingAddBad) { NewBadHabitSheet { areaId, name, penalty, controllable, cost, active in Task { await badVM.create(areaId: areaId.isEmpty ? nil : areaId, name: name, lifePenalty: penalty, controllable: controllable, coinCost: cost, isActive: active); await refreshAll() } } }
+            .sheet(isPresented: $showingAddArea) { NewAreaSheet { name, icon, xp, curve in Task { await areasVM.create(name: name, icon: icon, xpPerLevel: xp, levelCurve: curve); await refreshAll() } } }
+        }
+    }
+
+    private var content: some View {
+        Group {
+            switch selected {
+            case .player: PlayerPanel(profile: profileVM.profile)
+            case .habits: CombinedHabitsPanel(goodVM: goodVM, badVM: badVM, onAddGood: { showingAddGood = true }, onAddBad: { showingAddBad = true })
+            case .areas: AreasPanel(vm: areasVM, onAdd: { showingAddArea = true })
+            case .store: StorePanel(vm: storeVM)
             }
-            .sheet(isPresented: $showingAddGood) { NewHabitSheet { areaId, name, xp, coins, cadence, active in
-                Task { await vm.create(areaId: areaId, name: name, xpReward: xp, coinReward: coins, cadence: cadence, isActive: active) }
-            } }
-            .sheet(isPresented: $showingAddBad) { NewBadHabitSheet { areaId, name, penalty, controllable, cost, active in
-                Task { await badVM.create(areaId: areaId.isEmpty ? nil : areaId, name: name, lifePenalty: penalty, controllable: controllable, coinCost: cost, isActive: active) }
-            } }
-            .task { await vm.refresh(); await badVM.refresh() }
-            .alert(item: $vm.apiError) { err in Alert(title: Text("Error"), message: Text(err.message), dismissButton: .default(Text("OK"))) }
-            .alert(item: $badVM.apiError) { err in Alert(title: Text("Error"), message: Text(err.message), dismissButton: .default(Text("OK"))) }
+        }
+    }
+
+    private func refreshAll() async {
+        await profileVM.refresh()
+        await goodVM.refresh()
+        await badVM.refresh()
+        await areasVM.refresh()
+        await storeVM.refresh()
+    }
+}
+
+private struct PlayerHeader: View {
+    let profile: Profile?
+    var onLogToday: () -> Void
+    var onOpenStore: () -> Void
+    var body: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            HStack(spacing: 16) {
+                if let p = profile {
+                    let totalLevel = p.areas.reduce(0) { $0 + $1.level }
+                    VStack(alignment: .leading) {
+                        HStack { Text("Lvl \(totalLevel)").bold().padding(6).background(Capsule().fill(Color.blue.opacity(0.15))) }
+                        if let best = p.areas.max(by: { ($0.xp*100)/max($0.xpPerLevel,1) < ($1.xp*100)/max($1.xpPerLevel,1) }) {
+                            ProgressView(value: Double(best.xp), total: Double(max(best.xpPerLevel,1))) { Text("XP to next (\(best.name))").font(.caption) }
+                        }
+                    }
+                    Spacer()
+                    VStack(alignment: .trailing) {
+                        Label("\(p.coins)", systemImage: "creditcard").labelStyle(.titleAndIcon)
+                        Label("Streak N/A", systemImage: "flame")
+                            .foregroundStyle(.orange)
+                    }
+                } else {
+                    Text("Loading...")
+                }
+            }
+            HStack(spacing: 12) {
+                Button("Log today", action: onLogToday).buttonStyle(.borderedProminent)
+                Button("Open Store", action: onOpenStore).buttonStyle(.bordered)
+            }
+        }
+        .accessibilityElement(children: .contain)
+    }
+}
+
+private struct TileNav: View {
+    @Binding var selected: HabitsView.SectionKind
+    var body: some View {
+        ScrollView(.horizontal, showsIndicators: false) {
+            HStack(spacing: 12) {
+                ForEach(HabitsView.SectionKind.allCases, id: \.self) { kind in
+                    Button(action: { selected = kind }) {
+                        VStack(alignment: .leading) {
+                            Text(kind.rawValue).font(.headline).foregroundStyle(selected == kind ? .white : .primary)
+                        }
+                        .frame(width: 140, height: 64, alignment: .leading)
+                        .padding()
+                        .background(RoundedRectangle(cornerRadius: 12).fill(selected == kind ? Color.blue : Color.gray.opacity(0.15)))
+                    }
+                    .accessibilityLabel(Text(kind.rawValue))
+                    .accessibilityAddTraits(.isButton)
+                }
+            }
+        }
+    }
+}
+
+private struct PlayerPanel: View {
+    let profile: Profile?
+    var body: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            if let p = profile {
+                Text("Overall").font(.headline)
+                HStack { Label("Life", systemImage: "heart.fill"); Spacer(); Text("\(p.life)") }
+                HStack { Label("Coins", systemImage: "creditcard"); Spacer(); Text("\(p.coins)") }
+                Divider()
+                Text("Per Area").font(.headline)
+                ForEach(p.areas, id: \.areaId) { a in
+                    VStack(alignment: .leading) {
+                        HStack { Text(a.name).bold(); Spacer(); Text("Lvl \(a.level)") }
+                        ProgressView(value: Double(a.xp), total: Double(max(a.xpPerLevel,1)))
+                    }
+                }
+            } else {
+                Text("Loading stats...")
+            }
+        }
+    }
+}
+
+private struct CombinedHabitsPanel: View {
+    @ObservedObject var goodVM: HabitsViewModel
+    @ObservedObject var badVM: BadHabitsViewModel
+    var onAddGood: () -> Void
+    var onAddBad: () -> Void
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            HStack {
+                Text("Habits").font(.headline)
+                Spacer()
+                Menu {
+                    Button("New Good Habit", action: onAddGood)
+                    Button("New Bad Habit", action: onAddBad)
+                } label: {
+                    Image(systemName: "plus")
+                }
+            }
+            Group {
+                Text("Good").bold()
+                ForEach(goodVM.habits) { habit in
+                    VStack(alignment: .leading) {
+                        HStack { Text(habit.name).font(.headline); Spacer(); Text("XP +\(habit.xpReward) • Coins +\(habit.coinReward)").font(.caption).foregroundStyle(.secondary) }
+                        HStack {
+                            Button("Edit") { /* open via sheet */ }.disabled(true)
+                            Button("Delete", role: .destructive) { Task { await goodVM.delete(id: habit.id) } }
+                        }.buttonStyle(.bordered)
+                    }
+                }
+                Divider().padding(.vertical, 4)
+                Text("Bad").bold()
+                ForEach(badVM.items) { item in
+                    VStack(alignment: .leading) {
+                        HStack { Text(item.name).font(.headline); Spacer(); Text("Penalty \(item.lifePenalty)").font(.caption).foregroundStyle(.secondary) }
+                        HStack {
+                            Button("Edit") { /* open via sheet */ }.disabled(true)
+                            Button("Delete", role: .destructive) { Task { await badVM.delete(id: item.id) } }
+                        }.buttonStyle(.bordered)
+                    }
+                }
+            }
+        }
+    }
+}
+
+private struct AreasPanel: View {
+    @ObservedObject var vm: AreasViewModel
+    var onAdd: () -> Void
+    var body: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            HStack { Text("Areas").font(.headline); Spacer(); Button("New Area", action: onAdd) }
+            ForEach(vm.areas) { area in
+                VStack(alignment: .leading, spacing: 6) {
+                    HStack { Text(area.icon ?? "🗂️"); Text(area.name); Spacer(); Text("XP/Level: \(area.xpPerLevel)").font(.caption).foregroundStyle(.secondary) }
+                    HStack { Button("Edit"){}.disabled(true); Button("Delete", role: .destructive) { Task { await vm.delete(id: area.id) } } }
+                        .buttonStyle(.bordered)
+                }
+            }
+        }
+    }
+}
+
+private struct StorePanel: View {
+    @ObservedObject var vm: StoreViewModel
+    var body: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text("Store").font(.headline)
+            HStack { Label("Coins", systemImage: "creditcard"); Spacer(); Text("\(vm.coins)") }
+            Divider()
+            Text("Bad Habits Store").bold()
+            ForEach(vm.controlledBadHabits) { b in
+                HStack {
+                    VStack(alignment: .leading) {
+                        Text(b.name).font(.headline)
+                        Text("Penalty \(b.lifePenalty) • Cost \(b.coinCost)🪙").font(.caption).foregroundStyle(.secondary)
+                    }
+                    Spacer()
+                    let owned = vm.ownedBadHabits.first(where: { $0.id == b.id })?.count ?? 0
+                    if owned > 0 { Text("Owned: \(owned)").font(.caption) }
+                    Button("Buy") { Task { await vm.buy(cosmeticId: b.id) } }.buttonStyle(.borderedProminent)
+                }
+            }
+            Divider()
+            Text("Owned (Credits)").bold()
+            ForEach(vm.ownedBadHabits, id: \.id) { obh in HStack { Text(obh.name); Spacer(); Text("x\(obh.count)").font(.caption) } }
         }
     }
 }

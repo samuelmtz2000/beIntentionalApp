@@ -3,8 +3,8 @@
   "version": "1.0.0",
   "private": true,
   "description": "Habit Hero API documentation (Docusaurus)",
-  "type": "module",
   "scripts": {
+    "prestart": "docusaurus clear",
     "start": "docusaurus start",
     "build": "docusaurus build",
     "serve": "docusaurus serve",
@@ -14,6 +14,7 @@
   "dependencies": {
     "@docusaurus/core": "^3.4.0",
     "@docusaurus/preset-classic": "^3.4.0",
+    "@docusaurus/theme-mermaid": "^3.8.1",
     "clsx": "^2.1.1",
     "react": "^18.2.0",
     "react-dom": "^18.2.0"
@@ -22,4 +23,3 @@
     "typescript": "^5.9.2"
   }
 }
-

@@ -18,3 +18,98 @@ Ownership/credits
 - Each `UserOwnedBadHabit` row is one credit for a specific bad habit.
 - Multiple rows for the same `(userId, badHabitId)` are allowed (inventory).
 
+## ER Diagram
+
+```mermaid
+erDiagram
+  USER {
+    string id PK
+    string name
+    int life
+    int coins
+    json avatar
+  }
+
+  AREA {
+    string id PK
+    string userId FK
+    string name
+    string icon
+    int xpPerLevel
+    string levelCurve
+  }
+
+  GOODHABIT {
+    string id PK
+    string areaId FK
+    string name
+    int xpReward
+    int coinReward
+    string cadence
+    boolean isActive
+  }
+
+  BADHABIT {
+    string id PK
+    string areaId FK
+    string name
+    int lifePenalty
+    boolean controllable
+    int coinCost
+    boolean isActive
+  }
+
+  AREALEVEL {
+    string id PK
+    string userId FK
+    string areaId FK
+    int level
+    int xp
+  }
+
+  HABITLOG {
+    string id PK
+    string userId FK
+    string habitId FK
+    date timestamp
+  }
+
+  BADHABITLOG {
+    string id PK
+    string userId FK
+    string badHabitId FK
+    date timestamp
+    boolean avoidedPenalty
+  }
+
+  TRANSACTION {
+    string id PK
+    string userId FK
+    int amount
+    string type
+    json meta
+    date timestamp
+  }
+
+  USEROWNEDBADHABIT {
+    string id PK
+    string userId FK
+    string badHabitId FK
+    date purchasedAt
+  }
+
+  USER ||--o{ AREA : has
+  USER ||--o{ AREALEVEL : tracks
+  AREA ||--o{ AREALEVEL : progress
+  AREA ||--o{ GOODHABIT : has
+  AREA ||--o{ BADHABIT : has
+  USER ||--o{ HABITLOG : writes
+  GOODHABIT ||--o{ HABITLOG : logged
+  USER ||--o{ BADHABITLOG : writes
+  BADHABIT ||--o{ BADHABITLOG : logged
+  USER ||--o{ TRANSACTION : has
+  USER ||--o{ USEROWNEDBADHABIT : owns
+  BADHABIT ||--o{ USEROWNEDBADHABIT : credited
+```
+
+Note: If the diagram does not render, enable Mermaid in Docusaurus by adding `markdown: { mermaid: true }` and the `"@docusaurus/theme-mermaid"` theme in `docusaurus.config.ts`.
