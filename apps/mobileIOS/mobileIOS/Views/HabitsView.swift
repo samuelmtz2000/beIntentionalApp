@@ -42,6 +42,13 @@ struct HabitsView: View {
                         onAddGood: { showingAddGood = true },
                         onAddBad: { showingAddBad = true }
                     )
+                } else if selected == .areas {
+                    VStack(alignment: .leading, spacing: 16) {
+                        PlayerHeader(profile: profileVM.profile, onLogToday: { selected = .habits }, onOpenStore: { selected = .store })
+                        TileNav(selected: $selected, onConfig: { showingConfig = true })
+                    }
+                    .padding(.horizontal)
+                    AreasPanel(vm: areasVM, onAdd: { showingAddArea = true })
                 } else {
                     ScrollView {
                         VStack(alignment: .leading, spacing: 16) {
@@ -400,16 +407,48 @@ private struct ConfirmWrapper: Identifiable, Equatable {
 private struct AreasPanel: View {
     @ObservedObject var vm: AreasViewModel
     var onAdd: () -> Void
+    @State private var editingArea: Area? = nil
+    @State private var confirmDelete: (id: String, name: String)? = nil
     var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            HStack { Text("Areas").font(.headline); Spacer(); Button("New Area", action: onAdd) }
-            ForEach(vm.areas) { area in
-                VStack(alignment: .leading, spacing: 6) {
-                    HStack { Text(area.icon ?? "🗂️"); Text(area.name); Spacer(); Text("XP/Level: \(area.xpPerLevel)").font(.caption).foregroundStyle(.secondary) }
-                    HStack { Button("Edit"){}.disabled(true); Button("Delete", role: .destructive) { Task { await vm.delete(id: area.id) } } }
-                        .buttonStyle(.bordered)
+        List {
+            Section {
+                ForEach(vm.areas) { area in
+                    VStack(alignment: .leading, spacing: 6) {
+                        HStack {
+                            Text(area.icon ?? "🗂️")
+                            Text(area.name)
+                            Spacer()
+                            Text("XP/Level: \(area.xpPerLevel)")
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                        }
+                    }
+                    .contentShape(Rectangle())
+                    .swipeActions(edge: .trailing, allowsFullSwipe: true) {
+                        Button { editingArea = area } label: { Label("Edit", systemImage: "pencil") }.tint(.blue)
+                        Button(role: .destructive) { confirmDelete = (area.id, area.name) } label: { Label("Delete", systemImage: "trash") }
+                    }
+                }
+            } header: {
+                HStack {
+                    Text("Areas").font(.headline)
+                    Spacer()
+                    Button { onAdd() } label: {
+                        Image(systemName: "plus.circle.fill").foregroundStyle(.blue)
+                    }
+                    .accessibilityLabel(Text("New Area"))
                 }
             }
+        }
+        .alert(item: Binding(get: {
+            confirmDelete.map { ConfirmWrapper(id: $0.id, name: $0.name) }
+        }, set: { newVal in if newVal == nil { confirmDelete = nil } })) { wrap in
+            Alert(title: Text("Delete \(wrap.name)?"), message: Text("Are you sure you want to delete \(wrap.name)?"), primaryButton: .destructive(Text("Delete")) {
+                Task { await vm.delete(id: wrap.id) }
+            }, secondaryButton: .cancel())
+        }
+        .sheet(item: $editingArea) { area in
+            AreaEditSheet(area: area, onSave: { updated in Task { await vm.update(area: updated) } }, onDelete: { Task { await vm.delete(id: area.id) } })
         }
     }
 }

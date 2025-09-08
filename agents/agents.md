@@ -54,6 +54,7 @@ EXECUTION MECHANICS
 DOCUMENTATION FIRST POLICY
 - Consult repo docs BEFORE coding.
 - If docs are missing/outdated, propose doc updates and add them as part of the change (include examples, run commands, and troubleshooting).
+ - Break down features into small, incremental changes and PRs. Prefer adding new, focused files (small sheets/components/services) and minimal edits to large, complex views to keep compile times fast and diffs reviewable.
  - When API or UI behavior changes, update the docs site under `apps/docs` (Docusaurus) in addition to in-repo READMEs:
    - API: add/update pages under `apps/docs/docs/api/*` (endpoints, overview, store).
    - Frontend: reflect UI/UX in `apps/docs/docs/frontend/*` (screens, networking, configuration).
