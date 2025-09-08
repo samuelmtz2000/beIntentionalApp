@@ -16,16 +16,30 @@ router.post("/habits/:id/complete", async (req, res) => {
   }
 
   // compute next area level/xp
-  const nextArea = applyHabitCompletion(areaLevel.xp, areaLevel.level, habit.xpReward, habit.area.xpPerLevel, habit.area.levelCurve as any);
+  const nextArea = applyHabitCompletion(
+    areaLevel.xp,
+    areaLevel.level,
+    habit.xpReward,
+    habit.area.xpPerLevel,
+    habit.area.levelCurve as any
+  );
 
-  // fetch user to compute global leveling
+  // fetch user to compute global leveling or skip if logs-mode
   const user = await prisma.user.findUnique({ where: { id: DEFAULT_USER_ID } });
   if (!user) return res.status(404).json({ message: "User not found" });
-  const nextUser = applyHabitCompletion(user.xp, user.level, habit.xpReward, user.xpPerLevel, user.levelCurve as any);
+  const logsMode = (user.xpComputationMode as any) === "logs";
+  const nextUser = logsMode
+    ? { level: user.level, xp: user.xp } // do not update stored xp/level when computing from logs
+    : applyHabitCompletion(user.xp, user.level, habit.xpReward, user.xpPerLevel, user.levelCurve as any);
 
   const [updatedLevel, updatedUser, _log, _tx] = await prisma.$transaction([
     prisma.areaLevel.update({ where: { id: areaLevel.id }, data: { level: nextArea.level, xp: nextArea.xp } }),
-    prisma.user.update({ where: { id: DEFAULT_USER_ID }, data: { coins: { increment: habit.coinReward }, level: nextUser.level, xp: nextUser.xp } }),
+    prisma.user.update({
+      where: { id: DEFAULT_USER_ID },
+      data: logsMode
+        ? { coins: { increment: habit.coinReward } }
+        : { coins: { increment: habit.coinReward }, level: nextUser.level, xp: nextUser.xp },
+    }),
     prisma.habitLog.create({ data: { userId: DEFAULT_USER_ID, habitId: habit.id } }),
     prisma.transaction.create({ data: { userId: DEFAULT_USER_ID, amount: habit.coinReward, type: "earn", meta: { source: "habit", habitId: habit.id } } }),
   ]);

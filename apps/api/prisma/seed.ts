@@ -16,6 +16,8 @@ async function main() {
       xp: 0,
       xpPerLevel: 100,
       levelCurve: "linear",
+      levelMultiplier: 1.5,
+      xpComputationMode: "logs",
     },
   });
 

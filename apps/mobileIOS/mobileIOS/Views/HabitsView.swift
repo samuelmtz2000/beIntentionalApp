@@ -34,7 +34,6 @@ struct HabitsView: View {
                 }.padding()
             }
             .navigationTitle("Habits")
-            .toolbar { ToolbarItem(placement: .navigationBarTrailing) { Button { Task { await refreshAll() } } label: { Image(systemName: "arrow.clockwise") } } }
             .task { await refreshAll() }
             .refreshable { await refreshAll() }
             .sheet(isPresented: $showingAddGood) { NewHabitSheet { areaId, name, xp, coins, cadence, active in Task { await goodVM.create(areaId: areaId, name: name, xpReward: xp, coinReward: coins, cadence: cadence, isActive: active); await refreshAll() } } }

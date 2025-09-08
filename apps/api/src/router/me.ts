@@ -1,5 +1,6 @@
 import { Router } from "express";
 import prisma from "../lib/prisma";
+import { computeLevelFromTotalXP } from "../lib/leveling";
 
 const DEFAULT_USER_ID = "seed-user-1";
 const router = Router();
@@ -32,12 +33,31 @@ router.get("/", async (_req, res) => {
     else counts.set(key, { id: u.badHabit.id, name: u.badHabit.name, count: 1 });
   }
 
+  // Compute global level/xp from logs if configured
+  let gLevel = user.level;
+  let gXP = user.xp;
+  if (user.xpComputationMode === "logs") {
+    const logs = await prisma.habitLog.findMany({
+      where: { userId: DEFAULT_USER_ID },
+      include: { habit: { select: { xpReward: true } } },
+    });
+    const total = logs.reduce((sum, l) => sum + (l.habit?.xpReward || 0), 0);
+    const resLv = computeLevelFromTotalXP(total, user.xpPerLevel, user.levelCurve as any, user.levelMultiplier);
+    gLevel = resLv.level;
+    gXP = resLv.xp;
+  }
+
   res.json({
     life: user.life,
     coins: user.coins,
-    level: user.level,
-    xp: user.xp,
+    level: gLevel,
+    xp: gXP,
     xpPerLevel: user.xpPerLevel,
+    config: {
+      levelCurve: user.levelCurve,
+      levelMultiplier: user.levelMultiplier,
+      xpComputationMode: user.xpComputationMode,
+    },
     areas: areasView,
     ownedBadHabits: Array.from(counts.values()),
   });
