@@ -56,8 +56,22 @@ struct HabitsView: View {
             .navigationTitle("Habits")
             .task { await refreshAll() }
             .refreshable { await refreshAll() }
-            .sheet(isPresented: $showingAddGood) { NewHabitSheet { areaId, name, xp, coins, cadence, active in Task { await goodVM.create(areaId: areaId, name: name, xpReward: xp, coinReward: coins, cadence: cadence, isActive: active); await refreshAll() } } }
-            .sheet(isPresented: $showingAddBad) { NewBadHabitSheet { areaId, name, penalty, controllable, cost, active in Task { await badVM.create(areaId: areaId.isEmpty ? nil : areaId, name: name, lifePenalty: penalty, controllable: controllable, coinCost: cost, isActive: active); await refreshAll() } } }
+            .sheet(isPresented: $showingAddGood) {
+                NewHabitSheet(areas: areasVM.areas) { areaId, name, xp, coins, cadence, active in
+                    Task {
+                        await goodVM.create(areaId: areaId, name: name, xpReward: xp, coinReward: coins, cadence: cadence, isActive: active)
+                        await refreshAll()
+                    }
+                }
+            }
+            .sheet(isPresented: $showingAddBad) {
+                NewBadHabitSheet(areas: areasVM.areas) { areaId, name, penalty, controllable, cost, active in
+                    Task {
+                        await badVM.create(areaId: areaId.isEmpty ? nil : areaId, name: name, lifePenalty: penalty, controllable: controllable, coinCost: cost, isActive: active)
+                        await refreshAll()
+                    }
+                }
+            }
             .sheet(isPresented: $showingAddArea) { NewAreaSheet { name, icon, xp, curve in Task { await areasVM.create(name: name, icon: icon, xpPerLevel: xp, levelCurve: curve); await refreshAll() } } }
             .sheet(isPresented: $showingConfig) { UserConfigSheet(onSaved: { Task { await profileVM.refresh() } }) }
         }
@@ -288,7 +302,7 @@ private struct CombinedHabitsListPanel: View {
 
     var body: some View {
         List {
-            Section("Good") {
+            Section {
                 ForEach(goodVM.habits) { habit in
                     VStack(alignment: .leading, spacing: 6) {
                         HStack { Text(habit.name).font(.headline); Spacer(); Text("XP +\(habit.xpReward) • Coins +\(habit.coinReward)").font(.caption).foregroundStyle(.secondary) }
@@ -310,8 +324,15 @@ private struct CombinedHabitsListPanel: View {
                         Button(role: .destructive) { confirmDelete = (habit.id, habit.name) } label: { Label("Delete", systemImage: "trash") }
                     }
                 }
+            } header: {
+                HStack {
+                    Text("Good").bold()
+                    Spacer()
+                    Button { onAddGood() } label: { Image(systemName: "plus.circle.fill").foregroundStyle(.blue) }
+                        .accessibilityLabel(Text("New Good Habit"))
+                }
             }
-            Section("Bad") {
+            Section {
                 ForEach(badVM.items) { item in
                     VStack(alignment: .leading, spacing: 6) {
                         HStack { Text(item.name).font(.headline); Spacer(); Text("Penalty \(item.lifePenalty)").font(.caption).foregroundStyle(.secondary) }
@@ -332,6 +353,13 @@ private struct CombinedHabitsListPanel: View {
                         Button { editingBad = item } label: { Label("Edit", systemImage: "pencil") }.tint(.blue)
                         Button(role: .destructive) { confirmDelete = (item.id, item.name) } label: { Label("Delete", systemImage: "trash") }
                     }
+                }
+            } header: {
+                HStack {
+                    Text("Bad").bold()
+                    Spacer()
+                    Button { onAddBad() } label: { Image(systemName: "plus.circle.fill").foregroundStyle(.red) }
+                        .accessibilityLabel(Text("New Bad Habit"))
                 }
             }
         }
@@ -415,7 +443,8 @@ private struct StorePanel: View {
 
 struct NewHabitSheet: View {
     @Environment(\.dismiss) private var dismiss
-    @State private var areaId: String = "area-health"
+    let areas: [Area]
+    @State private var selectedAreaId: String = ""
     @State private var name: String = ""
     @State private var xp: Int = 10
     @State private var coins: Int = 5
@@ -428,8 +457,12 @@ struct NewHabitSheet: View {
         NavigationStack {
             Form {
                 Section("Details") {
+                    Picker("Area", selection: $selectedAreaId) {
+                        ForEach(areas, id: \.id) { a in
+                            Text(a.name).tag(a.id)
+                        }
+                    }
                     TextField("Name", text: $name)
-                    TextField("Area ID", text: $areaId)
                     TextField("Cadence", text: $cadence)
                     Toggle("Active", isOn: $active)
                 }
@@ -441,10 +474,13 @@ struct NewHabitSheet: View {
             .navigationTitle("New Habit")
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) { Button("Cancel") { dismiss() } }
-                ToolbarItem(placement: .confirmationAction) { Button("Create") { onCreate(areaId, name, xp, coins, cadence.isEmpty ? nil : cadence, active); dismiss() }.disabled(name.isEmpty) }
+                ToolbarItem(placement: .confirmationAction) { Button("Create") { onCreate(selectedAreaId, name, xp, coins, cadence.isEmpty ? nil : cadence, active); dismiss() }.disabled(name.isEmpty || selectedAreaId.isEmpty) }
             }
         }
         .presentationDetents([.medium, .large])
+        .onAppear {
+            if selectedAreaId.isEmpty, let first = areas.first { selectedAreaId = first.id }
+        }
     }
 }
 
@@ -488,7 +524,8 @@ struct HabitDetailView: View {
 
 struct NewBadHabitSheet: View {
     @Environment(\.dismiss) private var dismiss
-    @State private var areaId: String = ""
+    let areas: [Area]
+    @State private var selectedAreaId: String = "" // empty is Global
     @State private var name: String = ""
     @State private var lifePenalty: Int = 5
     @State private var controllable: Bool = false
@@ -501,8 +538,13 @@ struct NewBadHabitSheet: View {
         NavigationStack {
             Form {
                 Section("Details") {
+                    Picker("Area", selection: $selectedAreaId) {
+                        Text("None (Global)").tag("")
+                        ForEach(areas, id: \.id) { a in
+                            Text(a.name).tag(a.id)
+                        }
+                    }
                     TextField("Name", text: $name)
-                    TextField("Area ID (optional)", text: $areaId)
                     Toggle("Controllable", isOn: $controllable)
                     Toggle("Active", isOn: $active)
                 }
@@ -514,7 +556,7 @@ struct NewBadHabitSheet: View {
             .navigationTitle("New Bad Habit")
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) { Button("Cancel") { dismiss() } }
-                ToolbarItem(placement: .confirmationAction) { Button("Create") { onCreate(areaId, name, lifePenalty, controllable, coinCost, active); dismiss() }.disabled(name.isEmpty) }
+                ToolbarItem(placement: .confirmationAction) { Button("Create") { onCreate(selectedAreaId, name, lifePenalty, controllable, coinCost, active); dismiss() }.disabled(name.isEmpty) }
             }
         }
         .presentationDetents([.medium, .large])
