@@ -171,6 +171,9 @@ private struct CombinedHabitsPanel: View {
     @ObservedObject var badVM: BadHabitsViewModel
     var onAddGood: () -> Void
     var onAddBad: () -> Void
+    @State private var editingGood: GoodHabit? = nil
+    @State private var editingBad: BadHabit? = nil
+    @State private var confirmDelete: (id: String, name: String)? = nil
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
@@ -187,28 +190,63 @@ private struct CombinedHabitsPanel: View {
             Group {
                 Text("Good").bold()
                 ForEach(goodVM.habits) { habit in
-                    VStack(alignment: .leading) {
+                    VStack(alignment: .leading, spacing: 6) {
                         HStack { Text(habit.name).font(.headline); Spacer(); Text("XP +\(habit.xpReward) • Coins +\(habit.coinReward)").font(.caption).foregroundStyle(.secondary) }
-                        HStack {
-                            Button("Edit") { /* open via sheet */ }.disabled(true)
-                            Button("Delete", role: .destructive) { Task { await goodVM.delete(id: habit.id) } }
-                        }.buttonStyle(.bordered)
+                        Button("Record") { Task { _ = await goodVM.complete(id: habit.id) } }
+                            .buttonStyle(.borderedProminent)
+                    }
+                    .contentShape(Rectangle())
+                    .swipeActions(edge: .leading, allowsFullSwipe: true) {
+                        Button { editingGood = habit } label: { Label("Edit", systemImage: "pencil") }
+                            .tint(.blue)
+                    }
+                    .swipeActions(edge: .trailing, allowsFullSwipe: true) {
+                        Button(role: .destructive) { confirmDelete = (habit.id, habit.name) } label: { Label("Delete", systemImage: "trash") }
                     }
                 }
                 Divider().padding(.vertical, 4)
                 Text("Bad").bold()
                 ForEach(badVM.items) { item in
-                    VStack(alignment: .leading) {
+                    VStack(alignment: .leading, spacing: 6) {
                         HStack { Text(item.name).font(.headline); Spacer(); Text("Penalty \(item.lifePenalty)").font(.caption).foregroundStyle(.secondary) }
-                        HStack {
-                            Button("Edit") { /* open via sheet */ }.disabled(true)
-                            Button("Delete", role: .destructive) { Task { await badVM.delete(id: item.id) } }
-                        }.buttonStyle(.bordered)
+                        Button("Record Slip") { Task { await badVM.record(id: item.id) } }
+                            .buttonStyle(.bordered)
+                            .tint(.red)
+                    }
+                    .contentShape(Rectangle())
+                    .swipeActions(edge: .leading, allowsFullSwipe: true) {
+                        Button { editingBad = item } label: { Label("Edit", systemImage: "pencil") }.tint(.blue)
+                    }
+                    .swipeActions(edge: .trailing, allowsFullSwipe: true) {
+                        Button(role: .destructive) { confirmDelete = (item.id, item.name) } label: { Label("Delete", systemImage: "trash") }
                     }
                 }
             }
+            .alert(item: Binding(get: {
+                confirmDelete.map { ConfirmWrapper(id: $0.id, name: $0.name) }
+            }, set: { newVal in
+                if newVal == nil { confirmDelete = nil }
+            })) { wrap in
+                Alert(title: Text("Delete \(wrap.name)?"), message: Text("Are you sure you want to delete \(wrap.name)?"), primaryButton: .destructive(Text("Delete")) {
+                    Task {
+                        if goodVM.habits.contains(where: { $0.id == wrap.id }) { await goodVM.delete(id: wrap.id) }
+                        else if badVM.items.contains(where: { $0.id == wrap.id }) { await badVM.delete(id: wrap.id) }
+                    }
+                }, secondaryButton: .cancel())
+            }
+            .sheet(item: $editingGood) { h in
+                HabitDetailView(habit: h, onSave: { updated in Task { await goodVM.update(habit: updated) } }, onDelete: { Task { await goodVM.delete(id: h.id) } })
+            }
+            .sheet(item: $editingBad) { b in
+                BadHabitDetailView(item: b, onSave: { updated in Task { await badVM.update(item: updated) } }, onDelete: { Task { await badVM.delete(id: b.id) } })
+            }
         }
     }
+}
+
+private struct ConfirmWrapper: Identifiable, Equatable {
+    var id: String
+    var name: String
 }
 
 private struct AreasPanel: View {
