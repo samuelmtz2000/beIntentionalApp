@@ -13,6 +13,7 @@ struct HabitsView: View {
     @State private var showingAddGood = false
     @State private var showingAddBad = false
     @State private var showingAddArea = false
+    @State private var showingConfig = false
     @State private var selected: SectionKind = .habits
 
     init() {
@@ -34,12 +35,17 @@ struct HabitsView: View {
                 }.padding()
             }
             .navigationTitle("Habits")
-            .toolbar { ToolbarItem(placement: .navigationBarTrailing) { Button { Task { await refreshAll() } } label: { Image(systemName: "arrow.clockwise") } } }
+            .toolbar {
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button { showingConfig = true } label: { Image(systemName: "gearshape") }
+                }
+            }
             .task { await refreshAll() }
             .refreshable { await refreshAll() }
             .sheet(isPresented: $showingAddGood) { NewHabitSheet { areaId, name, xp, coins, cadence, active in Task { await goodVM.create(areaId: areaId, name: name, xpReward: xp, coinReward: coins, cadence: cadence, isActive: active); await refreshAll() } } }
             .sheet(isPresented: $showingAddBad) { NewBadHabitSheet { areaId, name, penalty, controllable, cost, active in Task { await badVM.create(areaId: areaId.isEmpty ? nil : areaId, name: name, lifePenalty: penalty, controllable: controllable, coinCost: cost, isActive: active); await refreshAll() } } }
             .sheet(isPresented: $showingAddArea) { NewAreaSheet { name, icon, xp, curve in Task { await areasVM.create(name: name, icon: icon, xpPerLevel: xp, levelCurve: curve); await refreshAll() } } }
+            .sheet(isPresented: $showingConfig) { UserConfigSheet(onSaved: { Task { await profileVM.refresh() } }) }
         }
     }
 
@@ -73,8 +79,15 @@ private struct PlayerHeader: View {
                 if let p = profile {
                     VStack(alignment: .leading) {
                         HStack { Text("Lvl \(p.level)").bold().padding(6).background(Capsule().fill(Color.blue.opacity(0.15))) }
-                        ProgressView(value: Double(p.xp), total: Double(max(p.xpPerLevel,1))) {
-                            Text("XP to next").font(.caption)
+                        let need = xpNeeded(level: p.level, base: p.xpPerLevel, curve: p.config?.levelCurve ?? "linear", multiplier: p.config?.levelMultiplier ?? 1.5)
+                        ProgressView(value: Double(p.xp), total: Double(max(need,1))) {
+                            HStack(spacing: 6) {
+                                Text("XP to next")
+                                Image(systemName: "arrow.right")
+                                Text("\(p.xp) from \(need)")
+                            }
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
                         }
                     }
                     Spacer()
@@ -93,6 +106,16 @@ private struct PlayerHeader: View {
             }
         }
         .accessibilityElement(children: .contain)
+    }
+}
+
+private func xpNeeded(level: Int, base: Int, curve: String, multiplier: Double) -> Int {
+    if curve == "exp" {
+        let m = max(1.0, multiplier)
+        let powv = pow(m, Double(max(0, level - 1)))
+        return max(1, Int(floor(Double(base) * powv)))
+    } else {
+        return max(1, base)
     }
 }
 

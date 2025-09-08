@@ -12,7 +12,9 @@ Native iOS client for Habit Hero, built with Swift 5.9+, SwiftUI, MVVM, async/aw
 
 - Tabs: Today, Habits, Stats, Settings
 - Habits CRUD, quick completion (awards XP/coins)
-- Profile: life, coins, and per‑area progress
+- Global profile stats: life, coins, and global Level/XP derived from your activity
+- Clear progress: Habits header shows “XP to next → {current} from {required}” with correct per‑level requirement (linear or exponential)
+- User Config sheet (gear icon in Habits): edit XP per Level, Level curve (linear/exp), exponential multiplier, and XP computation mode (logs vs stored)
 - Settings: editable API base URL
 
 ## Getting Started
@@ -45,6 +47,7 @@ Common modules:
 
 The app targets the backend routes documented in the API docs and OpenAPI (Swagger):
 - Profile: `GET /me`
+- User config: `GET /users/:id/config`, `PUT /users/:id/config`
 - Habits list: `GET /habits`
 - Complete habit: `POST /actions/habits/:id/complete`
 - Bad habits list: `GET /bad-habits`
@@ -63,3 +66,4 @@ Ensure the backend is running and seeded so the app has demo data.
 - White screen or empty data: verify the API is running and reachable from the simulator/device.
 - 404/validation errors: confirm routes match the current backend version and input payloads.
 - CORS not applicable for native iOS networking; connection issues are usually base URL or network reachability.
+- Changing curve/multiplier while in “logs” mode recalculates past XP; if you want stable counters, switch to “stored” mode in the User Config sheet.

@@ -34,8 +34,8 @@ Express + TypeScript + Prisma (SQLite). Strict ESM, Zod‑validated routes. Ship
 
 ## Data Model (Prisma)
 
-- User(id, name?, life=100, coins=0, avatar Json?)
-- Area(id, userId, name, icon?, xpPerLevel=100, levelCurve="linear")
+- User(id, name?, life=100, coins=0, avatar Json?, level=1, xp=0, xpPerLevel=100, levelCurve="linear", levelMultiplier=1.5, xpComputationMode="logs")
+- Area(id, userId, name, icon?, xpPerLevel=100, levelCurve="linear", levelMultiplier=1.5)
 - GoodHabit(id, areaId, name, xpReward=10, coinReward=5, cadence?, isActive=true)
 - BadHabit(id, areaId?, name, lifePenalty=5, controllable=false, coinCost=0, isActive=true)
 - AreaLevel(id, userId, areaId, level=1, xp=0) with unique (userId, areaId)
@@ -54,7 +54,19 @@ All bodies are JSON. Validation errors: HTTP 400 with Zod error details. Missing
   - GET → `{ ok: true }`
 
 - Profile `/me`
-  - GET → `{ life, coins, areas: [{ areaId, name, level, xp, xpPerLevel }], ownedBadHabits: [{ id, name, count }] }`
+  - GET → returns global user stats and per‑area progress. Example:
+  ```json
+  {
+    "life": 100,
+    "coins": 12,
+    "level": 2,
+    "xp": 15,
+    "xpPerLevel": 100,
+    "config": { "levelCurve": "exp", "levelMultiplier": 1.5, "xpComputationMode": "logs" },
+    "areas": [ { "areaId": "area-health", "name": "Health", "level": 1, "xp": 12, "xpPerLevel": 100 } ],
+    "ownedBadHabits": [ { "id": "bad-doomscroll", "name": "Doomscrolling", "count": 2 } ]
+  }
+  ```
 
 - Areas `/areas`
   - GET — list areas for default user
@@ -84,7 +96,10 @@ All bodies are JSON. Validation errors: HTTP 400 with Zod error details. Missing
 - Actions `/actions`
   - POST `/actions/habits/:id/complete`
     - Applies XP to the habit’s area, upserts AreaLevel for default user, increments user coins, creates `HabitLog` and `Transaction`.
-    - Response: `{ areaLevel, user: { coins } }`
+    - Global user XP/level behavior depends on `xpComputationMode`:
+      - `logs` (default): user global XP/level are computed from history; stored counters are not updated on completion.
+      - `stored`: user global XP/level counters are incremented on completion.
+    - Response: `{ areaLevel, user: { coins, level?, xp?, xpPerLevel? } }`
   - POST `/actions/bad-habits/:id/record`
     - If the user has at least one purchased credit for that bad habit, one credit is consumed and the life penalty is avoided (applies to ALL bad habits).
     - Otherwise, reduce user `life` by `lifePenalty`.
@@ -95,6 +110,13 @@ All bodies are JSON. Validation errors: HTTP 400 with Zod error details. Missing
   - Listing: use `GET /bad-habits` directly (no separate store listing). The store UI should display all bad habits from `/bad-habits` with their `coinCost`.
   - Inventory: use `GET /me` and read `ownedBadHabits[{ id, name, count }]` to show how many pre‑paid credits the user has per bad habit.
   - POST `/store/bad-habits/:id/buy` — purchases one credit for that bad habit using `coinCost` (multiple purchases supported).
+
+- Users `/users`
+  - GET `/users/:id/config` → user leveling config
+    - Response: `{ xpPerLevel, levelCurve, levelMultiplier, xpComputationMode }`
+  - PUT `/users/:id/config` → update user leveling config
+    - Body: `{ xpPerLevel>=10, levelCurve: "linear"|"exp", levelMultiplier>=1, xpComputationMode: "logs"|"stored" }`
+    - Response: `{ ok: true, userId }`
 
 - Docs `/docs`
   - Swagger UI interactive tester
@@ -229,3 +251,21 @@ Shared logic in `src/lib/leveling.ts`:
 - ESM everywhere; run via `node --import tsx/esm`
 - TypeScript strict; lint/format from repo root:
   - `pnpm dlx prettier -w . && pnpm dlx eslint . --ext .ts,.tsx`
+
+## Global XP & Level
+
+There are two modes for global user XP/Level:
+
+- logs (default):
+  - Global Level/XP are computed from history by summing `xpReward` for all `HabitLog`s and applying the configured curve.
+  - Changing `xpPerLevel`, `levelCurve`, or `levelMultiplier` retroactively affects computed level.
+- stored:
+  - Global Level/XP are stored counters updated when a habit is completed.
+  - Retrospective changes to the curve do not re‑compute historical XP.
+
+### Curves
+
+- linear: XP required per level is constant: `need(level) = xpPerLevel`.
+- exp: XP grows with level via a multiplier: `need(level) = floor(xpPerLevel * levelMultiplier^(level-1))`.
+
+Configure per‑user via `/users/:id/config`. Areas also support `levelCurve` and `levelMultiplier` for per‑area progression.

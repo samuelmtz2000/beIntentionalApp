@@ -45,7 +45,6 @@ struct TodayView: View {
                 }
             }
             .navigationTitle("Today")
-            .toolbar { ToolbarItem(placement: .navigationBarTrailing) { Button { Task { await load() } } label: { Image(systemName: "arrow.clockwise") } } }
             .refreshable { await load() }
             .task { await load() }
             .alert(item: $habitsVM.apiError) { err in Alert(title: Text("Error"), message: Text(err.message), dismissButton: .default(Text("OK"))) }

@@ -5,6 +5,7 @@ import badHabits from "./badHabits";
 import actions from "./actions";
 import store from "./store";
 import me from "./me";
+import users from "./users";
 
 const api = Router();
 api.get("/__ping", (_req, res) => res.json({ ok: true }));
@@ -14,5 +15,6 @@ api.use("/bad-habits", badHabits);
 api.use("/actions", actions);
 api.use("/store", store);
 api.use("/me", me);
+api.use("/users", users);
 
 export default api;

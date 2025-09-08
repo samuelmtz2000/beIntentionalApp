@@ -9,6 +9,7 @@ const areaSchema = z.object({
   icon: z.string().optional(),
   xpPerLevel: z.number().int().min(10),
   levelCurve: z.enum(["linear", "exp"]).default("linear"),
+  levelMultiplier: z.number().min(1).optional(),
 });
 
 const router = Router();

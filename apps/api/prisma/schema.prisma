@@ -18,6 +18,8 @@ model User {
   xp           Int           @default(0)
   xpPerLevel   Int           @default(100)
   levelCurve   String        @default("linear")
+  levelMultiplier Float      @default(1.5)
+  xpComputationMode String   @default("logs") // "logs" | "stored"
   areas        Area[]
   areaLevels   AreaLevel[]
   transactions Transaction[]
@@ -35,6 +37,7 @@ model Area {
   icon        String?
   xpPerLevel  Int         @default(100)
   levelCurve  String      @default("linear")
+  levelMultiplier Float   @default(1.5)
   habits      GoodHabit[]
   badHabits   BadHabit[]
   areaLevels  AreaLevel[]
