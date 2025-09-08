@@ -15,6 +15,7 @@ struct HabitsView: View {
     @State private var showingAddArea = false
     @State private var showingConfig = false
     @State private var selected: SectionKind = .habits
+    @State private var toast: ToastData? = nil
 
     init() {
         let app = AppModel()
@@ -38,6 +39,12 @@ struct HabitsView: View {
                         goodVM: goodVM,
                         badVM: badVM,
                         onRefresh: { await refreshAll() },
+                        onToast: { text, color in
+                            withAnimation(.spring(response: 0.35, dampingFraction: 0.8)) { toast = ToastData(text: text, color: color) }
+                            DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
+                                withAnimation(.easeInOut(duration: 0.25)) { toast = nil }
+                            }
+                        },
                         onAddGood: { showingAddGood = true },
                         onAddBad: { showingAddBad = true }
                     )
@@ -49,6 +56,14 @@ struct HabitsView: View {
                             content
                         }.padding()
                     }
+                }
+            }
+            .overlay(alignment: .top) {
+                if let toast = toast {
+                    ToastBanner(text: toast.text, color: toast.color)
+                        .padding(.top, 8)
+                        .padding(.horizontal, 16)
+                        .transition(.move(edge: .top).combined(with: .opacity))
                 }
             }
             .navigationTitle("Habits")
@@ -265,6 +280,7 @@ private struct CombinedHabitsListPanel: View {
     @ObservedObject var goodVM: HabitsViewModel
     @ObservedObject var badVM: BadHabitsViewModel
     var onRefresh: () async -> Void
+    var onToast: (_ text: String, _ color: Color) -> Void
     var onAddGood: () -> Void
     var onAddBad: () -> Void
 
@@ -287,7 +303,11 @@ private struct CombinedHabitsListPanel: View {
                     }
                     .swipeActions(edge: .leading, allowsFullSwipe: true) {
                         Button {
-                            Task { _ = await goodVM.complete(id: habit.id); await onRefresh() }
+                            Task {
+                                _ = await goodVM.complete(id: habit.id)
+                                onToast("Recorded \(habit.name): +\(habit.xpReward) XP, +\(habit.coinReward) coins", .green)
+                                await onRefresh()
+                            }
                         } label: { Label("Record", systemImage: "checkmark.circle.fill") }
                         .tint(.green)
                     }
@@ -303,7 +323,14 @@ private struct CombinedHabitsListPanel: View {
                         HStack { Text(item.name).font(.headline); Spacer(); Text("Penalty \(item.lifePenalty)").font(.caption).foregroundStyle(.secondary) }
                     }
                     .swipeActions(edge: .leading, allowsFullSwipe: true) {
-                        Button { Task { await badVM.record(id: item.id); await onRefresh() } } label: { Label("Record", systemImage: "exclamationmark.circle") }.tint(.red)
+                        Button {
+                            Task {
+                                await badVM.record(id: item.id)
+                                onToast("Recorded \(item.name)", .red)
+                                await onRefresh()
+                            }
+                        } label: { Label("Record", systemImage: "exclamationmark.circle") }
+                        .tint(.red)
                     }
                     .swipeActions(edge: .trailing, allowsFullSwipe: true) {
                         Button { editingBad = item } label: { Label("Edit", systemImage: "pencil") }.tint(.blue)
@@ -352,6 +379,32 @@ private struct CombinedHabitsListPanel: View {
 private struct ConfirmWrapper: Identifiable, Equatable {
     var id: String
     var name: String
+}
+
+private struct ToastData: Identifiable {
+    var id: UUID = UUID()
+    let text: String
+    let color: Color
+}
+
+private struct ToastBanner: View {
+    let text: String
+    let color: Color
+    var body: some View {
+        HStack(spacing: 8) {
+            Circle().fill(color).frame(width: 8, height: 8)
+            Text(text)
+                .font(.subheadline).fontWeight(.semibold)
+                .foregroundStyle(.white)
+        }
+        .padding(.horizontal, 14)
+        .padding(.vertical, 10)
+        .background(
+            Capsule()
+                .fill(color.opacity(0.9))
+                .shadow(color: .black.opacity(0.2), radius: 8, x: 0, y: 4)
+        )
+    }
 }
 
 private struct AreasPanel: View {
