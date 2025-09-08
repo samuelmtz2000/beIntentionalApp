@@ -278,12 +278,12 @@ private struct CombinedHabitsPanel: View {
                     }
                 }, secondaryButton: .cancel())
             }
-        .sheet(item: $editingGood) { h in
-            HabitDetailView(habit: h, areas: areasVM.areas, onSave: { updated in Task { await goodVM.update(habit: updated) } }, onDelete: { Task { await goodVM.delete(id: h.id) } })
-        }
-        .sheet(item: $editingBad) { b in
-            BadHabitDetailView(item: b, areas: areasVM.areas, onSave: { updated in Task { await badVM.update(item: updated) } }, onDelete: { Task { await badVM.delete(id: b.id) } })
-        }
+            .sheet(item: $editingGood) { h in
+                HabitDetailView(habit: h, onSave: { updated in Task { await goodVM.update(habit: updated) } }, onDelete: { Task { await goodVM.delete(id: h.id) } })
+            }
+            .sheet(item: $editingBad) { b in
+                BadHabitDetailView(item: b, onSave: { updated in Task { await badVM.update(item: updated) } }, onDelete: { Task { await badVM.delete(id: b.id) } })
+            }
         }
     }
 }
@@ -487,15 +487,13 @@ struct NewHabitSheet: View {
 struct HabitDetailView: View {
     @Environment(\.dismiss) private var dismiss
     @State private var habit: GoodHabit
-    let areas: [Area]
-    @State private var selectedAreaId: String
+    @State private var areaIdInput: String
     var onSave: (GoodHabit) -> Void
     var onDelete: () -> Void
 
-    init(habit: GoodHabit, areas: [Area], onSave: @escaping (GoodHabit) -> Void, onDelete: @escaping () -> Void) {
+    init(habit: GoodHabit, onSave: @escaping (GoodHabit) -> Void, onDelete: @escaping () -> Void) {
         _habit = State(initialValue: habit)
-        self.areas = areas
-        _selectedAreaId = State(initialValue: habit.areaId)
+        _areaIdInput = State(initialValue: habit.areaId)
         self.onSave = onSave
         self.onDelete = onDelete
     }
@@ -504,11 +502,7 @@ struct HabitDetailView: View {
         Form {
             Section("Basics") {
                 TextField("Name", text: $habit.name)
-                Picker("Area", selection: $selectedAreaId) {
-                    ForEach(areas, id: \.id) { a in
-                        Text(a.name).tag(a.id)
-                    }
-                }
+                TextField("Area ID", text: $areaIdInput)
                 TextField("Cadence", text: Binding(get: { habit.cadence ?? "" }, set: { habit.cadence = $0.isEmpty ? nil : $0 }))
                 Toggle("Active", isOn: $habit.isActive)
             }
@@ -518,7 +512,7 @@ struct HabitDetailView: View {
             }
             Section {
                 Button("Save") {
-                    let updated = GoodHabit(id: habit.id, areaId: selectedAreaId, name: habit.name, xpReward: habit.xpReward, coinReward: habit.coinReward, cadence: habit.cadence, isActive: habit.isActive)
+                    let updated = GoodHabit(id: habit.id, areaId: areaIdInput, name: habit.name, xpReward: habit.xpReward, coinReward: habit.coinReward, cadence: habit.cadence, isActive: habit.isActive)
                     onSave(updated); dismiss()
                 }.buttonStyle(.borderedProminent)
                 Button("Delete", role: .destructive) { onDelete(); dismiss() }
@@ -534,6 +528,7 @@ struct NewBadHabitSheet: View {
     @State private var selectedAreaId: String = "" // empty is Global
     @State private var name: String = ""
     @State private var lifePenalty: Int = 5
+    @State private var controllable: Bool = false
     @State private var coinCost: Int = 0
     @State private var active: Bool = true
 
@@ -550,6 +545,7 @@ struct NewBadHabitSheet: View {
                         }
                     }
                     TextField("Name", text: $name)
+                    Toggle("Controllable", isOn: $controllable)
                     Toggle("Active", isOn: $active)
                 }
                 Section("Penalty / Cost") {
@@ -560,7 +556,7 @@ struct NewBadHabitSheet: View {
             .navigationTitle("New Bad Habit")
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) { Button("Cancel") { dismiss() } }
-                ToolbarItem(placement: .confirmationAction) { Button("Create") { onCreate(selectedAreaId, name, lifePenalty, false, coinCost, active); dismiss() }.disabled(name.isEmpty) }
+                ToolbarItem(placement: .confirmationAction) { Button("Create") { onCreate(selectedAreaId, name, lifePenalty, controllable, coinCost, active); dismiss() }.disabled(name.isEmpty) }
             }
         }
         .presentationDetents([.medium, .large])
@@ -570,15 +566,13 @@ struct NewBadHabitSheet: View {
 struct BadHabitDetailView: View {
     @Environment(\.dismiss) private var dismiss
     @State private var item: BadHabit
-    let areas: [Area]
-    @State private var selectedAreaId: String
+    @State private var areaIdInput: String
     var onSave: (BadHabit) -> Void
     var onDelete: () -> Void
 
-    init(item: BadHabit, areas: [Area], onSave: @escaping (BadHabit) -> Void, onDelete: @escaping () -> Void) {
+    init(item: BadHabit, onSave: @escaping (BadHabit) -> Void, onDelete: @escaping () -> Void) {
         _item = State(initialValue: item)
-        self.areas = areas
-        _selectedAreaId = State(initialValue: item.areaId ?? "")
+        _areaIdInput = State(initialValue: item.areaId ?? "")
         self.onSave = onSave
         self.onDelete = onDelete
     }
@@ -587,13 +581,8 @@ struct BadHabitDetailView: View {
         Form {
             Section("Basics") {
                 TextField("Name", text: $item.name)
-                Picker("Area", selection: $selectedAreaId) {
-                    Text("None (Global)").tag("")
-                    ForEach(areas, id: \.id) { a in
-                        Text(a.name).tag(a.id)
-                    }
-                }
-                // Controllable is no longer user-editable in v1; keep existing value server-side
+                TextField("Area ID (optional)", text: $areaIdInput)
+                Toggle("Controllable", isOn: $item.controllable)
                 Toggle("Active", isOn: $item.isActive)
             }
             Section("Costs") {
@@ -602,7 +591,7 @@ struct BadHabitDetailView: View {
             }
             Section {
                 Button("Save") {
-                    let updated = BadHabit(id: item.id, areaId: selectedAreaId.isEmpty ? nil : selectedAreaId, name: item.name, lifePenalty: item.lifePenalty, controllable: item.controllable, coinCost: item.coinCost, isActive: item.isActive)
+                    let updated = BadHabit(id: item.id, areaId: areaIdInput.isEmpty ? nil : areaIdInput, name: item.name, lifePenalty: item.lifePenalty, controllable: item.controllable, coinCost: item.coinCost, isActive: item.isActive)
                     onSave(updated); dismiss()
                 }.buttonStyle(.borderedProminent)
                 Button("Delete", role: .destructive) { onDelete(); dismiss() }
