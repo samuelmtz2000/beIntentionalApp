@@ -378,10 +378,10 @@ private struct CombinedHabitsListPanel: View {
             }, secondaryButton: .cancel())
         }
         .sheet(item: $editingGood) { h in
-            HabitDetailView(habit: h, onSave: { updated in Task { await goodVM.update(habit: updated); await onRefresh() } }, onDelete: { Task { await goodVM.delete(id: h.id); await onRefresh() } })
+            HabitEditSheet(habit: h, onSave: { updated in Task { await goodVM.update(habit: updated); await onRefresh() } }, onDelete: { Task { await goodVM.delete(id: h.id); await onRefresh() } })
         }
         .sheet(item: $editingBad) { b in
-            BadHabitDetailView(item: b, onSave: { updated in Task { await badVM.update(item: updated); await onRefresh() } }, onDelete: { Task { await badVM.delete(id: b.id); await onRefresh() } })
+            BadHabitEditSheet(item: b, onSave: { updated in Task { await badVM.update(item: updated); await onRefresh() } }, onDelete: { Task { await badVM.delete(id: b.id); await onRefresh() } })
         }
         .refreshable { await onRefresh() }
     }
