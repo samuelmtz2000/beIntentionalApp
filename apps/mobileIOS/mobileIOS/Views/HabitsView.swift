@@ -49,6 +49,20 @@ struct HabitsView: View {
                     }
                     .padding(.horizontal)
                     AreasPanel(vm: areasVM, onAdd: { showingAddArea = true })
+                } else if selected == .areas {
+                    VStack(alignment: .leading, spacing: 16) {
+                        PlayerHeader(profile: profileVM.profile, onLogToday: { selected = .habits }, onOpenStore: { selected = .store })
+                        TileNav(selected: $selected, onConfig: { showingConfig = true })
+                    }
+                    .padding(.horizontal)
+                    AreasPanel(vm: areasVM, onAdd: { showingAddArea = true })
+                } else if selected == .store {
+                    VStack(alignment: .leading, spacing: 16) {
+                        PlayerHeader(profile: profileVM.profile, onLogToday: { selected = .habits }, onOpenStore: { selected = .store })
+                        TileNav(selected: $selected, onConfig: { showingConfig = true })
+                    }
+                    .padding(.horizontal)
+                    StorePanel(vm: storeVM)
                 } else {
                     ScrollView {
                         VStack(alignment: .leading, spacing: 16) {
@@ -456,27 +470,39 @@ private struct AreasPanel: View {
 private struct StorePanel: View {
     @ObservedObject var vm: StoreViewModel
     var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            Text("Store").font(.headline)
-            HStack { Label("Coins", systemImage: "creditcard"); Spacer(); Text("\(vm.coins)") }
-            Divider()
-            Text("Bad Habits Store").bold()
-            ForEach(vm.controlledBadHabits) { b in
-                HStack {
-                    VStack(alignment: .leading) {
-                        Text(b.name).font(.headline)
-                        Text("Penalty \(b.lifePenalty) • Cost \(b.coinCost)🪙").font(.caption).foregroundStyle(.secondary)
+        List {
+            Section {
+                ForEach(vm.controlledBadHabits) { b in
+                    VStack(alignment: .leading, spacing: 6) {
+                        HStack {
+                            Text(b.name).font(.headline)
+                            Spacer()
+                            Text("Penalty \(b.lifePenalty) • Cost \(b.coinCost)🪙")
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                        }
                     }
+                    .contentShape(Rectangle())
+                    .swipeActions(edge: .trailing, allowsFullSwipe: true) {
+                        Button { Task { await vm.buy(cosmeticId: b.id) } } label: { Label("Buy", systemImage: "cart") }.tint(.blue)
+                    }
+                }
+            } header: {
+                HStack {
+                    Text("Bad Habits Store").bold()
                     Spacer()
-                    let owned = vm.ownedBadHabits.first(where: { $0.id == b.id })?.count ?? 0
-                    if owned > 0 { Text("Owned: \(owned)").font(.caption) }
-                    Button("Buy") { Task { await vm.buy(cosmeticId: b.id) } }.buttonStyle(.borderedProminent)
+                    HStack { Label("Coins", systemImage: "creditcard"); Text("\(vm.coins)") }
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
                 }
             }
-            Divider()
-            Text("Owned (Credits)").bold()
-            ForEach(vm.ownedBadHabits, id: \.id) { obh in HStack { Text(obh.name); Spacer(); Text("x\(obh.count)").font(.caption) } }
+            Section("Owned (Credits)") {
+                ForEach(vm.ownedBadHabits, id: \.id) { obh in
+                    HStack { Text(obh.name); Spacer(); Text("x\(obh.count)").font(.caption) }
+                }
+            }
         }
+        .listStyle(.insetGrouped)
     }
 }
 
