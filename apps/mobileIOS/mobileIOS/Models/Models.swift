@@ -8,6 +8,7 @@ struct Area: Codable, Identifiable, Hashable {
     var icon: String?
     var xpPerLevel: Int
     var levelCurve: String
+    var levelMultiplier: Double?
 }
 
 struct GoodHabit: Codable, Identifiable, Hashable {
