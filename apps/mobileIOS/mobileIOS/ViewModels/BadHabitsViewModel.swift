@@ -39,5 +39,12 @@ final class BadHabitsViewModel: ObservableObject {
         catch let e as APIError { apiError = e }
         catch let err { apiError = APIError(message: err.localizedDescription) }
     }
-}
 
+    func record(id: String, payWithCoins: Bool = false) async {
+        struct Body: Encodable { let payWithCoins: Bool }
+        struct VoidResp: Decodable {}
+        do { _ = try await api.post("actions/bad-habits/\(id)/record", body: Body(payWithCoins: payWithCoins)) as VoidResp }
+        catch let e as APIError { apiError = e }
+        catch let err { apiError = APIError(message: err.localizedDescription) }
+    }
+}
