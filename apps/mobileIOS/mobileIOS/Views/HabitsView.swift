@@ -318,7 +318,7 @@ private struct CombinedHabitsListPanel: View {
         }, set: { newVal in
             if newVal == nil { confirmDelete = nil }
         })) { wrap in
-            Alert(title: Text("Delete \\(wrap.name)?"), message: Text("Are you sure you want to delete \\(wrap.name)?"), primaryButton: .destructive(Text("Delete")) {
+            Alert(title: Text("Delete \(wrap.name)?"), message: Text("Are you sure you want to delete \(wrap.name)?"), primaryButton: .destructive(Text("Delete")) {
                 Task {
                     if goodVM.habits.contains(where: { $0.id == wrap.id }) { await goodVM.delete(id: wrap.id) }
                     else if badVM.items.contains(where: { $0.id == wrap.id }) { await badVM.delete(id: wrap.id) }
