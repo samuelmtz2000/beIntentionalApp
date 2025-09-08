@@ -14,12 +14,13 @@ export function applyHabitCompletion(
   currentLevel: number,
   addXP: number,
   xpPerLevel: number,
-  curve: "linear" | "exp" = "linear"
+  curve: "linear" | "exp" = "linear",
+  multiplier = 1.5
 ): { level: number; xp: number } {
   let xp = currentXP + addXP;
   let level = currentLevel;
-  while (xp >= xpForLevel(level, xpPerLevel, curve)) {
-    xp -= xpForLevel(level, xpPerLevel, curve);
+  while (xp >= xpForLevel(level, xpPerLevel, curve, multiplier)) {
+    xp -= xpForLevel(level, xpPerLevel, curve, multiplier);
     level += 1;
   }
   return { level, xp };

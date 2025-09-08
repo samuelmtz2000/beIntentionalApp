@@ -23,7 +23,7 @@ Profile
 Areas `/areas`
 - GET — list
 - GET `/:id` — get by id
-- POST — create `{ name, icon?, xpPerLevel>=10, levelCurve: "linear"|"exp" }`
+- POST — create `{ name, icon?, xpPerLevel>=10, levelCurve: "linear"|"exp", levelMultiplier>=1? }`
 - PUT `/:id` — update (partial)
 - DELETE `/:id` — delete
 

@@ -21,7 +21,8 @@ router.post("/habits/:id/complete", async (req, res) => {
     areaLevel.level,
     habit.xpReward,
     habit.area.xpPerLevel,
-    habit.area.levelCurve as any
+    habit.area.levelCurve as any,
+    (habit.area as any).levelMultiplier ?? 1.5
   );
 
   // fetch user to compute global leveling or skip if logs-mode
@@ -30,7 +31,7 @@ router.post("/habits/:id/complete", async (req, res) => {
   const logsMode = (user.xpComputationMode as any) === "logs";
   const nextUser = logsMode
     ? { level: user.level, xp: user.xp } // do not update stored xp/level when computing from logs
-    : applyHabitCompletion(user.xp, user.level, habit.xpReward, user.xpPerLevel, user.levelCurve as any);
+    : applyHabitCompletion(user.xp, user.level, habit.xpReward, user.xpPerLevel, user.levelCurve as any, user.levelMultiplier ?? 1.5);
 
   const [updatedLevel, updatedUser, _log, _tx] = await prisma.$transaction([
     prisma.areaLevel.update({ where: { id: areaLevel.id }, data: { level: nextArea.level, xp: nextArea.xp } }),
