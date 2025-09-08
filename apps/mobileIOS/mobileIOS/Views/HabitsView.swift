@@ -15,7 +15,7 @@ struct HabitsView: View {
     @State private var showingAddArea = false
     @State private var showingConfig = false
     @State private var selected: SectionKind = .habits
-    @State private var toast: ToastData? = nil
+    // toast removed
 
     init() {
         let app = AppModel()
@@ -32,23 +32,13 @@ struct HabitsView: View {
                 if selected == .habits {
                     VStack(alignment: .leading, spacing: 16) {
                         PlayerHeader(profile: profileVM.profile, onLogToday: { selected = .habits }, onOpenStore: { selected = .store })
-                        TileNav(selected: $selected)
+                        TileNav(selected: $selected, onConfig: { showingConfig = true })
                     }
                     .padding(.horizontal)
                     CombinedHabitsListPanel(
                         goodVM: goodVM,
                         badVM: badVM,
                         onRefresh: { await refreshAll() },
-                        onToast: { text, color in
-                            // If a toast is already visible, do not stack another — keep only the top banner
-                            guard toast == nil else { return }
-                            withAnimation(.spring(response: 0.35, dampingFraction: 0.8)) {
-                                toast = ToastData(text: text, color: color)
-                            }
-                            DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
-                                withAnimation(.easeInOut(duration: 0.25)) { toast = nil }
-                            }
-                        },
                         onAddGood: { showingAddGood = true },
                         onAddBad: { showingAddBad = true }
                     )
@@ -56,26 +46,14 @@ struct HabitsView: View {
                     ScrollView {
                         VStack(alignment: .leading, spacing: 16) {
                             PlayerHeader(profile: profileVM.profile, onLogToday: { selected = .habits }, onOpenStore: { selected = .store })
-                            TileNav(selected: $selected)
+                            TileNav(selected: $selected, onConfig: { showingConfig = true })
                             content
                         }.padding()
                     }
                 }
             }
-            .overlay(alignment: .top) {
-                if let toast = toast {
-                    ToastBanner(text: toast.text, color: toast.color)
-                        .padding(.top, 8)
-                        .padding(.horizontal, 16)
-                        .transition(.move(edge: .top).combined(with: .opacity))
-                }
-            }
+            // Toast overlay removed
             .navigationTitle("Habits")
-            .toolbar {
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    Button { showingConfig = true } label: { Image(systemName: "gearshape") }
-                }
-            }
             .task { await refreshAll() }
             .refreshable { await refreshAll() }
             .sheet(isPresented: $showingAddGood) { NewHabitSheet { areaId, name, xp, coins, cadence, active in Task { await goodVM.create(areaId: areaId, name: name, xpReward: xp, coinReward: coins, cadence: cadence, isActive: active); await refreshAll() } } }
@@ -154,6 +132,7 @@ private func xpNeeded(level: Int, base: Int, curve: String, multiplier: Double) 
 
 private struct TileNav: View {
     @Binding var selected: HabitsView.SectionKind
+    var onConfig: (() -> Void)? = nil
     var body: some View {
         ScrollView(.horizontal, showsIndicators: false) {
             HStack(spacing: 10) {
@@ -173,6 +152,21 @@ private struct TileNav: View {
                     }
                     .accessibilityLabel(Text(kind.rawValue))
                     .accessibilityAddTraits(.isButton)
+                }
+                if let onConfig {
+                    Button(action: onConfig) {
+                        HStack(spacing: 6) {
+                            Image(systemName: "gearshape")
+                            Text("Config")
+                        }
+                        .font(.callout)
+                        .fontWeight(.semibold)
+                        .foregroundStyle(.primary)
+                        .padding(.horizontal, 16)
+                        .padding(.vertical, 9)
+                        .background(Capsule().fill(Color.gray.opacity(0.15)))
+                    }
+                    .accessibilityLabel(Text("User Configuration"))
                 }
             }
         }
@@ -284,22 +278,16 @@ private struct CombinedHabitsListPanel: View {
     @ObservedObject var goodVM: HabitsViewModel
     @ObservedObject var badVM: BadHabitsViewModel
     var onRefresh: () async -> Void
-    var onToast: (_ text: String, _ color: Color) -> Void
     var onAddGood: () -> Void
     var onAddBad: () -> Void
 
     @State private var editingGood: GoodHabit? = nil
     @State private var editingBad: BadHabit? = nil
     @State private var confirmDelete: (id: String, name: String)? = nil
+    @State private var inFlightIds: Set<String> = []
 
     var body: some View {
         List {
-            Section(header: headerView) {
-                EmptyView()
-            }
-            .listRowInsets(EdgeInsets())
-            .frame(height: 0.1)
-
             Section("Good") {
                 ForEach(goodVM.habits) { habit in
                     VStack(alignment: .leading, spacing: 6) {
@@ -308,8 +296,10 @@ private struct CombinedHabitsListPanel: View {
                     .swipeActions(edge: .leading, allowsFullSwipe: true) {
                         Button {
                             Task {
+                                guard inFlightIds.contains(habit.id) == false else { return }
+                                inFlightIds.insert(habit.id)
+                                defer { inFlightIds.remove(habit.id) }
                                 _ = await goodVM.complete(id: habit.id)
-                                onToast("Recorded \(habit.name): +\(habit.xpReward) XP, +\(habit.coinReward) coins", .green)
                                 await onRefresh()
                             }
                         } label: { Label("Record", systemImage: "checkmark.circle.fill") }
@@ -329,8 +319,10 @@ private struct CombinedHabitsListPanel: View {
                     .swipeActions(edge: .leading, allowsFullSwipe: true) {
                         Button {
                             Task {
+                                guard inFlightIds.contains(item.id) == false else { return }
+                                inFlightIds.insert(item.id)
+                                defer { inFlightIds.remove(item.id) }
                                 await badVM.record(id: item.id)
-                                onToast("Recorded \(item.name)", .red)
                                 await onRefresh()
                             }
                         } label: { Label("Record", systemImage: "exclamationmark.circle") }
@@ -367,17 +359,7 @@ private struct CombinedHabitsListPanel: View {
     }
 
     private var headerView: some View {
-        HStack {
-            Text("Habits").font(.headline)
-            Spacer()
-            Menu {
-                Button("New Good Habit", action: onAddGood)
-                Button("New Bad Habit", action: onAddBad)
-            } label: {
-                Image(systemName: "plus")
-            }
-        }
-        .padding(.horizontal)
+        EmptyView()
     }
 }
 private struct ConfirmWrapper: Identifiable, Equatable {
@@ -385,31 +367,7 @@ private struct ConfirmWrapper: Identifiable, Equatable {
     var name: String
 }
 
-private struct ToastData: Identifiable {
-    var id: UUID = UUID()
-    let text: String
-    let color: Color
-}
-
-private struct ToastBanner: View {
-    let text: String
-    let color: Color
-    var body: some View {
-        HStack(spacing: 8) {
-            Circle().fill(color).frame(width: 8, height: 8)
-            Text(text)
-                .font(.subheadline).fontWeight(.semibold)
-                .foregroundStyle(.white)
-        }
-        .padding(.horizontal, 14)
-        .padding(.vertical, 10)
-        .background(
-            Capsule()
-                .fill(color.opacity(0.9))
-                .shadow(color: .black.opacity(0.2), radius: 8, x: 0, y: 4)
-        )
-    }
-}
+// Toast types removed per request
 
 private struct AreasPanel: View {
     @ObservedObject var vm: AreasViewModel
