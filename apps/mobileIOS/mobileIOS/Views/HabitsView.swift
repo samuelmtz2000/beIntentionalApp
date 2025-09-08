@@ -71,11 +71,10 @@ private struct PlayerHeader: View {
         VStack(alignment: .leading, spacing: 12) {
             HStack(spacing: 16) {
                 if let p = profile {
-                    let totalLevel = p.areas.reduce(0) { $0 + $1.level }
                     VStack(alignment: .leading) {
-                        HStack { Text("Lvl \(totalLevel)").bold().padding(6).background(Capsule().fill(Color.blue.opacity(0.15))) }
-                        if let best = p.areas.max(by: { ($0.xp*100)/max($0.xpPerLevel,1) < ($1.xp*100)/max($1.xpPerLevel,1) }) {
-                            ProgressView(value: Double(best.xp), total: Double(max(best.xpPerLevel,1))) { Text("XP to next (\(best.name))").font(.caption) }
+                        HStack { Text("Lvl \(p.level)").bold().padding(6).background(Capsule().fill(Color.blue.opacity(0.15))) }
+                        ProgressView(value: Double(p.xp), total: Double(max(p.xpPerLevel,1))) {
+                            Text("XP to next").font(.caption)
                         }
                     }
                     Spacer()

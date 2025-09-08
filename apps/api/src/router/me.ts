@@ -32,7 +32,15 @@ router.get("/", async (_req, res) => {
     else counts.set(key, { id: u.badHabit.id, name: u.badHabit.name, count: 1 });
   }
 
-  res.json({ life: user.life, coins: user.coins, areas: areasView, ownedBadHabits: Array.from(counts.values()) });
+  res.json({
+    life: user.life,
+    coins: user.coins,
+    level: user.level,
+    xp: user.xp,
+    xpPerLevel: user.xpPerLevel,
+    areas: areasView,
+    ownedBadHabits: Array.from(counts.values()),
+  });
 });
 
 export default router;

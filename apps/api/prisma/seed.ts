@@ -12,6 +12,10 @@ async function main() {
       name: "Seed User",
       life: 100,
       coins: 0,
+      level: 1,
+      xp: 0,
+      xpPerLevel: 100,
+      levelCurve: "linear",
     },
   });
 
