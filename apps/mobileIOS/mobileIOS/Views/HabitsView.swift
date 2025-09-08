@@ -42,6 +42,13 @@ struct HabitsView: View {
                         onAddGood: { showingAddGood = true },
                         onAddBad: { showingAddBad = true }
                     )
+                } else if selected == .areas {
+                    VStack(alignment: .leading, spacing: 16) {
+                        PlayerHeader(profile: profileVM.profile, onLogToday: { selected = .habits }, onOpenStore: { selected = .store })
+                        TileNav(selected: $selected, onConfig: { showingConfig = true })
+                    }
+                    .padding(.horizontal)
+                    AreasPanel(vm: areasVM, onAdd: { showingAddArea = true })
                 } else {
                     ScrollView {
                         VStack(alignment: .leading, spacing: 16) {
@@ -423,7 +430,14 @@ private struct AreasPanel: View {
                     }
                 }
             } header: {
-                HStack { Text("Areas").font(.headline); Spacer(); Button("New Area", action: onAdd) }
+                HStack {
+                    Text("Areas").font(.headline)
+                    Spacer()
+                    Button { onAdd() } label: {
+                        Image(systemName: "plus.circle.fill").foregroundStyle(.blue)
+                    }
+                    .accessibilityLabel(Text("New Area"))
+                }
             }
         }
         .alert(item: Binding(get: {
