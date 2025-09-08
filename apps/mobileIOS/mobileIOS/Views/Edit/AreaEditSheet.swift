@@ -23,6 +23,18 @@ struct AreaEditSheet: View {
                         Text("Linear").tag("linear")
                         Text("Exponential").tag("exp")
                     }.pickerStyle(.segmented)
+                    if area.levelCurve == "exp" {
+                        HStack {
+                            Text("Multiplier")
+                            Spacer()
+                            Text(String(format: "%.2f×", area.levelMultiplier ?? 1.5))
+                                .foregroundStyle(.secondary)
+                        }
+                        Slider(value: Binding(get: { area.levelMultiplier ?? 1.5 }, set: { area.levelMultiplier = $0 }), in: 1.0...4.0, step: 0.1)
+                        Text("Each level requires multiplier× previous XP.")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
                 }
                 Section {
                     Button("Save") { onSave(area); dismiss() }
@@ -34,4 +46,3 @@ struct AreaEditSheet: View {
         }
     }
 }
-

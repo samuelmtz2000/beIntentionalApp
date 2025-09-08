@@ -93,7 +93,7 @@ struct HabitsView: View {
                     }
                 }
             }
-            .sheet(isPresented: $showingAddArea) { NewAreaSheet { name, icon, xp, curve in Task { await areasVM.create(name: name, icon: icon, xpPerLevel: xp, levelCurve: curve); await refreshAll() } } }
+            .sheet(isPresented: $showingAddArea) { NewAreaSheet { name, icon, xp, curve, mult in Task { await areasVM.create(name: name, icon: icon, xpPerLevel: xp, levelCurve: curve, levelMultiplier: mult); await refreshAll() } } }
             .sheet(isPresented: $showingConfig) { UserConfigSheet(onSaved: { Task { await profileVM.refresh() } }) }
         }
     }
@@ -101,7 +101,7 @@ struct HabitsView: View {
     private var content: some View {
         Group {
             switch selected {
-            case .player: PlayerPanel(profile: profileVM.profile)
+            case .player: PlayerPanel(profile: profileVM.profile, areasMeta: areasVM.areas)
             case .habits: CombinedHabitsPanel(goodVM: goodVM, badVM: badVM, onAddGood: { showingAddGood = true }, onAddBad: { showingAddBad = true })
             case .areas: AreasPanel(vm: areasVM, onAdd: { showingAddArea = true })
             case .store: StorePanel(vm: storeVM)
@@ -210,6 +210,7 @@ private struct TileNav: View {
 
 private struct PlayerPanel: View {
     let profile: Profile?
+    var areasMeta: [Area] = []
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
             if let p = profile {
@@ -221,7 +222,21 @@ private struct PlayerPanel: View {
                 ForEach(p.areas, id: \.areaId) { a in
                     VStack(alignment: .leading) {
                         HStack { Text(a.name).bold(); Spacer(); Text("Lvl \(a.level)") }
-                        ProgressView(value: Double(a.xp), total: Double(max(a.xpPerLevel,1)))
+                        let meta = areasMeta.first(where: { $0.id == a.areaId })
+                        let curve = meta?.levelCurve ?? "linear"
+                        let mult = meta?.levelMultiplier ?? 1.5
+                        let need = areaNeed(level: a.level, base: a.xpPerLevel, curve: curve, multiplier: mult)
+                        let total = Double(max(need, 1))
+                        let value = min(total, max(0, Double(a.xp)))
+                        ProgressView(value: value, total: total) {
+                            HStack(spacing: 6) {
+                                Text("XP to next")
+                                Image(systemName: "arrow.right")
+                                Text("\(a.xp) from \(need)")
+                            }
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                        }
                     }
                 }
             } else {
@@ -229,6 +244,14 @@ private struct PlayerPanel: View {
             }
         }
     }
+}
+
+private func areaNeed(level: Int, base: Int, curve: String, multiplier: Double) -> Int {
+    if curve == "exp" {
+        let m = max(1.0, multiplier)
+        let powv = pow(m, Double(max(0, level - 1)))
+        return max(1, Int(floor(Double(base) * powv)))
+    } else { return max(1, base) }
 }
 
 private struct CombinedHabitsPanel: View {

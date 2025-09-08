@@ -72,7 +72,7 @@ All bodies are JSON. Validation errors: HTTP 400 with Zod error details. Missing
   - GET — list areas for default user
   - GET `/:id` — get by id
   - POST — create
-    - Body: `{ name, icon?, xpPerLevel>=10, levelCurve: "linear"|"exp" }`
+    - Body: `{ name, icon?, xpPerLevel>=10, levelCurve: "linear"|"exp", levelMultiplier>=1? }`
   - PUT `/:id` — update (partial)
   - DELETE `/:id` — delete
 

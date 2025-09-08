@@ -39,6 +39,26 @@ TileNav(selected: $selected, onConfig: { showingConfig = true })
   .sheet(isPresented: $showingConfig) { UserConfigSheet(onSaved: { Task { await profileVM.refresh() } }) }
 ```
 
+Per‑Area Legend
+```swift
+ForEach(profile.areas, id: \.areaId) { a in
+  // compute need for this level using area curve + multiplier
+  let meta = areas.first(where: { $0.id == a.areaId })
+  let curve = meta?.levelCurve ?? "linear"
+  let mult = meta?.levelMultiplier ?? 1.5
+  let need = xpForLevel(level: a.level, base: a.xpPerLevel, curve: curve, multiplier: mult)
+  ProgressView(value: Double(a.xp), total: Double(max(need,1))) {
+    HStack(spacing: 6) {
+      Text("XP to next")
+      Image(systemName: "arrow.right")
+      Text("\\(a.xp) from \\(need)")
+    }
+    .font(.caption)
+    .foregroundStyle(.secondary)
+  }
+}
+```
+
 Example List
 ```swift
 import SwiftUI

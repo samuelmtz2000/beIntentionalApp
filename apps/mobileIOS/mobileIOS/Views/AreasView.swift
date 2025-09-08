@@ -34,8 +34,8 @@ struct AreasView: View {
                 ToolbarItem(placement: .navigationBarTrailing) { Button { showingAdd = true } label: { Image(systemName: "plus") } }
                 ToolbarItem(placement: .navigationBarTrailing) { Button { Task { await vm.refresh() } } label: { Image(systemName: "arrow.clockwise") } }
             }
-            .sheet(isPresented: $showingAdd) { NewAreaSheet { name, icon, xp, curve in
-                Task { await vm.create(name: name, icon: icon, xpPerLevel: xp, levelCurve: curve) }
+            .sheet(isPresented: $showingAdd) { NewAreaSheet { name, icon, xp, curve, mult in
+                Task { await vm.create(name: name, icon: icon, xpPerLevel: xp, levelCurve: curve, levelMultiplier: mult) }
             } }
             .task { await vm.refresh() }
             .alert(item: $vm.apiError) { err in Alert(title: Text("Error"), message: Text(err.message), dismissButton: .default(Text("OK"))) }
@@ -49,8 +49,9 @@ struct NewAreaSheet: View {
     @State private var icon: String = ""
     @State private var xpPerLevel: Int = 100
     @State private var levelCurve: String = "linear"
+    @State private var levelMultiplier: Double = 1.5
 
-    var onCreate: (String, String?, Int, String) -> Void
+    var onCreate: (String, String?, Int, String, Double?) -> Void
 
     var body: some View {
         NavigationStack {
@@ -65,12 +66,17 @@ struct NewAreaSheet: View {
                 }
                 Section("XP") {
                     Stepper("XP per Level: \(xpPerLevel)", value: $xpPerLevel, in: 10...1000)
+                    if levelCurve == "exp" {
+                        HStack { Text("Multiplier"); Spacer(); Text(String(format: "%.2f×", levelMultiplier)).foregroundStyle(.secondary) }
+                        Slider(value: $levelMultiplier, in: 1.0...4.0, step: 0.1)
+                        Text("Each level requires multiplier× previous XP.").font(.caption).foregroundStyle(.secondary)
+                    }
                 }
             }
             .navigationTitle("New Area")
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) { Button("Cancel") { dismiss() } }
-                ToolbarItem(placement: .confirmationAction) { Button("Create") { onCreate(name, icon.isEmpty ? nil : icon, xpPerLevel, levelCurve); dismiss() }.disabled(name.isEmpty) }
+                ToolbarItem(placement: .confirmationAction) { Button("Create") { onCreate(name, icon.isEmpty ? nil : icon, xpPerLevel, levelCurve, levelCurve == "exp" ? levelMultiplier : nil); dismiss() }.disabled(name.isEmpty) }
             }
         }
         .presentationDetents([.medium, .large])
@@ -101,4 +107,3 @@ struct AreaDetailView: View {
         .navigationTitle("Edit Area")
     }
 }
-

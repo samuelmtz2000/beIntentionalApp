@@ -5,7 +5,7 @@ title: Data Model
 Prisma models (SQLite):
 
 - User(id, name?, life=100, coins=0, avatar Json?)
-- Area(id, userId, name, icon?, xpPerLevel=100, levelCurve)
+- Area(id, userId, name, icon?, xpPerLevel=100, levelCurve, levelMultiplier=1.5)
 - GoodHabit(id, areaId, name, xpReward, coinReward, cadence?, isActive)
 - BadHabit(id, areaId?, name, lifePenalty, coinCost, isActive)
 - AreaLevel(id, userId, areaId, level, xp) with unique (userId, areaId)
@@ -37,6 +37,7 @@ erDiagram
     string icon
     int xpPerLevel
     string levelCurve
+    float levelMultiplier
   }
 
   GOODHABIT {
