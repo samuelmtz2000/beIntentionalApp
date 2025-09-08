@@ -4,6 +4,12 @@ title: UI & Components
 
 SwiftUI views are small, composable, and previewable. Emphasize accessibility and performance.
 
+UI Navigation Patterns
+- Tab navigation: Primary app sections are exposed via the bottom tab bar (Today, Habits, Settings, etc.). Screens should not hide the tab bar unless in a modal flow.
+- Pill navigation: Within a screen (e.g., Habits), use horizontal “chips” (peels) to switch between local sections (Player / Habits / Areas / Store). The selected pill is filled (blue), others are neutral. A Config pill appears at the end to open the User Config sheet.
+- Spotify‑like actions: Use swipe actions on list rows. Leading full swipe auto‑executes the primary action (Record). Trailing full swipe opens Edit; Delete is trailing and always asks for confirmation.
+- Forms: Use native SwiftUI Forms. For Habits, Area is chosen via a Picker populated from the Areas catalog. Bad Habits allow “None (Global)”. Avoid manual ID entry.
+
 Habits Header (Global XP)
 ```swift
 VStack(alignment: .leading) {
@@ -27,14 +33,10 @@ VStack(alignment: .leading) {
 }
 ```
 
-Config Entry (gear icon)
+Config Entry (pill in chip bar)
 ```swift
-.toolbar {
-  ToolbarItem(placement: .navigationBarTrailing) {
-    Button { showingConfig = true } label: { Image(systemName: "gearshape") }
-  }
-}
-.sheet(isPresented: $showingConfig) { UserConfigSheet(onSaved: { Task { await profileVM.refresh() } }) }
+TileNav(selected: $selected, onConfig: { showingConfig = true })
+  .sheet(isPresented: $showingConfig) { UserConfigSheet(onSaved: { Task { await profileVM.refresh() } }) }
 ```
 
 Example List
