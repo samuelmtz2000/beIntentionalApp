@@ -354,6 +354,9 @@ private struct CombinedHabitsListPanel: View {
     var body: some View {
         List {
             Section {
+                if goodVM.habits.isEmpty {
+                    Text("No good habits yet").dsFont(.caption).foregroundStyle(.secondary)
+                }
                 ForEach(goodVM.habits) { habit in
                     VStack(alignment: .leading, spacing: 6) {
                         HStack { Text(habit.name).font(.headline); Spacer(); Text("XP +\(habit.xpReward) • Coins +\(habit.coinReward)").font(.caption).foregroundStyle(.secondary) }
@@ -379,13 +382,16 @@ private struct CombinedHabitsListPanel: View {
                 }
             } header: {
                 HStack {
-                    Text("Good").bold()
+                    Text("Good").dsFont(.headerMD).bold()
                     Spacer()
                     Button { onAddGood() } label: { Image(systemName: "plus.circle.fill").foregroundStyle(.blue) }
                         .accessibilityLabel(Text("New Good Habit"))
                 }
             }
             Section {
+                if badVM.items.isEmpty {
+                    Text("No bad habits yet").dsFont(.caption).foregroundStyle(.secondary)
+                }
                 ForEach(badVM.items) { item in
                     VStack(alignment: .leading, spacing: 6) {
                         HStack { Text(item.name).font(.headline); Spacer(); Text("Penalty \(item.lifePenalty)").font(.caption).foregroundStyle(.secondary) }
@@ -411,7 +417,7 @@ private struct CombinedHabitsListPanel: View {
                 }
             } header: {
                 HStack {
-                    Text("Bad").bold()
+                    Text("Bad").dsFont(.headerMD).bold()
                     Spacer()
                     Button { onAddBad() } label: { Image(systemName: "plus.circle.fill").foregroundStyle(.red) }
                         .accessibilityLabel(Text("New Bad Habit"))

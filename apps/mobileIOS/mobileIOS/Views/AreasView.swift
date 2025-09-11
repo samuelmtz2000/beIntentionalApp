@@ -44,6 +44,8 @@ struct AreasView: View {
             .alert(item: $vm.apiError) { err in Alert(title: Text("Error"), message: Text(err.message), dismissButton: .default(Text("OK"))) }
         }
         .background(DSTheme.colors(for: scheme).backgroundPrimary)
+        .toolbarBackground(DSTheme.colors(for: scheme).backgroundSecondary, for: .navigationBar)
+        .toolbarColorScheme(scheme, for: .navigationBar)
     }
 }
 
