@@ -80,12 +80,8 @@ struct HabitsView: View {
                 }
             }
             // Toast overlay removed
-<<<<<<< HEAD
-            .navigationTitle("")
-=======
             .navigationTitle("Habits")
             .navigationBarTitleDisplayMode(.inline)
->>>>>>> f348e13 (feat(ios): small inline Habits title; Store uses DS card grid with Buy buttons; align with Habits/Areas design)
             .background(DSTheme.colors(for: scheme).backgroundPrimary)
             .task { await refreshAll() }
             .refreshable { await refreshAll() }
