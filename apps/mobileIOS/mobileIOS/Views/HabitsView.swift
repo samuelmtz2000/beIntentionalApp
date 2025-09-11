@@ -33,12 +33,11 @@ struct HabitsView: View {
         NavigationStack {
             Group {
                 if selected == .habits {
-                    VStack(alignment: .leading, spacing: 16) {
-                        PlayerHeader(profile: profileVM.profile, onLogToday: { selected = .habits }, onOpenStore: { selected = .store })
-                        TileNav(selected: $selected, onConfig: { showingConfig = true })
-                    }
-                    .padding(.horizontal)
                     CombinedHabitsListPanel(
+                        profile: profileVM.profile,
+                        areasMeta: areasVM.areas,
+                        selected: $selected,
+                        onConfig: { showingConfig = true },
                         goodVM: goodVM,
                         badVM: badVM,
                         onRefresh: { await refreshAll() },
@@ -85,6 +84,7 @@ struct HabitsView: View {
             }
             // Toast overlay removed
             .navigationTitle("Habits")
+            .navigationBarTitleDisplayMode(.inline)
             .background(DSTheme.colors(for: scheme).backgroundPrimary)
             .task { await refreshAll() }
             .refreshable { await refreshAll() }
@@ -278,16 +278,6 @@ private struct CombinedHabitsPanel: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
-            HStack {
-                Text("Habits").dsFont(.headerMD)
-                Spacer()
-                Menu {
-                    Button("New Good Habit", action: onAddGood)
-                    Button("New Bad Habit", action: onAddBad)
-                } label: {
-                    Image(systemName: "plus")
-                }
-            }
             Group {
                 HStack(spacing: 8) {
                     Image(systemName: "checkmark.seal.fill").foregroundStyle(.green)
@@ -353,6 +343,12 @@ private struct CombinedHabitsPanel: View {
 }
 
 private struct CombinedHabitsListPanel: View {
+    // Header content
+    let profile: Profile?
+    var areasMeta: [Area] = []
+    @Binding var selected: HabitsView.SectionKind
+    var onConfig: () -> Void
+    // Data
     @ObservedObject var goodVM: HabitsViewModel
     @ObservedObject var badVM: BadHabitsViewModel
     var onRefresh: () async -> Void
@@ -366,6 +362,15 @@ private struct CombinedHabitsListPanel: View {
 
     var body: some View {
         List {
+            // Collapsible header: scrolls away with list
+            Section {
+                VStack(alignment: .leading, spacing: 16) {
+                    PlayerHeader(profile: profile, onLogToday: { selected = .habits }, onOpenStore: { selected = .store })
+                    TileNav(selected: $selected, onConfig: onConfig)
+                }
+                .padding(.horizontal)
+            }
+            .listRowBackground(Color.clear)
             Section {
                 if goodVM.habits.isEmpty {
                     Text("No good habits yet").dsFont(.caption).foregroundStyle(.secondary)
@@ -527,39 +532,43 @@ private struct AreasPanel: View {
 private struct StorePanel: View {
     @ObservedObject var vm: StoreViewModel
     var body: some View {
-        List {
-            Section {
-                ForEach(vm.controlledBadHabits) { b in
-                    VStack(alignment: .leading, spacing: 6) {
-                        HStack {
-                            Text(b.name).dsFont(.headerMD)
-                            Spacer()
-                            Text("Penalty \(b.lifePenalty) • Cost \(b.coinCost)🪙").dsFont(.caption)
-                                .font(.caption)
-                                .foregroundStyle(.secondary)
-                        }
-                    }
-                    .contentShape(Rectangle())
-                    .swipeActions(edge: .trailing, allowsFullSwipe: true) {
-                        Button { Task { await vm.buy(cosmeticId: b.id) } } label: { Label("Buy", systemImage: "cart") }.tint(.blue)
-                    }
-                }
-            } header: {
+        ScrollView {
+            VStack(alignment: .leading, spacing: 12) {
                 HStack {
-                    Text("Bad Habits Store").bold()
+                    Label("Bad Habits Store", systemImage: "cart")
+                        .font(.headline)
                     Spacer()
                     HStack { Label("Coins", systemImage: "creditcard"); Text("\(vm.coins)") }
-                        .font(.caption)
+                        .dsFont(.caption)
                         .foregroundStyle(.secondary)
                 }
-            }
-            Section("Owned (Credits)") {
-                ForEach(vm.ownedBadHabits, id: \.id) { obh in
-                    HStack { Text(obh.name); Spacer(); Text("x\(obh.count)").font(.caption) }
+                let columns = [GridItem(.flexible(), spacing: 12), GridItem(.flexible(), spacing: 12)]
+                LazyVGrid(columns: columns, spacing: 12) {
+                    ForEach(vm.controlledBadHabits) { b in
+                        VStack(alignment: .leading, spacing: 8) {
+                            Text(b.name).dsFont(.headerMD)
+                            Text("Penalty \(b.lifePenalty) • Cost \(b.coinCost)🪙").dsFont(.caption).foregroundStyle(.secondary)
+                            Button { Task { await vm.buy(cosmeticId: b.id) } } label: { Label("Buy", systemImage: "cart") }
+                                .buttonStyle(PrimaryButtonStyle())
+                                .accessibilityLabel(Text("Buy \(b.name) for \(b.coinCost) coins"))
+                        }
+                        .cardStyle()
+                    }
+                }
+
+                if !vm.ownedBadHabits.isEmpty {
+                    Text("Owned (Credits)").dsFont(.headerMD)
+                    LazyVGrid(columns: columns, spacing: 12) {
+                        ForEach(vm.ownedBadHabits, id: \.id) { obh in
+                            HStack { Text(obh.name).dsFont(.body); Spacer(); Text("x\(obh.count)").dsFont(.caption) }
+                                .cardStyle()
+                        }
+                    }
                 }
             }
+            .padding(.horizontal)
+            .padding(.bottom, 16)
         }
-        .listStyle(.insetGrouped)
     }
 }
 
