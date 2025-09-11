@@ -4,6 +4,7 @@ struct TodayView: View {
     @EnvironmentObject private var app: AppModel
     @StateObject private var profileVM: ProfileViewModel
     @StateObject private var habitsVM: HabitsViewModel
+    @Environment(\.colorScheme) private var scheme
 
     init() {
         let app = AppModel()

@@ -80,7 +80,12 @@ struct HabitsView: View {
                 }
             }
             // Toast overlay removed
+<<<<<<< HEAD
             .navigationTitle("")
+=======
+            .navigationTitle("Habits")
+            .navigationBarTitleDisplayMode(.inline)
+>>>>>>> f348e13 (feat(ios): small inline Habits title; Store uses DS card grid with Buy buttons; align with Habits/Areas design)
             .background(DSTheme.colors(for: scheme).backgroundPrimary)
             .task { await refreshAll() }
             .refreshable { await refreshAll() }
@@ -533,8 +538,7 @@ private struct StorePanel: View {
         ScrollView {
             VStack(alignment: .leading, spacing: 12) {
                 HStack {
-                    Label("Bad Habits Store", systemImage: "cart")
-                        .font(.headline)
+                    Label("Bad Habits Store", systemImage: "cart").font(.headline)
                     Spacer()
                     HStack { Label("Coins", systemImage: "creditcard"); Text("\(vm.coins)") }
                         .dsFont(.caption)
@@ -553,7 +557,6 @@ private struct StorePanel: View {
                         .cardStyle()
                     }
                 }
-
                 if !vm.ownedBadHabits.isEmpty {
                     Text("Owned (Credits)").dsFont(.headerMD)
                     LazyVGrid(columns: columns, spacing: 12) {
