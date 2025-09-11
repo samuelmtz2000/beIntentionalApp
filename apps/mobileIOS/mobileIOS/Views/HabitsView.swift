@@ -2,7 +2,7 @@ import SwiftUI
 
 struct HabitsView: View {
     @Environment(\.colorScheme) private var scheme
-    enum SectionKind: String, CaseIterable { case player = "Player", habits = "Habits", areas = "Areas", store = "Store", archive = "Archive" }
+    enum SectionKind: String, CaseIterable { case player = "Player", habits = "Habits", areas = "Areas", store = "Store", archive = "Archive", config = "Config" }
 
     @EnvironmentObject private var app: AppModel
     @StateObject private var profileVM: ProfileViewModel
@@ -192,18 +192,31 @@ private struct TileNav: View {
             HStack(spacing: 10) {
                 ForEach(HabitsView.SectionKind.allCases, id: \.self) { kind in
                     let isSelected = (selected == kind)
-                    Button(action: { selected = kind }) { Text(kind.rawValue).font(.callout).fontWeight(.semibold) }
-                        .buttonStyle(PillButtonStyle(isSelected: isSelected))
+                    Button(action: {
+                        if kind == .config { onConfig?() } else { selected = kind }
+                    }) {
+                        HStack(spacing: 6) {
+                            Image(systemName: iconName(for: kind))
+                            Text(kind.rawValue).font(.callout).fontWeight(.semibold)
+                        }
+                    }
+                    .buttonStyle(PillButtonStyle(isSelected: isSelected))
                     .accessibilityLabel(Text(kind.rawValue))
                     .accessibilityAddTraits(.isButton)
                 }
-                if let onConfig {
-                    Button(action: onConfig) { Text("Config").font(.callout).fontWeight(.semibold) }
-                        .buttonStyle(PillButtonStyle(isSelected: false))
-                        .accessibilityLabel(Text("User Configuration"))
-                }
             }
         }
+    }
+}
+
+private func iconName(for kind: HabitsView.SectionKind) -> String {
+    switch kind {
+    case .player: return "person.crop.circle"
+    case .habits: return "checkmark.circle"
+    case .areas: return "square.grid.2x2"
+    case .store: return "cart"
+    case .archive: return "archivebox"
+    case .config: return "gearshape"
     }
 }
 
