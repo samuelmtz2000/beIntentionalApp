@@ -189,18 +189,8 @@ private struct TileNav: View {
             HStack(spacing: 10) {
                 ForEach(HabitsView.SectionKind.allCases, id: \.self) { kind in
                     let isSelected = (selected == kind)
-                    Button(action: { selected = kind }) {
-                        Text(kind.rawValue)
-                            .font(.callout)
-                            .fontWeight(.semibold)
-                            .foregroundStyle(isSelected ? .white : .primary)
-                            .padding(.horizontal, 16)
-                            .padding(.vertical, 9)
-                            .background(
-                                Capsule()
-                                    .fill(isSelected ? Color.blue : Color.gray.opacity(0.15))
-                            )
-                    }
+                    Button(action: { selected = kind }) { Text(kind.rawValue).font(.callout).fontWeight(.semibold) }
+                        .buttonStyle(PillButtonStyle(isSelected: isSelected))
                     .accessibilityLabel(Text(kind.rawValue))
                     .accessibilityAddTraits(.isButton)
                 }

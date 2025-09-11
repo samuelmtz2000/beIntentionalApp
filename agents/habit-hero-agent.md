@@ -14,9 +14,23 @@
 - iOS native app: open `apps/mobileIOS/mobileIOS.xcodeproj` in Xcode 15+, select an iOS 17+ simulator, and Run.
 - `pnpm db:migrate` — run Prisma migrations for the API (SQLite).
 - `pnpm db:seed` — reserved for seeding; add `apps/api/prisma/seed.ts` before using.
- - `pnpm -F @habit-hero/api prisma generate` — regenerate Prisma client after schema changes.
- - `pnpm test` — run API tests (Vitest).
- - `pnpm -F @habit-hero/api test:soft-delete` — run the soft delete + archive smoke tests (see below).
+- `pnpm -F @habit-hero/api prisma generate` — regenerate Prisma client after schema changes.
+- `pnpm test` — run API tests (Vitest).
+- `pnpm -F @habit-hero/api test:soft-delete` — run the soft delete + archive smoke tests (see below).
+
+## Design Review Workflows
+
+- iOS (Simulator MCP): `agents/design-review-ios/`
+  - Overview: `agents/design-review-ios/README.md`
+  - Agent: `agents/design-review-ios/design-review-agent.md`
+  - Principles checklist: `agents/design-review-ios/design-principles-example.md`
+  - Slash command: `agents/design-review-ios/design-review-slash-command.md`
+
+- Browser (Playwright MCP): `agents/design-review-browser/`
+  - Overview: `agents/design-review-browser/README.md`
+  - Agent: `agents/design-review-browser/design-review-agent.md`
+  - Principles checklist: `agents/design-review-browser/design-principles-example.md`
+  - Slash command: `agents/design-review-browser/design-review-slash-command.md`
 
 ## Coding Style & Naming Conventions
 
