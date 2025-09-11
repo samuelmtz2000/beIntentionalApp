@@ -37,12 +37,14 @@ struct AreaEditSheet: View {
                     }
                 }
                 Section {
-                    Button("Save") { onSave(area); dismiss() }
-                        .buttonStyle(.borderedProminent)
                     Button("Delete", role: .destructive) { onDelete(); dismiss() }
                 }
             }
             .navigationTitle("Edit Area")
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) { Button("Cancel") { dismiss() } }
+                ToolbarItem(placement: .confirmationAction) { Button("Save") { onSave(area); dismiss() }.keyboardShortcut(.defaultAction) }
+            }
         }
     }
 }
