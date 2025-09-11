@@ -69,6 +69,8 @@ private struct BadHabitStoreRow: View {
             if ownedCount > 0 { Text("Owned: \(ownedCount)").font(.caption) }
             Button("Buy", action: onBuy).buttonStyle(PrimaryButtonStyle())
         }
+        .cardStyle()
+        .listRowBackground(Color.clear)
     }
 }
 

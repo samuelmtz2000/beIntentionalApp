@@ -26,8 +26,10 @@ struct AreasView: View {
                             Spacer()
                             Text("XP/Level: \(area.xpPerLevel)").font(.caption).foregroundStyle(.secondary)
                         }
+                        .cardStyle()
                     }
                     .swipeActions { Button(role: .destructive) { Task { await vm.delete(id: area.id) } } label: { Label("Delete", systemImage: "trash") } }
+                    .listRowBackground(Color.clear)
                 }
             }
             .navigationTitle("Areas")

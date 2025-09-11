@@ -358,6 +358,8 @@ private struct CombinedHabitsListPanel: View {
                     VStack(alignment: .leading, spacing: 6) {
                         HStack { Text(habit.name).font(.headline); Spacer(); Text("XP +\(habit.xpReward) • Coins +\(habit.coinReward)").font(.caption).foregroundStyle(.secondary) }
                     }
+                    .cardStyle()
+                    .listRowBackground(Color.clear)
                     .swipeActions(edge: .leading, allowsFullSwipe: true) {
                         Button {
                             Task {
@@ -388,6 +390,8 @@ private struct CombinedHabitsListPanel: View {
                     VStack(alignment: .leading, spacing: 6) {
                         HStack { Text(item.name).font(.headline); Spacer(); Text("Penalty \(item.lifePenalty)").font(.caption).foregroundStyle(.secondary) }
                     }
+                    .cardStyle()
+                    .listRowBackground(Color.clear)
                     .swipeActions(edge: .leading, allowsFullSwipe: true) {
                         Button {
                             Task {

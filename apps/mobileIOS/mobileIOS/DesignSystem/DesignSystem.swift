@@ -20,6 +20,7 @@ struct DSTheme {
 
     struct Spacing { let xs: CGFloat = 4, sm: CGFloat = 8, md: CGFloat = 16, lg: CGFloat = 24, xl: CGFloat = 32 }
     struct Radii { let small: CGFloat = 8, medium: CGFloat = 16, large: CGFloat = 24, full: CGFloat = 9999 }
+    struct StateOpacity { let hover: Double = 0.08, pressed: Double = 0.14, disabled: Double = 0.38 }
 
     static func colors(for scheme: ColorScheme) -> Colors {
         if scheme == .dark {
@@ -87,16 +88,18 @@ struct CardModifier: ViewModifier {
 
 struct PrimaryButtonStyle: ButtonStyle {
     @Environment(\.colorScheme) private var scheme
+    @Environment(\.isEnabled) private var isEnabled
     func makeBody(configuration: Configuration) -> some View {
         let c = DSTheme.colors(for: scheme)
+        let state = DSTheme.StateOpacity()
         return configuration.label
-            .foregroundStyle(c.textPrimary)
+            .foregroundStyle(isEnabled ? c.textPrimary : c.textPrimary.opacity(state.disabled))
             .padding(.horizontal, 24)
             .padding(.vertical, 10)
-            .background(RoundedRectangle(cornerRadius: 24).fill(c.accentPrimary))
+            .background(RoundedRectangle(cornerRadius: 24).fill(isEnabled ? c.accentPrimary : c.accentPrimary.opacity(1 - state.disabled)))
             .overlay(
                 RoundedRectangle(cornerRadius: 24)
-                    .fill(Color.white.opacity(configuration.isPressed ? 0.14 : 0))
+                    .fill(Color.white.opacity(configuration.isPressed ? state.pressed : 0))
             )
             .shadow(color: c.accentPrimary.opacity(0.25), radius: 8)
             .scaleEffect(configuration.isPressed ? 0.98 : 1)
@@ -105,14 +108,17 @@ struct PrimaryButtonStyle: ButtonStyle {
 
 struct SecondaryButtonStyle: ButtonStyle {
     @Environment(\.colorScheme) private var scheme
+    @Environment(\.isEnabled) private var isEnabled
     func makeBody(configuration: Configuration) -> some View {
         let c = DSTheme.colors(for: scheme)
+        let state = DSTheme.StateOpacity()
         return configuration.label
-            .foregroundStyle(c.accentPrimary)
+            .foregroundStyle(isEnabled ? c.accentPrimary : c.accentPrimary.opacity(state.disabled))
             .padding(.horizontal, 24)
             .padding(.vertical, 10)
             .background(RoundedRectangle(cornerRadius: 16).fill(c.surfaceCard))
-            .overlay(RoundedRectangle(cornerRadius: 16).stroke(c.accentPrimary, lineWidth: 1))
+            .overlay(RoundedRectangle(cornerRadius: 16).stroke(isEnabled ? c.accentPrimary : c.accentPrimary.opacity(state.disabled), lineWidth: 1))
+            .overlay(RoundedRectangle(cornerRadius: 16).fill(Color.black.opacity(configuration.isPressed ? state.pressed : 0)))
             .scaleEffect(configuration.isPressed ? 0.98 : 1)
     }
 }
