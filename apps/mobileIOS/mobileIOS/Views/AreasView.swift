@@ -10,6 +10,7 @@ struct AreasView: View {
         _vm = StateObject(wrappedValue: AreasViewModel(api: app.api))
     }
 
+    @Environment(\.colorScheme) private var scheme
     var body: some View {
         NavigationStack {
             List {
@@ -21,12 +22,14 @@ struct AreasView: View {
                     }) {
                         HStack {
                             Text(area.icon ?? "🗂️")
-                            Text(area.name)
+                            Text(area.name).dsFont(.headerMD)
                             Spacer()
-                            Text("XP/Level: \(area.xpPerLevel)").font(.caption).foregroundStyle(.secondary)
+                            Text("XP/Level: \(area.xpPerLevel)").dsFont(.caption).foregroundStyle(.secondary)
                         }
+                        .cardStyle()
                     }
                     .swipeActions { Button(role: .destructive) { Task { await vm.delete(id: area.id) } } label: { Label("Delete", systemImage: "trash") } }
+                    .listRowBackground(Color.clear)
                 }
             }
             .navigationTitle("Areas")
@@ -40,6 +43,9 @@ struct AreasView: View {
             .task { await vm.refresh() }
             .alert(item: $vm.apiError) { err in Alert(title: Text("Error"), message: Text(err.message), dismissButton: .default(Text("OK"))) }
         }
+        .background(DSTheme.colors(for: scheme).backgroundPrimary)
+        .toolbarBackground(DSTheme.colors(for: scheme).backgroundSecondary, for: .navigationBar)
+        .toolbarColorScheme(scheme, for: .navigationBar)
     }
 }
 

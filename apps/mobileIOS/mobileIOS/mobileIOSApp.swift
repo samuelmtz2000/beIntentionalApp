@@ -7,6 +7,7 @@
 
 import SwiftUI
 import Combine
+import UIKit
 
 @main
 struct HabitHeroApp: App {
@@ -17,6 +18,7 @@ struct HabitHeroApp: App {
             MainTabView()
                 .environmentObject(appModel)
                 .preferredColorScheme(appModel.colorSchemeOverride)
+                // Navigation appearance can be customized later with tokenized colors if needed.
         }
     }
 }
@@ -50,5 +52,9 @@ final class AppModel: ObservableObject {
     func setAppearance(_ pref: AppearancePreference) {
         appearance = pref
         UserDefaults.standard.set(pref.rawValue, forKey: "APPEARANCE")
+    }
+
+    func configureNavigationAppearance(for scheme: ColorScheme) {
+        // Reserved for future token-based UINavigationBar appearance customization
     }
 }

@@ -1,7 +1,8 @@
 import SwiftUI
 
 struct HabitsView: View {
-    enum SectionKind: String, CaseIterable { case player = "Player", habits = "Habits", areas = "Areas", store = "Store", archive = "Archive" }
+    @Environment(\.colorScheme) private var scheme
+    enum SectionKind: String, CaseIterable { case player = "Player", habits = "Habits", areas = "Areas", store = "Store", archive = "Archive", config = "Config" }
 
     @EnvironmentObject private var app: AppModel
     @StateObject private var profileVM: ProfileViewModel
@@ -32,12 +33,11 @@ struct HabitsView: View {
         NavigationStack {
             Group {
                 if selected == .habits {
-                    VStack(alignment: .leading, spacing: 16) {
-                        PlayerHeader(profile: profileVM.profile, onLogToday: { selected = .habits }, onOpenStore: { selected = .store })
-                        TileNav(selected: $selected, onConfig: { showingConfig = true })
-                    }
-                    .padding(.horizontal)
                     CombinedHabitsListPanel(
+                        profile: profileVM.profile,
+                        areasMeta: areasVM.areas,
+                        selected: $selected,
+                        onConfig: { showingConfig = true },
                         goodVM: goodVM,
                         badVM: badVM,
                         onRefresh: { await refreshAll() },
@@ -49,21 +49,18 @@ struct HabitsView: View {
                         PlayerHeader(profile: profileVM.profile, onLogToday: { selected = .habits }, onOpenStore: { selected = .store })
                         TileNav(selected: $selected, onConfig: { showingConfig = true })
                     }
-                    .padding(.horizontal)
                     AreasPanel(vm: areasVM, onAdd: { showingAddArea = true })
                 } else if selected == .areas {
                     VStack(alignment: .leading, spacing: 16) {
                         PlayerHeader(profile: profileVM.profile, onLogToday: { selected = .habits }, onOpenStore: { selected = .store })
                         TileNav(selected: $selected, onConfig: { showingConfig = true })
                     }
-                    .padding(.horizontal)
                     AreasPanel(vm: areasVM, onAdd: { showingAddArea = true })
                 } else if selected == .store {
                     VStack(alignment: .leading, spacing: 16) {
                         PlayerHeader(profile: profileVM.profile, onLogToday: { selected = .habits }, onOpenStore: { selected = .store })
                         TileNav(selected: $selected, onConfig: { showingConfig = true })
                     }
-                    .padding(.horizontal)
                     StorePanel(vm: storeVM)
                 } else if selected == .archive {
                     VStack(alignment: .leading, spacing: 16) {
@@ -78,12 +75,18 @@ struct HabitsView: View {
                             PlayerHeader(profile: profileVM.profile, onLogToday: { selected = .habits }, onOpenStore: { selected = .store })
                             TileNav(selected: $selected, onConfig: { showingConfig = true })
                             content
-                        }.padding()
+                        }.padding(.vertical)
                     }
                 }
             }
             // Toast overlay removed
+<<<<<<< HEAD
+            .navigationTitle("")
+=======
             .navigationTitle("Habits")
+            .navigationBarTitleDisplayMode(.inline)
+>>>>>>> f348e13 (feat(ios): small inline Habits title; Store uses DS card grid with Buy buttons; align with Habits/Areas design)
+            .background(DSTheme.colors(for: scheme).backgroundPrimary)
             .task { await refreshAll() }
             .refreshable { await refreshAll() }
             .sheet(isPresented: $showingAddGood) {
@@ -115,6 +118,7 @@ struct HabitsView: View {
             case .areas: AreasPanel(vm: areasVM, onAdd: { showingAddArea = true })
             case .store: StorePanel(vm: storeVM)
             case .archive: ArchivePanel(vm: archiveVM, onRestored: { await refreshAll() })
+            case .config: EmptyView()
             }
         }
     }
@@ -139,8 +143,8 @@ private struct PlayerHeader: View {
     var onLogToday: () -> Void
     var onOpenStore: () -> Void
     var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            HStack(spacing: 16) {
+        VStack(alignment: .leading, spacing: 16) {
+            HStack(spacing: 20) {
                 if let p = profile {
                     VStack(alignment: .leading) {
                         HStack { Text("Lvl \(p.level)").bold().padding(6).background(Capsule().fill(Color.blue.opacity(0.15))) }
@@ -165,9 +169,11 @@ private struct PlayerHeader: View {
                     Text("Loading...")
                 }
             }
+            .padding(.vertical, 8)
             // Removed quick action buttons to simplify header; navigation chips below handle section switching
         }
         .accessibilityElement(children: .contain)
+        .padding(.horizontal, 16)
     }
 }
 
@@ -189,28 +195,32 @@ private struct TileNav: View {
             HStack(spacing: 10) {
                 ForEach(HabitsView.SectionKind.allCases, id: \.self) { kind in
                     let isSelected = (selected == kind)
-                    Button(action: { selected = kind }) { Text(kind.rawValue).font(.callout).fontWeight(.semibold) }
-                        .buttonStyle(PillButtonStyle(isSelected: isSelected))
+                    Button(action: {
+                        if kind == .config { onConfig?() } else { selected = kind }
+                    }) {
+                        HStack(spacing: 6) {
+                            Image(systemName: iconName(for: kind))
+                            Text(kind.rawValue).font(.callout).fontWeight(.semibold)
+                        }
+                    }
+                    .buttonStyle(PillButtonStyle(isSelected: isSelected))
                     .accessibilityLabel(Text(kind.rawValue))
                     .accessibilityAddTraits(.isButton)
                 }
-                if let onConfig {
-                    Button(action: onConfig) {
-                        HStack(spacing: 6) {
-                            Image(systemName: "gearshape")
-                            Text("Config")
-                        }
-                        .font(.callout)
-                        .fontWeight(.semibold)
-                        .foregroundStyle(.primary)
-                        .padding(.horizontal, 16)
-                        .padding(.vertical, 9)
-                        .background(Capsule().fill(Color.gray.opacity(0.15)))
-                    }
-                    .accessibilityLabel(Text("User Configuration"))
-                }
             }
+            .padding(.horizontal, 16)
         }
+    }
+}
+
+private func iconName(for kind: HabitsView.SectionKind) -> String {
+    switch kind {
+    case .player: return "person.crop.circle"
+    case .habits: return "checkmark.circle"
+    case .areas: return "square.grid.2x2"
+    case .store: return "cart"
+    case .archive: return "archivebox"
+    case .config: return "gearshape"
     }
 }
 
@@ -220,11 +230,11 @@ private struct PlayerPanel: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
             if let p = profile {
-                Text("Overall").font(.headline)
+                Text("Overall").dsFont(.headerMD)
                 HStack { Label("Life", systemImage: "heart.fill"); Spacer(); Text("\(p.life)") }
                 HStack { Label("Coins", systemImage: "creditcard"); Spacer(); Text("\(p.coins)") }
                 Divider()
-                Text("Per Area").font(.headline)
+                Text("Per Area").dsFont(.headerMD)
                 ForEach(p.areas, id: \.areaId) { a in
                     VStack(alignment: .leading) {
                         HStack { Text(a.name).bold(); Spacer(); Text("Lvl \(a.level)") }
@@ -240,7 +250,7 @@ private struct PlayerPanel: View {
                                 Image(systemName: "arrow.right")
                                 Text("\(a.xp) from \(need)")
                             }
-                            .font(.caption)
+                            .dsFont(.caption)
                             .foregroundStyle(.secondary)
                         }
                     }
@@ -271,23 +281,17 @@ private struct CombinedHabitsPanel: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
-            HStack {
-                Text("Habits").font(.headline)
-                Spacer()
-                Menu {
-                    Button("New Good Habit", action: onAddGood)
-                    Button("New Bad Habit", action: onAddBad)
-                } label: {
-                    Image(systemName: "plus")
-                }
-            }
             Group {
-                Text("Good").bold()
+                HStack(spacing: 8) {
+                    Image(systemName: "checkmark.seal.fill").foregroundStyle(.green)
+                    Text("Good Habits").dsFont(.headerMD).bold()
+                }
                 ForEach(goodVM.habits) { habit in
                     VStack(alignment: .leading, spacing: 6) {
-                        HStack { Text(habit.name).font(.headline); Spacer(); Text("XP +\(habit.xpReward) • Coins +\(habit.coinReward)").font(.caption).foregroundStyle(.secondary) }
+                        HStack { Text(habit.name).dsFont(.headerMD); Spacer(); Text("XP +\(habit.xpReward) • Coins +\(habit.coinReward)").dsFont(.caption).foregroundStyle(.secondary) }
                         Button("Record") { Task { _ = await goodVM.complete(id: habit.id) } }
                             .buttonStyle(PrimaryButtonStyle())
+                            .accessibilityLabel(Text("Complete habit \(habit.name)"))
                     }
                     .contentShape(Rectangle())
                     .swipeActions(edge: .leading, allowsFullSwipe: true) {
@@ -298,13 +302,17 @@ private struct CombinedHabitsPanel: View {
                         Button(role: .destructive) { confirmDelete = (habit.id, habit.name) } label: { Label("Delete", systemImage: "trash") }
                     }
                 }
-                Divider().padding(.vertical, 4)
-                Text("Bad").bold()
+                Divider().padding(.vertical, 8)
+                HStack(spacing: 8) {
+                    Image(systemName: "exclamationmark.triangle.fill").foregroundStyle(.orange)
+                    Text("Bad Habits").dsFont(.headerMD).bold()
+                }
                 ForEach(badVM.items) { item in
                     VStack(alignment: .leading, spacing: 6) {
-                        HStack { Text(item.name).font(.headline); Spacer(); Text("Penalty \(item.lifePenalty)").font(.caption).foregroundStyle(.secondary) }
+                        HStack { Text(item.name).dsFont(.headerMD); Spacer(); Text("Penalty \(item.lifePenalty)").dsFont(.caption).foregroundStyle(.secondary) }
                         Button("Record Slip") { Task { await badVM.record(id: item.id) } }
                             .buttonStyle(SecondaryButtonStyle())
+                            .accessibilityLabel(Text("Record bad habit \(item.name)"))
                     }
                     .contentShape(Rectangle())
                     .swipeActions(edge: .leading, allowsFullSwipe: true) {
@@ -338,6 +346,12 @@ private struct CombinedHabitsPanel: View {
 }
 
 private struct CombinedHabitsListPanel: View {
+    // Header content
+    let profile: Profile?
+    var areasMeta: [Area] = []
+    @Binding var selected: HabitsView.SectionKind
+    var onConfig: () -> Void
+    // Data
     @ObservedObject var goodVM: HabitsViewModel
     @ObservedObject var badVM: BadHabitsViewModel
     var onRefresh: () async -> Void
@@ -351,11 +365,25 @@ private struct CombinedHabitsListPanel: View {
 
     var body: some View {
         List {
+            // Collapsible header: scrolls away with list
             Section {
+                VStack(alignment: .leading, spacing: 16) {
+                    PlayerHeader(profile: profile, onLogToday: { selected = .habits }, onOpenStore: { selected = .store })
+                    TileNav(selected: $selected, onConfig: onConfig)
+                }
+                .padding(.horizontal)
+            }
+            .listRowBackground(Color.clear)
+            Section {
+                if goodVM.habits.isEmpty {
+                    Text("No good habits yet").dsFont(.caption).foregroundStyle(.secondary)
+                }
                 ForEach(goodVM.habits) { habit in
                     VStack(alignment: .leading, spacing: 6) {
-                        HStack { Text(habit.name).font(.headline); Spacer(); Text("XP +\(habit.xpReward) • Coins +\(habit.coinReward)").font(.caption).foregroundStyle(.secondary) }
+                        HStack { Text(habit.name).dsFont(.headerMD); Spacer(); Text("XP +\(habit.xpReward) • Coins +\(habit.coinReward)").dsFont(.caption).foregroundStyle(.secondary) }
                     }
+                    .cardStyle()
+                    .listRowBackground(Color.clear)
                     .swipeActions(edge: .leading, allowsFullSwipe: true) {
                         Button {
                             Task {
@@ -374,18 +402,24 @@ private struct CombinedHabitsListPanel: View {
                     }
                 }
             } header: {
-                HStack {
-                    Text("Good").bold()
+                HStack(spacing: 8) {
+                    Image(systemName: "checkmark.seal.fill").foregroundStyle(.green)
+                    Text("Good Habits").dsFont(.headerMD).bold()
                     Spacer()
                     Button { onAddGood() } label: { Image(systemName: "plus.circle.fill").foregroundStyle(.blue) }
                         .accessibilityLabel(Text("New Good Habit"))
                 }
             }
             Section {
+                if badVM.items.isEmpty {
+                    Text("No bad habits yet").dsFont(.caption).foregroundStyle(.secondary)
+                }
                 ForEach(badVM.items) { item in
                     VStack(alignment: .leading, spacing: 6) {
-                        HStack { Text(item.name).font(.headline); Spacer(); Text("Penalty \(item.lifePenalty)").font(.caption).foregroundStyle(.secondary) }
+                        HStack { Text(item.name).dsFont(.headerMD); Spacer(); Text("Penalty \(item.lifePenalty)").dsFont(.caption).foregroundStyle(.secondary) }
                     }
+                    .cardStyle()
+                    .listRowBackground(Color.clear)
                     .swipeActions(edge: .leading, allowsFullSwipe: true) {
                         Button {
                             Task {
@@ -404,8 +438,9 @@ private struct CombinedHabitsListPanel: View {
                     }
                 }
             } header: {
-                HStack {
-                    Text("Bad").bold()
+                HStack(spacing: 8) {
+                    Image(systemName: "exclamationmark.triangle.fill").foregroundStyle(.orange)
+                    Text("Bad Habits").dsFont(.headerMD).bold()
                     Spacer()
                     Button { onAddBad() } label: { Image(systemName: "plus.circle.fill").foregroundStyle(.red) }
                         .accessibilityLabel(Text("New Bad Habit"))
@@ -458,13 +493,15 @@ private struct AreasPanel: View {
                     VStack(alignment: .leading, spacing: 6) {
                         HStack {
                             Text(area.icon ?? "🗂️")
-                            Text(area.name)
+                            Text(area.name).dsFont(.headerMD)
                             Spacer()
                             Text("XP/Level: \(area.xpPerLevel)")
-                                .font(.caption)
+                                .dsFont(.caption)
                                 .foregroundStyle(.secondary)
                         }
                     }
+                    .cardStyle()
+                    .listRowBackground(Color.clear)
                     .contentShape(Rectangle())
                     .swipeActions(edge: .trailing, allowsFullSwipe: true) {
                         Button { editingArea = area } label: { Label("Edit", systemImage: "pencil") }.tint(.blue)
@@ -473,7 +510,7 @@ private struct AreasPanel: View {
                 }
             } header: {
                 HStack {
-                    Text("Areas").font(.headline)
+                    Text("Areas").dsFont(.headerMD)
                     Spacer()
                     Button { onAdd() } label: {
                         Image(systemName: "plus.circle.fill").foregroundStyle(.blue)
@@ -498,39 +535,41 @@ private struct AreasPanel: View {
 private struct StorePanel: View {
     @ObservedObject var vm: StoreViewModel
     var body: some View {
-        List {
-            Section {
-                ForEach(vm.controlledBadHabits) { b in
-                    VStack(alignment: .leading, spacing: 6) {
-                        HStack {
-                            Text(b.name).font(.headline)
-                            Spacer()
-                            Text("Penalty \(b.lifePenalty) • Cost \(b.coinCost)🪙")
-                                .font(.caption)
-                                .foregroundStyle(.secondary)
-                        }
-                    }
-                    .contentShape(Rectangle())
-                    .swipeActions(edge: .trailing, allowsFullSwipe: true) {
-                        Button { Task { await vm.buy(cosmeticId: b.id) } } label: { Label("Buy", systemImage: "cart") }.tint(.blue)
-                    }
-                }
-            } header: {
+        ScrollView {
+            VStack(alignment: .leading, spacing: 12) {
                 HStack {
-                    Text("Bad Habits Store").bold()
+                    Label("Bad Habits Store", systemImage: "cart").font(.headline)
                     Spacer()
                     HStack { Label("Coins", systemImage: "creditcard"); Text("\(vm.coins)") }
-                        .font(.caption)
+                        .dsFont(.caption)
                         .foregroundStyle(.secondary)
                 }
-            }
-            Section("Owned (Credits)") {
-                ForEach(vm.ownedBadHabits, id: \.id) { obh in
-                    HStack { Text(obh.name); Spacer(); Text("x\(obh.count)").font(.caption) }
+                let columns = [GridItem(.flexible(), spacing: 12), GridItem(.flexible(), spacing: 12)]
+                LazyVGrid(columns: columns, spacing: 12) {
+                    ForEach(vm.controlledBadHabits) { b in
+                        VStack(alignment: .leading, spacing: 8) {
+                            Text(b.name).dsFont(.headerMD)
+                            Text("Penalty \(b.lifePenalty) • Cost \(b.coinCost)🪙").dsFont(.caption).foregroundStyle(.secondary)
+                            Button { Task { await vm.buy(cosmeticId: b.id) } } label: { Label("Buy", systemImage: "cart") }
+                                .buttonStyle(PrimaryButtonStyle())
+                                .accessibilityLabel(Text("Buy \(b.name) for \(b.coinCost) coins"))
+                        }
+                        .cardStyle()
+                    }
+                }
+                if !vm.ownedBadHabits.isEmpty {
+                    Text("Owned (Credits)").dsFont(.headerMD)
+                    LazyVGrid(columns: columns, spacing: 12) {
+                        ForEach(vm.ownedBadHabits, id: \.id) { obh in
+                            HStack { Text(obh.name).dsFont(.body); Spacer(); Text("x\(obh.count)").dsFont(.caption) }
+                                .cardStyle()
+                        }
+                    }
                 }
             }
+            .padding(.horizontal)
+            .padding(.bottom, 16)
         }
-        .listStyle(.insetGrouped)
     }
 }
 
@@ -544,7 +583,9 @@ private struct ArchivePanel: View {
             if !vm.areas.isEmpty {
                 Section("Areas") {
                     ForEach(vm.areas) { a in
-                        HStack { Text(a.icon ?? "🗂️"); Text(a.name); Spacer(); Text("XP/Level \(a.xpPerLevel)").font(.caption).foregroundStyle(.secondary) }
+                        HStack { Text(a.icon ?? "🗂️"); Text(a.name).dsFont(.headerMD); Spacer(); Text("XP/Level \(a.xpPerLevel)").dsFont(.caption).foregroundStyle(.secondary) }
+                            .cardStyle()
+                            .listRowBackground(Color.clear)
                             .swipeActions {
                                 Button {
                                     Task { await vm.restoreArea(id: a.id); await vm.refresh(); await onRestored() }
@@ -556,7 +597,9 @@ private struct ArchivePanel: View {
             if !vm.habits.isEmpty {
                 Section("Habits") {
                     ForEach(vm.habits) { h in
-                        HStack { Text(h.name); Spacer(); Text("XP +\(h.xpReward) • Coins +\(h.coinReward)").font(.caption).foregroundStyle(.secondary) }
+                        HStack { Text(h.name).dsFont(.headerMD); Spacer(); Text("XP +\(h.xpReward) • Coins +\(h.coinReward)").dsFont(.caption).foregroundStyle(.secondary) }
+                            .cardStyle()
+                            .listRowBackground(Color.clear)
                             .swipeActions {
                                 Button {
                                     Task { await vm.restoreHabit(id: h.id); await vm.refresh(); await onRestored() }
@@ -568,7 +611,9 @@ private struct ArchivePanel: View {
             if !vm.badHabits.isEmpty {
                 Section("Bad Habits") {
                     ForEach(vm.badHabits) { b in
-                        HStack { Text(b.name); Spacer(); Text("Penalty \(b.lifePenalty)").font(.caption).foregroundStyle(.secondary) }
+                        HStack { Text(b.name).dsFont(.headerMD); Spacer(); Text("Penalty \(b.lifePenalty)").dsFont(.caption).foregroundStyle(.secondary) }
+                            .cardStyle()
+                            .listRowBackground(Color.clear)
                             .swipeActions {
                                 Button {
                                     Task { await vm.restoreBadHabit(id: b.id); await vm.refresh(); await onRestored() }

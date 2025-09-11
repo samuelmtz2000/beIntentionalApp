@@ -8,8 +8,10 @@
 import SwiftUI
 
 struct MainTabView: View {
+    @Environment(\.colorScheme) private var scheme
     var body: some View {
-        TabView {
+        let c = DSTheme.colors(for: scheme)
+        return TabView {
             TodayView()
                 .tabItem { Label("Today", systemImage: "sun.max.fill") }
             HabitsView()
@@ -17,6 +19,8 @@ struct MainTabView: View {
             SettingsView()
                 .tabItem { Label("Settings", systemImage: "gearshape") }
         }
+        .tint(c.accentSecondary)
+        .toolbarBackground(c.backgroundSecondary, for: .tabBar)
     }
 }
 

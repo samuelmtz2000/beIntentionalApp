@@ -4,6 +4,7 @@ struct TodayView: View {
     @EnvironmentObject private var app: AppModel
     @StateObject private var profileVM: ProfileViewModel
     @StateObject private var habitsVM: HabitsViewModel
+    @Environment(\.colorScheme) private var scheme
 
     init() {
         let app = AppModel()
@@ -22,9 +23,11 @@ struct TodayView: View {
                     Section("Areas") {
                         ForEach(p.areas, id: \.areaId) { a in
                             HStack {
-                                Text(a.name)
+                                Text(a.name).dsFont(.headerMD)
                                 Spacer()
-                                Text("Lvl \(a.level) • \(a.xp)/\(a.xpPerLevel)").foregroundStyle(.secondary)
+                                Text("Lvl \(a.level) • \(a.xp)/\(a.xpPerLevel)")
+                                    .dsFont(.caption)
+                                    .foregroundStyle(.secondary)
                             }
                         }
                     }
@@ -32,10 +35,11 @@ struct TodayView: View {
                 Section("Quick Habits") {
                     ForEach(habitsVM.habits) { h in
                         HStack {
-                            Text(h.name)
+                            Text(h.name).dsFont(.body)
                             Spacer()
                             Button("Done") { Task { _ = await habitsVM.complete(id: h.id); await profileVM.refresh() } }
-                                .buttonStyle(.borderedProminent)
+                                .buttonStyle(PrimaryButtonStyle())
+                                .accessibilityLabel(Text("Complete habit \(h.name)"))
                         }
                         .contextMenu { Button(role: .destructive) { Task { await habitsVM.delete(id: h.id) } } label: { Label("Delete", systemImage: "trash") } }
                         .swipeActions(edge: .trailing, allowsFullSwipe: true) {
@@ -45,6 +49,8 @@ struct TodayView: View {
                 }
             }
             .navigationTitle("Today")
+            .toolbarBackground(DSTheme.colors(for: scheme).backgroundSecondary, for: .navigationBar)
+            .toolbarColorScheme(scheme, for: .navigationBar)
             .refreshable { await load() }
             .task { await load() }
             .alert(item: $habitsVM.apiError) { err in Alert(title: Text("Error"), message: Text(err.message), dismissButton: .default(Text("OK"))) }
