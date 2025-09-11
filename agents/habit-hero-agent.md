@@ -14,6 +14,9 @@
 - iOS native app: open `apps/mobileIOS/mobileIOS.xcodeproj` in Xcode 15+, select an iOS 17+ simulator, and Run.
 - `pnpm db:migrate` — run Prisma migrations for the API (SQLite).
 - `pnpm db:seed` — reserved for seeding; add `apps/api/prisma/seed.ts` before using.
+ - `pnpm -F @habit-hero/api prisma generate` — regenerate Prisma client after schema changes.
+ - `pnpm test` — run API tests (Vitest).
+ - `pnpm -F @habit-hero/api test:soft-delete` — run the soft delete + archive smoke tests (see below).
 
 ## Coding Style & Naming Conventions
 
@@ -31,6 +34,33 @@
 - Recommended stack: Vitest for API; Xcode unit/UI tests for iOS. RN tests optional while paused.
 - Place tests as `*.test.ts`/`*.test.tsx` next to code or under `__tests__/`.
 - Target meaningful coverage on business logic; mock network/IO.
+
+### API Smoke Tests: Soft Delete + Archive
+
+To validate soft deletes, archive listing, and restore flows end‑to‑end:
+
+1) Apply migrations and seed:
+
+```
+pnpm db:migrate
+pnpm db:seed
+pnpm -F @habit-hero/api prisma generate
+```
+
+2) Run the smoke test (starts the API on `:4000` in‑process and hits HTTP endpoints):
+
+```
+pnpm -F @habit-hero/api test:soft-delete
+```
+
+The script exercises:
+- Active lists exclude archived (Areas/Habits/Bad Habits)
+- DELETE performs soft delete
+- Unified `GET /archive` lists archived items grouped by type
+- `POST /:type/:id/restore` re‑activates items
+- Actions/Store block archived targets
+
+Output is a compact JSON summary with pass/fail per step.
 
 ## Commit & Pull Request Guidelines
 

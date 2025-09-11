@@ -5,6 +5,7 @@
   "scripts": {
     "dev": "node --import tsx/esm src/index.ts",
     "prisma": "prisma",
+    "test:soft-delete": "node --import tsx/esm scripts/softDeleteCheck.ts",
     "test": "vitest --run",
     "test:watch": "vitest"
   },
