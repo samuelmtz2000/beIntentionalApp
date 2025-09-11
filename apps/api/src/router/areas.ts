@@ -15,12 +15,12 @@ const areaSchema = z.object({
 const router = Router();
 
 router.get("/", async (_req, res) => {
-  const areas = await prisma.area.findMany({ where: { userId: DEFAULT_USER_ID } });
+  const areas = await prisma.area.findMany({ where: { userId: DEFAULT_USER_ID, deletedAt: null } });
   res.json(areas);
 });
 
 router.get("/:id", async (req, res) => {
-  const area = await prisma.area.findUnique({ where: { id: req.params.id } });
+  const area = await prisma.area.findFirst({ where: { id: req.params.id, deletedAt: null } });
   if (!area) return res.status(404).json({ message: "Area not found" });
   res.json(area);
 });
@@ -36,6 +36,9 @@ router.put("/:id", async (req, res) => {
   const parsed = areaSchema.partial().safeParse(req.body);
   if (!parsed.success) return res.status(400).json(parsed.error.flatten());
   try {
+    // Ensure not archived
+    const existing = await prisma.area.findFirst({ where: { id: req.params.id, deletedAt: null } });
+    if (!existing) return res.status(404).json({ message: "Area not found" });
     const area = await prisma.area.update({ where: { id: req.params.id }, data: parsed.data });
     res.json(area);
   } catch {
@@ -45,8 +48,17 @@ router.put("/:id", async (req, res) => {
 
 router.delete("/:id", async (req, res) => {
   try {
-    await prisma.area.delete({ where: { id: req.params.id } });
+    await prisma.area.update({ where: { id: req.params.id }, data: { deletedAt: new Date() } });
     res.status(204).end();
+  } catch {
+    res.status(404).json({ message: "Area not found" });
+  }
+});
+
+router.post("/:id/restore", async (req, res) => {
+  try {
+    const area = await prisma.area.update({ where: { id: req.params.id }, data: { deletedAt: null } });
+    res.json(area);
   } catch {
     res.status(404).json({ message: "Area not found" });
   }

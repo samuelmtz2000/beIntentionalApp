@@ -10,9 +10,9 @@ router.get("/", async (_req, res) => {
   if (!user) return res.status(404).json({ message: "User not found" });
 
   const [areas, levels, owned] = await Promise.all([
-    prisma.area.findMany({ where: { userId: DEFAULT_USER_ID } }),
+    prisma.area.findMany({ where: { userId: DEFAULT_USER_ID, deletedAt: null } }),
     prisma.areaLevel.findMany({ where: { userId: DEFAULT_USER_ID } }),
-    prisma.userOwnedBadHabit.findMany({ where: { userId: DEFAULT_USER_ID }, include: { badHabit: true } }),
+    prisma.userOwnedBadHabit.findMany({ where: { userId: DEFAULT_USER_ID, badHabit: { deletedAt: null } }, include: { badHabit: true } }),
   ]);
 
   const byArea = new Map(levels.map((l) => [l.areaId, l]));

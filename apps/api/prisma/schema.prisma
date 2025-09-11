@@ -41,6 +41,9 @@ model Area {
   habits      GoodHabit[]
   badHabits   BadHabit[]
   areaLevels  AreaLevel[]
+  deletedAt   DateTime?
+
+  @@index([deletedAt])
 }
 
 model GoodHabit {
@@ -53,6 +56,9 @@ model GoodHabit {
   cadence    String?
   logs       HabitLog[]
   isActive   Boolean    @default(true)
+  deletedAt  DateTime?
+
+  @@index([deletedAt])
 }
 
 model BadHabit {
@@ -66,6 +72,9 @@ model BadHabit {
   logs          BadHabitLog[]
   isActive      Boolean      @default(true)
   ownedBy       UserOwnedBadHabit[]
+  deletedAt     DateTime?
+
+  @@index([deletedAt])
 }
 
 model AreaLevel {

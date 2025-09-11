@@ -6,7 +6,7 @@ const router = Router();
 
 // Purchase a controlled bad habit so future records avoid life penalty
 router.post("/bad-habits/:id/buy", async (req, res) => {
-  const bad = await prisma.badHabit.findUnique({ where: { id: req.params.id } });
+  const bad = await prisma.badHabit.findFirst({ where: { id: req.params.id, deletedAt: null } });
   if (!bad) return res.status(404).json({ message: "Bad habit not found" });
   // All bad habits are purchasable; controllable flag is ignored
 
