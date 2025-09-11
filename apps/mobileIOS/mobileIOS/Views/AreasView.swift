@@ -22,9 +22,9 @@ struct AreasView: View {
                     }) {
                         HStack {
                             Text(area.icon ?? "🗂️")
-                            Text(area.name)
+                            Text(area.name).dsFont(.headerMD)
                             Spacer()
-                            Text("XP/Level: \(area.xpPerLevel)").font(.caption).foregroundStyle(.secondary)
+                            Text("XP/Level: \(area.xpPerLevel)").dsFont(.caption).foregroundStyle(.secondary)
                         }
                         .cardStyle()
                     }

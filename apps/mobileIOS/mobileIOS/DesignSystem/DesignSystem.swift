@@ -21,6 +21,19 @@ struct DSTheme {
     struct Spacing { let xs: CGFloat = 4, sm: CGFloat = 8, md: CGFloat = 16, lg: CGFloat = 24, xl: CGFloat = 32 }
     struct Radii { let small: CGFloat = 8, medium: CGFloat = 16, large: CGFloat = 24, full: CGFloat = 9999 }
     struct StateOpacity { let hover: Double = 0.08, pressed: Double = 0.14, disabled: Double = 0.38 }
+    struct Motion { let fast: Double = 0.2, standard: Double = 0.3 }
+
+    enum TypeScale {
+        case headerLG, headerMD, body, caption
+        var font: Font {
+            switch self {
+            case .headerLG: return .title3
+            case .headerMD: return .headline
+            case .body: return .body
+            case .caption: return .caption
+            }
+        }
+    }
 
     static func colors(for scheme: ColorScheme) -> Colors {
         if scheme == .dark {
@@ -72,6 +85,7 @@ struct PillButtonStyle: ButtonStyle {
             )
             .shadow(color: isSelected ? c.accentPrimary.opacity(configuration.isPressed ? 0.2 : 0.35) : .clear, radius: isSelected ? 8 : 0, x: 0, y: 0)
             .scaleEffect(configuration.isPressed ? 0.98 : 1)
+            .animation(.easeInOut(duration: DSTheme.Motion().fast), value: configuration.isPressed)
     }
 }
 
@@ -125,4 +139,5 @@ struct SecondaryButtonStyle: ButtonStyle {
 
 extension View {
     func cardStyle() -> some View { modifier(CardModifier()) }
+    func dsFont(_ scale: DSTheme.TypeScale) -> some View { self.font(scale.font) }
 }

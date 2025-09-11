@@ -62,11 +62,11 @@ private struct BadHabitStoreRow: View {
     var body: some View {
         HStack {
             VStack(alignment: .leading) {
-                Text(item.name).font(.headline)
-                Text("Penalty \(item.lifePenalty) • Cost \(item.coinCost)🪙").font(.caption).foregroundStyle(.secondary)
+                Text(item.name).dsFont(.headerMD)
+                Text("Penalty \(item.lifePenalty) • Cost \(item.coinCost)🪙").dsFont(.caption).foregroundStyle(.secondary)
             }
             Spacer()
-            if ownedCount > 0 { Text("Owned: \(ownedCount)").font(.caption) }
+            if ownedCount > 0 { Text("Owned: \(ownedCount)").dsFont(.caption) }
             Button("Buy", action: onBuy).buttonStyle(PrimaryButtonStyle())
         }
         .cardStyle()

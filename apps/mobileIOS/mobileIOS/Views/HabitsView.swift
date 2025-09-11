@@ -287,7 +287,7 @@ private struct CombinedHabitsPanel: View {
                 Text("Good").bold()
                 ForEach(goodVM.habits) { habit in
                     VStack(alignment: .leading, spacing: 6) {
-                        HStack { Text(habit.name).font(.headline); Spacer(); Text("XP +\(habit.xpReward) • Coins +\(habit.coinReward)").font(.caption).foregroundStyle(.secondary) }
+                        HStack { Text(habit.name).dsFont(.headerMD); Spacer(); Text("XP +\(habit.xpReward) • Coins +\(habit.coinReward)").dsFont(.caption).foregroundStyle(.secondary) }
                         Button("Record") { Task { _ = await goodVM.complete(id: habit.id) } }
                             .buttonStyle(PrimaryButtonStyle())
                     }
@@ -304,7 +304,7 @@ private struct CombinedHabitsPanel: View {
                 Text("Bad").bold()
                 ForEach(badVM.items) { item in
                     VStack(alignment: .leading, spacing: 6) {
-                        HStack { Text(item.name).font(.headline); Spacer(); Text("Penalty \(item.lifePenalty)").font(.caption).foregroundStyle(.secondary) }
+                        HStack { Text(item.name).dsFont(.headerMD); Spacer(); Text("Penalty \(item.lifePenalty)").dsFont(.caption).foregroundStyle(.secondary) }
                         Button("Record Slip") { Task { await badVM.record(id: item.id) } }
                             .buttonStyle(SecondaryButtonStyle())
                     }
