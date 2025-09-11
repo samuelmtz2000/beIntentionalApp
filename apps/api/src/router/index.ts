@@ -6,6 +6,7 @@ import actions from "./actions";
 import store from "./store";
 import me from "./me";
 import users from "./users";
+import archive from "./archive";
 
 const api = Router();
 api.get("/__ping", (_req, res) => res.json({ ok: true }));
@@ -16,5 +17,6 @@ api.use("/actions", actions);
 api.use("/store", store);
 api.use("/me", me);
 api.use("/users", users);
+api.use("/archive", archive);
 
 export default api;

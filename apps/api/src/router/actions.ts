@@ -6,8 +6,8 @@ const DEFAULT_USER_ID = "seed-user-1";
 const router = Router();
 
 router.post("/habits/:id/complete", async (req, res) => {
-  const habit = await prisma.goodHabit.findUnique({ where: { id: req.params.id }, include: { area: true } });
-  if (!habit || !habit.area) return res.status(404).json({ message: "Habit not found" });
+  const habit = await prisma.goodHabit.findFirst({ where: { id: req.params.id, deletedAt: null }, include: { area: true } });
+  if (!habit || !habit.area || (habit.area as any).deletedAt) return res.status(404).json({ message: "Habit not found" });
 
   // get or create AreaLevel
   let areaLevel = await prisma.areaLevel.findUnique({ where: { userId_areaId: { userId: DEFAULT_USER_ID, areaId: habit.areaId } } });
@@ -49,7 +49,7 @@ router.post("/habits/:id/complete", async (req, res) => {
 });
 
 router.post("/bad-habits/:id/record", async (req, res) => {
-  const bad = await prisma.badHabit.findUnique({ where: { id: req.params.id } });
+  const bad = await prisma.badHabit.findFirst({ where: { id: req.params.id, deletedAt: null } });
   if (!bad) return res.status(404).json({ message: "Bad habit not found" });
 
   let avoidedPenalty = false;
