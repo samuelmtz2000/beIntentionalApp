@@ -24,7 +24,7 @@ struct UserConfigSheet: View {
                     if vm.levelCurve == "exp" {
                         HStack { Text("Multiplier"); Spacer(); Text(String(format: "%.2f×", vm.levelMultiplier)).foregroundStyle(.secondary) }
                         Slider(value: $vm.levelMultiplier, in: 1.0...4.0, step: 0.1)
-                        Text("Each level requires multiplier× previous XP.").font(.caption).foregroundStyle(.secondary)
+                        Text("Each level requires multiplier× previous XP.").dsFont(.caption).foregroundStyle(.secondary)
                     }
                 }
                 Section("XP Source Mode") {
@@ -33,7 +33,7 @@ struct UserConfigSheet: View {
                         Text("Stored").tag("stored")
                     }.pickerStyle(.segmented)
                     Text("Logs: sums past habit completions. Stored: increments a counter on completion.")
-                        .font(.caption)
+                        .dsFont(.caption)
                         .foregroundStyle(.secondary)
                 }
                 Section("Appearance") {
@@ -43,7 +43,7 @@ struct UserConfigSheet: View {
                         Text("Dark").tag(AppearancePreference.dark)
                     }.pickerStyle(.segmented)
                     Text("Applies immediately. Stored in Settings.")
-                        .font(.caption)
+                        .dsFont(.caption)
                         .foregroundStyle(.secondary)
                 }
             }

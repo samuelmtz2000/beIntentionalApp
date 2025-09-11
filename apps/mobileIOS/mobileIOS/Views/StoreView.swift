@@ -69,7 +69,9 @@ private struct BadHabitStoreRow: View {
             }
             Spacer()
             if ownedCount > 0 { Text("Owned: \(ownedCount)").dsFont(.caption) }
-            Button("Buy", action: onBuy).buttonStyle(PrimaryButtonStyle())
+            Button("Buy", action: onBuy)
+                .buttonStyle(PrimaryButtonStyle())
+                .accessibilityLabel(Text("Buy \(item.name) for \(item.coinCost) coins"))
         }
         .cardStyle()
         .listRowBackground(Color.clear)

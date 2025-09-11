@@ -222,11 +222,11 @@ private struct PlayerPanel: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
             if let p = profile {
-                Text("Overall").font(.headline)
+                Text("Overall").dsFont(.headerMD)
                 HStack { Label("Life", systemImage: "heart.fill"); Spacer(); Text("\(p.life)") }
                 HStack { Label("Coins", systemImage: "creditcard"); Spacer(); Text("\(p.coins)") }
                 Divider()
-                Text("Per Area").font(.headline)
+                Text("Per Area").dsFont(.headerMD)
                 ForEach(p.areas, id: \.areaId) { a in
                     VStack(alignment: .leading) {
                         HStack { Text(a.name).bold(); Spacer(); Text("Lvl \(a.level)") }
@@ -242,7 +242,7 @@ private struct PlayerPanel: View {
                                 Image(systemName: "arrow.right")
                                 Text("\(a.xp) from \(need)")
                             }
-                            .font(.caption)
+                            .dsFont(.caption)
                             .foregroundStyle(.secondary)
                         }
                     }
@@ -274,7 +274,7 @@ private struct CombinedHabitsPanel: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
             HStack {
-                Text("Habits").font(.headline)
+                Text("Habits").dsFont(.headerMD)
                 Spacer()
                 Menu {
                     Button("New Good Habit", action: onAddGood)
@@ -290,6 +290,7 @@ private struct CombinedHabitsPanel: View {
                         HStack { Text(habit.name).dsFont(.headerMD); Spacer(); Text("XP +\(habit.xpReward) • Coins +\(habit.coinReward)").dsFont(.caption).foregroundStyle(.secondary) }
                         Button("Record") { Task { _ = await goodVM.complete(id: habit.id) } }
                             .buttonStyle(PrimaryButtonStyle())
+                            .accessibilityLabel(Text("Complete habit \(habit.name)"))
                     }
                     .contentShape(Rectangle())
                     .swipeActions(edge: .leading, allowsFullSwipe: true) {
@@ -307,6 +308,7 @@ private struct CombinedHabitsPanel: View {
                         HStack { Text(item.name).dsFont(.headerMD); Spacer(); Text("Penalty \(item.lifePenalty)").dsFont(.caption).foregroundStyle(.secondary) }
                         Button("Record Slip") { Task { await badVM.record(id: item.id) } }
                             .buttonStyle(SecondaryButtonStyle())
+                            .accessibilityLabel(Text("Record bad habit \(item.name)"))
                     }
                     .contentShape(Rectangle())
                     .swipeActions(edge: .leading, allowsFullSwipe: true) {
@@ -359,7 +361,7 @@ private struct CombinedHabitsListPanel: View {
                 }
                 ForEach(goodVM.habits) { habit in
                     VStack(alignment: .leading, spacing: 6) {
-                        HStack { Text(habit.name).font(.headline); Spacer(); Text("XP +\(habit.xpReward) • Coins +\(habit.coinReward)").font(.caption).foregroundStyle(.secondary) }
+                        HStack { Text(habit.name).dsFont(.headerMD); Spacer(); Text("XP +\(habit.xpReward) • Coins +\(habit.coinReward)").dsFont(.caption).foregroundStyle(.secondary) }
                     }
                     .cardStyle()
                     .listRowBackground(Color.clear)
@@ -394,7 +396,7 @@ private struct CombinedHabitsListPanel: View {
                 }
                 ForEach(badVM.items) { item in
                     VStack(alignment: .leading, spacing: 6) {
-                        HStack { Text(item.name).font(.headline); Spacer(); Text("Penalty \(item.lifePenalty)").font(.caption).foregroundStyle(.secondary) }
+                        HStack { Text(item.name).dsFont(.headerMD); Spacer(); Text("Penalty \(item.lifePenalty)").dsFont(.caption).foregroundStyle(.secondary) }
                     }
                     .cardStyle()
                     .listRowBackground(Color.clear)
@@ -485,7 +487,7 @@ private struct AreasPanel: View {
                 }
             } header: {
                 HStack {
-                    Text("Areas").font(.headline)
+                    Text("Areas").dsFont(.headerMD)
                     Spacer()
                     Button { onAdd() } label: {
                         Image(systemName: "plus.circle.fill").foregroundStyle(.blue)
@@ -515,9 +517,9 @@ private struct StorePanel: View {
                 ForEach(vm.controlledBadHabits) { b in
                     VStack(alignment: .leading, spacing: 6) {
                         HStack {
-                            Text(b.name).font(.headline)
+                            Text(b.name).dsFont(.headerMD)
                             Spacer()
-                            Text("Penalty \(b.lifePenalty) • Cost \(b.coinCost)🪙")
+                            Text("Penalty \(b.lifePenalty) • Cost \(b.coinCost)🪙").dsFont(.caption)
                                 .font(.caption)
                                 .foregroundStyle(.secondary)
                         }

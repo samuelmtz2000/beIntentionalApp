@@ -21,7 +21,7 @@ struct StatsView: View {
                     Section("Per Area") {
                         ForEach(p.areas, id: \.areaId) { a in
                             VStack(alignment: .leading, spacing: 4) {
-                                HStack { Text(a.name).font(.headline); Spacer(); Text("Lvl \(a.level)") }
+                                HStack { Text(a.name).dsFont(.headerMD); Spacer(); Text("Lvl \(a.level)").dsFont(.caption) }
                                 ProgressView(value: Double(a.xp), total: Double(a.xpPerLevel))
                                     .tint(.blue)
                             }
@@ -37,4 +37,3 @@ struct StatsView: View {
         }
     }
 }
-
