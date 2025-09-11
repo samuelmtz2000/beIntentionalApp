@@ -50,7 +50,7 @@ struct BadHabitEditSheet: View {
                                                coinCost: item.coinCost,
                                                isActive: item.isActive)
                         onSave(updated); dismiss()
-                    }.keyboardShortcut(.defaultAction)
+                    }.buttonStyle(PrimaryButtonStyle()).keyboardShortcut(.defaultAction)
                 }
             }
         }

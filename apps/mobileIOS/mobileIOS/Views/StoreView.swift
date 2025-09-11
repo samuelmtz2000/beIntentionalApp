@@ -65,7 +65,7 @@ private struct BadHabitStoreRow: View {
             }
             Spacer()
             if ownedCount > 0 { Text("Owned: \(ownedCount)").font(.caption) }
-            Button("Buy", action: onBuy).buttonStyle(.borderedProminent)
+            Button("Buy", action: onBuy).buttonStyle(PrimaryButtonStyle())
         }
     }
 }

@@ -76,7 +76,7 @@ struct NewAreaSheet: View {
             .navigationTitle("New Area")
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) { Button("Cancel") { dismiss() } }
-                ToolbarItem(placement: .confirmationAction) { Button("Create") { onCreate(name, icon.isEmpty ? nil : icon, xpPerLevel, levelCurve, levelCurve == "exp" ? levelMultiplier : nil); dismiss() }.disabled(name.isEmpty) }
+                ToolbarItem(placement: .confirmationAction) { Button("Create") { onCreate(name, icon.isEmpty ? nil : icon, xpPerLevel, levelCurve, levelCurve == "exp" ? levelMultiplier : nil); dismiss() }.buttonStyle(PrimaryButtonStyle()).disabled(name.isEmpty) }
             }
         }
         .presentationDetents([.medium, .large])

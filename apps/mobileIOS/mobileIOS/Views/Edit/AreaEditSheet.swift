@@ -43,7 +43,7 @@ struct AreaEditSheet: View {
             .navigationTitle("Edit Area")
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) { Button("Cancel") { dismiss() } }
-                ToolbarItem(placement: .confirmationAction) { Button("Save") { onSave(area); dismiss() }.keyboardShortcut(.defaultAction) }
+                ToolbarItem(placement: .confirmationAction) { Button("Save") { onSave(area); dismiss() }.buttonStyle(PrimaryButtonStyle()).keyboardShortcut(.defaultAction) }
             }
         }
     }
