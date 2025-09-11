@@ -141,8 +141,8 @@ private struct PlayerHeader: View {
     var onLogToday: () -> Void
     var onOpenStore: () -> Void
     var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            HStack(spacing: 16) {
+        VStack(alignment: .leading, spacing: 16) {
+            HStack(spacing: 20) {
                 if let p = profile {
                     VStack(alignment: .leading) {
                         HStack { Text("Lvl \(p.level)").bold().padding(6).background(Capsule().fill(Color.blue.opacity(0.15))) }
@@ -167,6 +167,7 @@ private struct PlayerHeader: View {
                     Text("Loading...")
                 }
             }
+            .padding(.vertical, 8)
             // Removed quick action buttons to simplify header; navigation chips below handle section switching
         }
         .accessibilityElement(children: .contain)
@@ -197,19 +198,9 @@ private struct TileNav: View {
                     .accessibilityAddTraits(.isButton)
                 }
                 if let onConfig {
-                    Button(action: onConfig) {
-                        HStack(spacing: 6) {
-                            Image(systemName: "gearshape")
-                            Text("Config")
-                        }
-                        .font(.callout)
-                        .fontWeight(.semibold)
-                        .foregroundStyle(.primary)
-                        .padding(.horizontal, 16)
-                        .padding(.vertical, 9)
-                        .background(Capsule().fill(Color.gray.opacity(0.15)))
-                    }
-                    .accessibilityLabel(Text("User Configuration"))
+                    Button(action: onConfig) { Text("Config").font(.callout).fontWeight(.semibold) }
+                        .buttonStyle(PillButtonStyle(isSelected: false))
+                        .accessibilityLabel(Text("User Configuration"))
                 }
             }
         }
@@ -284,7 +275,10 @@ private struct CombinedHabitsPanel: View {
                 }
             }
             Group {
-                Text("Good").bold()
+                HStack(spacing: 8) {
+                    Image(systemName: "checkmark.seal.fill").foregroundStyle(.green)
+                    Text("Good Habits").dsFont(.headerMD).bold()
+                }
                 ForEach(goodVM.habits) { habit in
                     VStack(alignment: .leading, spacing: 6) {
                         HStack { Text(habit.name).dsFont(.headerMD); Spacer(); Text("XP +\(habit.xpReward) • Coins +\(habit.coinReward)").dsFont(.caption).foregroundStyle(.secondary) }
@@ -301,8 +295,11 @@ private struct CombinedHabitsPanel: View {
                         Button(role: .destructive) { confirmDelete = (habit.id, habit.name) } label: { Label("Delete", systemImage: "trash") }
                     }
                 }
-                Divider().padding(.vertical, 4)
-                Text("Bad").bold()
+                Divider().padding(.vertical, 8)
+                HStack(spacing: 8) {
+                    Image(systemName: "exclamationmark.triangle.fill").foregroundStyle(.orange)
+                    Text("Bad Habits").dsFont(.headerMD).bold()
+                }
                 ForEach(badVM.items) { item in
                     VStack(alignment: .leading, spacing: 6) {
                         HStack { Text(item.name).dsFont(.headerMD); Spacer(); Text("Penalty \(item.lifePenalty)").dsFont(.caption).foregroundStyle(.secondary) }
@@ -472,13 +469,15 @@ private struct AreasPanel: View {
                     VStack(alignment: .leading, spacing: 6) {
                         HStack {
                             Text(area.icon ?? "🗂️")
-                            Text(area.name)
+                            Text(area.name).dsFont(.headerMD)
                             Spacer()
                             Text("XP/Level: \(area.xpPerLevel)")
-                                .font(.caption)
+                                .dsFont(.caption)
                                 .foregroundStyle(.secondary)
                         }
                     }
+                    .cardStyle()
+                    .listRowBackground(Color.clear)
                     .contentShape(Rectangle())
                     .swipeActions(edge: .trailing, allowsFullSwipe: true) {
                         Button { editingArea = area } label: { Label("Edit", systemImage: "pencil") }.tint(.blue)
@@ -558,7 +557,9 @@ private struct ArchivePanel: View {
             if !vm.areas.isEmpty {
                 Section("Areas") {
                     ForEach(vm.areas) { a in
-                        HStack { Text(a.icon ?? "🗂️"); Text(a.name); Spacer(); Text("XP/Level \(a.xpPerLevel)").font(.caption).foregroundStyle(.secondary) }
+                        HStack { Text(a.icon ?? "🗂️"); Text(a.name).dsFont(.headerMD); Spacer(); Text("XP/Level \(a.xpPerLevel)").dsFont(.caption).foregroundStyle(.secondary) }
+                            .cardStyle()
+                            .listRowBackground(Color.clear)
                             .swipeActions {
                                 Button {
                                     Task { await vm.restoreArea(id: a.id); await vm.refresh(); await onRestored() }
@@ -570,7 +571,9 @@ private struct ArchivePanel: View {
             if !vm.habits.isEmpty {
                 Section("Habits") {
                     ForEach(vm.habits) { h in
-                        HStack { Text(h.name); Spacer(); Text("XP +\(h.xpReward) • Coins +\(h.coinReward)").font(.caption).foregroundStyle(.secondary) }
+                        HStack { Text(h.name).dsFont(.headerMD); Spacer(); Text("XP +\(h.xpReward) • Coins +\(h.coinReward)").dsFont(.caption).foregroundStyle(.secondary) }
+                            .cardStyle()
+                            .listRowBackground(Color.clear)
                             .swipeActions {
                                 Button {
                                     Task { await vm.restoreHabit(id: h.id); await vm.refresh(); await onRestored() }
@@ -582,7 +585,9 @@ private struct ArchivePanel: View {
             if !vm.badHabits.isEmpty {
                 Section("Bad Habits") {
                     ForEach(vm.badHabits) { b in
-                        HStack { Text(b.name); Spacer(); Text("Penalty \(b.lifePenalty)").font(.caption).foregroundStyle(.secondary) }
+                        HStack { Text(b.name).dsFont(.headerMD); Spacer(); Text("Penalty \(b.lifePenalty)").dsFont(.caption).foregroundStyle(.secondary) }
+                            .cardStyle()
+                            .listRowBackground(Color.clear)
                             .swipeActions {
                                 Button {
                                     Task { await vm.restoreBadHabit(id: b.id); await vm.refresh(); await onRestored() }
