@@ -287,7 +287,7 @@ private struct CombinedHabitsPanel: View {
                     VStack(alignment: .leading, spacing: 6) {
                         HStack { Text(habit.name).font(.headline); Spacer(); Text("XP +\(habit.xpReward) • Coins +\(habit.coinReward)").font(.caption).foregroundStyle(.secondary) }
                         Button("Record") { Task { _ = await goodVM.complete(id: habit.id) } }
-                            .buttonStyle(PrimaryButtonStyle())
+                            .buttonStyle(.borderedProminent)
                     }
                     .contentShape(Rectangle())
                     .swipeActions(edge: .leading, allowsFullSwipe: true) {
@@ -304,7 +304,8 @@ private struct CombinedHabitsPanel: View {
                     VStack(alignment: .leading, spacing: 6) {
                         HStack { Text(item.name).font(.headline); Spacer(); Text("Penalty \(item.lifePenalty)").font(.caption).foregroundStyle(.secondary) }
                         Button("Record Slip") { Task { await badVM.record(id: item.id) } }
-                            .buttonStyle(SecondaryButtonStyle())
+                            .buttonStyle(.bordered)
+                            .tint(.red)
                     }
                     .contentShape(Rectangle())
                     .swipeActions(edge: .leading, allowsFullSwipe: true) {
@@ -620,7 +621,7 @@ struct NewHabitSheet: View {
             .navigationTitle("New Habit")
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) { Button("Cancel") { dismiss() } }
-                ToolbarItem(placement: .confirmationAction) { Button("Create") { onCreate(selectedAreaId, name, xp, coins, cadence.isEmpty ? nil : cadence, active); dismiss() }.buttonStyle(PrimaryButtonStyle()).disabled(name.isEmpty || selectedAreaId.isEmpty) }
+                ToolbarItem(placement: .confirmationAction) { Button("Create") { onCreate(selectedAreaId, name, xp, coins, cadence.isEmpty ? nil : cadence, active); dismiss() }.disabled(name.isEmpty || selectedAreaId.isEmpty) }
             }
         }
         .presentationDetents([.medium, .large])
@@ -660,7 +661,7 @@ struct HabitDetailView: View {
                 Button("Save") {
                     let updated = GoodHabit(id: habit.id, areaId: areaIdInput, name: habit.name, xpReward: habit.xpReward, coinReward: habit.coinReward, cadence: habit.cadence, isActive: habit.isActive)
                     onSave(updated); dismiss()
-                }.buttonStyle(PrimaryButtonStyle())
+                }.buttonStyle(.borderedProminent)
                 Button("Delete", role: .destructive) { onDelete(); dismiss() }
             }
         }
@@ -702,7 +703,7 @@ struct NewBadHabitSheet: View {
             .navigationTitle("New Bad Habit")
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) { Button("Cancel") { dismiss() } }
-                ToolbarItem(placement: .confirmationAction) { Button("Create") { onCreate(selectedAreaId, name, lifePenalty, controllable, coinCost, active); dismiss() }.buttonStyle(PrimaryButtonStyle()).disabled(name.isEmpty) }
+                ToolbarItem(placement: .confirmationAction) { Button("Create") { onCreate(selectedAreaId, name, lifePenalty, controllable, coinCost, active); dismiss() }.disabled(name.isEmpty) }
             }
         }
         .presentationDetents([.medium, .large])
@@ -739,7 +740,7 @@ struct BadHabitDetailView: View {
                 Button("Save") {
                     let updated = BadHabit(id: item.id, areaId: areaIdInput.isEmpty ? nil : areaIdInput, name: item.name, lifePenalty: item.lifePenalty, controllable: item.controllable, coinCost: item.coinCost, isActive: item.isActive)
                     onSave(updated); dismiss()
-                }.buttonStyle(PrimaryButtonStyle())
+                }.buttonStyle(.borderedProminent)
                 Button("Delete", role: .destructive) { onDelete(); dismiss() }
             }
         }
