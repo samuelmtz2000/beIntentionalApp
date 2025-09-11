@@ -1,6 +1,7 @@
 import SwiftUI
 
 struct HabitsView: View {
+    @Environment(\.colorScheme) private var scheme
     enum SectionKind: String, CaseIterable { case player = "Player", habits = "Habits", areas = "Areas", store = "Store", archive = "Archive" }
 
     @EnvironmentObject private var app: AppModel
@@ -84,6 +85,7 @@ struct HabitsView: View {
             }
             // Toast overlay removed
             .navigationTitle("Habits")
+            .background(DSTheme.colors(for: scheme).backgroundPrimary)
             .task { await refreshAll() }
             .refreshable { await refreshAll() }
             .sheet(isPresented: $showingAddGood) {

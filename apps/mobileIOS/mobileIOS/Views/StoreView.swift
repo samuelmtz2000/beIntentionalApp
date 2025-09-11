@@ -9,6 +9,7 @@ struct StoreView: View {
         _vm = StateObject(wrappedValue: StoreViewModel(api: app.api))
     }
 
+    @Environment(\.colorScheme) private var scheme
     var body: some View {
         NavigationStack {
             List {
@@ -24,6 +25,7 @@ struct StoreView: View {
             .refreshable { await vm.refresh() }
             .alert(item: $vm.apiError) { err in Alert(title: Text("Error"), message: Text(err.message), dismissButton: .default(Text("OK"))) }
         }
+        .background(DSTheme.colors(for: scheme).backgroundPrimary)
     }
 
     private func ownedCount(_ id: String) -> Int { vm.ownedBadHabits.first(where: { $0.id == id })?.count ?? 0 }

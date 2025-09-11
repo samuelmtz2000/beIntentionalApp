@@ -10,6 +10,7 @@ struct AreasView: View {
         _vm = StateObject(wrappedValue: AreasViewModel(api: app.api))
     }
 
+    @Environment(\.colorScheme) private var scheme
     var body: some View {
         NavigationStack {
             List {
@@ -40,6 +41,7 @@ struct AreasView: View {
             .task { await vm.refresh() }
             .alert(item: $vm.apiError) { err in Alert(title: Text("Error"), message: Text(err.message), dismissButton: .default(Text("OK"))) }
         }
+        .background(DSTheme.colors(for: scheme).backgroundPrimary)
     }
 }
 
