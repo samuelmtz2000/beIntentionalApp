@@ -5,6 +5,7 @@ struct SettingsView: View {
     @State private var baseURLString: String = UserDefaults.standard.string(forKey: "API_BASE_URL") ?? "http://localhost:4000"
     @State private var showingSaved = false
 
+    @Environment(\.colorScheme) private var scheme
     var body: some View {
         NavigationStack {
             Form {
@@ -20,6 +21,8 @@ struct SettingsView: View {
                 }
             }
             .navigationTitle("Settings")
+            .toolbarBackground(DSTheme.colors(for: scheme).backgroundSecondary, for: .navigationBar)
+            .toolbarColorScheme(scheme, for: .navigationBar)
             .alert("Saved", isPresented: $showingSaved) { Button("OK", role: .cancel) {} }
         }
     }
@@ -32,4 +35,3 @@ struct SettingsView: View {
         showingSaved = true
     }
 }
-
