@@ -43,7 +43,7 @@ struct HabitEditSheet: View {
                     Button("Save") {
                         let updated = GoodHabit(id: habit.id, areaId: selectedAreaId, name: habit.name, xpReward: habit.xpReward, coinReward: habit.coinReward, cadence: habit.cadence, isActive: habit.isActive)
                         onSave(updated); dismiss()
-                    }.keyboardShortcut(.defaultAction)
+                    }.buttonStyle(PrimaryButtonStyle()).keyboardShortcut(.defaultAction)
                 }
             }
         }

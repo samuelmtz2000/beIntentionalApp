@@ -85,7 +85,38 @@ struct CardModifier: ViewModifier {
     }
 }
 
+struct PrimaryButtonStyle: ButtonStyle {
+    @Environment(\.colorScheme) private var scheme
+    func makeBody(configuration: Configuration) -> some View {
+        let c = DSTheme.colors(for: scheme)
+        return configuration.label
+            .foregroundStyle(c.textPrimary)
+            .padding(.horizontal, 24)
+            .padding(.vertical, 10)
+            .background(RoundedRectangle(cornerRadius: 24).fill(c.accentPrimary))
+            .overlay(
+                RoundedRectangle(cornerRadius: 24)
+                    .fill(Color.white.opacity(configuration.isPressed ? 0.14 : 0))
+            )
+            .shadow(color: c.accentPrimary.opacity(0.25), radius: 8)
+            .scaleEffect(configuration.isPressed ? 0.98 : 1)
+    }
+}
+
+struct SecondaryButtonStyle: ButtonStyle {
+    @Environment(\.colorScheme) private var scheme
+    func makeBody(configuration: Configuration) -> some View {
+        let c = DSTheme.colors(for: scheme)
+        return configuration.label
+            .foregroundStyle(c.accentPrimary)
+            .padding(.horizontal, 24)
+            .padding(.vertical, 10)
+            .background(RoundedRectangle(cornerRadius: 16).fill(c.surfaceCard))
+            .overlay(RoundedRectangle(cornerRadius: 16).stroke(c.accentPrimary, lineWidth: 1))
+            .scaleEffect(configuration.isPressed ? 0.98 : 1)
+    }
+}
+
 extension View {
     func cardStyle() -> some View { modifier(CardModifier()) }
 }
-
