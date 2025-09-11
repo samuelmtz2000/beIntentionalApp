@@ -117,6 +117,7 @@ struct HabitsView: View {
             case .areas: AreasPanel(vm: areasVM, onAdd: { showingAddArea = true })
             case .store: StorePanel(vm: storeVM)
             case .archive: ArchivePanel(vm: archiveVM, onRestored: { await refreshAll() })
+            case .config: EmptyView()
             }
         }
     }
@@ -393,8 +394,9 @@ private struct CombinedHabitsListPanel: View {
                     }
                 }
             } header: {
-                HStack {
-                    Text("Good").dsFont(.headerMD).bold()
+                HStack(spacing: 8) {
+                    Image(systemName: "checkmark.seal.fill").foregroundStyle(.green)
+                    Text("Good Habits").dsFont(.headerMD).bold()
                     Spacer()
                     Button { onAddGood() } label: { Image(systemName: "plus.circle.fill").foregroundStyle(.blue) }
                         .accessibilityLabel(Text("New Good Habit"))
@@ -428,8 +430,9 @@ private struct CombinedHabitsListPanel: View {
                     }
                 }
             } header: {
-                HStack {
-                    Text("Bad").dsFont(.headerMD).bold()
+                HStack(spacing: 8) {
+                    Image(systemName: "exclamationmark.triangle.fill").foregroundStyle(.orange)
+                    Text("Bad Habits").dsFont(.headerMD).bold()
                     Spacer()
                     Button { onAddBad() } label: { Image(systemName: "plus.circle.fill").foregroundStyle(.red) }
                         .accessibilityLabel(Text("New Bad Habit"))
