@@ -12,9 +12,13 @@ Native iOS client for Habit Hero, built with Swift 5.9+, SwiftUI, MVVM, async/aw
 
 - Tabs: Today, Habits, Stats, Settings
 - Habits CRUD, quick completion (awards XP/coins)
+- Small inline header for Habits; section headers for Good/Bad with icons
 - Global profile stats: life, coins, and global Level/XP derived from your activity
-- Clear progress: Habits header shows “XP to next → {current} from {required}” with correct per‑level requirement (linear or exponential)
-- User Config sheet (Config pill in Habits chip bar): edit XP per Level, Level curve (linear/exp), exponential multiplier, and XP computation mode (logs vs stored)
+- Clear progress: Habits player header shows “XP to next → {current} from {required}”
+- Pill navigation with icons: Player, Habits, Areas, Store, Archive, Config
+- Store redesigned as DS card grid with Buy actions (no table rows)
+- Archive/Areas rows styled as DS cards with consistent typography
+- User Config (via Config pill): XP per Level, Level curve (linear/exp), multiplier, XP computation mode (logs vs stored), and Appearance (System/Light/Dark)
 - Settings: editable API base URL
 
 ## Getting Started
@@ -59,9 +63,18 @@ Ensure the backend is running and seeded so the app has demo data.
 ## UI Patterns
 
 - Tab navigation: primary screens via bottom tabs.
-- Pill navigation: horizontal chip bar for local sections (Player / Habits / Areas / Store) and a Config pill.
-- Spotify‑like actions: leading full swipe = Record; trailing full swipe = Edit (full), Delete (with confirm).
+- Pill navigation with icons: Player / Habits / Areas / Store / Archive / Config.
+- Habits title: small inline nav title; Good/Bad sections have icon headers.
+- Store: two‑column card grid (Design System), each card shows title, secondary text, Buy button.
+- Archive/Areas: DS cards for rows (rounded, shadow), consistent dsFont typography.
+- Swipe actions: leading swipe → Record; trailing swipe → Edit/Delete (with confirm).
 - Forms: Good/Bad create & edit forms use Area pickers sourced from the Areas catalog. Bad can be “None (Global)”.
+
+## Design System
+
+- Tokens: semantic colors, spacing, radii, typography wrappers (dsFont), button styles (Primary/Secondary), card modifier.
+- Theme switching: System/Light/Dark from Config; applied app‑wide.
+- Accessibility: buttons have descriptive labels, 44×44pt targets where applicable.
 
 ## Testing
 

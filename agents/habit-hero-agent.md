@@ -32,6 +32,15 @@
   - Principles checklist: `agents/design-review-browser/design-principles-example.md`
   - Slash command: `agents/design-review-browser/design-review-slash-command.md`
 
+## iOS App — Current UI Conventions
+
+- Pills with icons: Player, Habits, Areas, Store, Archive, Config. Config pill opens the user config sheet.
+- Habits screen: small inline nav title; content organized by Good Habits / Bad Habits section headers with icons.
+- Store: two‑column DS card grid (not table rows). Cards include title, secondary text, and Primary Buy button.
+- Archive/Areas: DS card rows with dsFont type scale and clear row backgrounds.
+- Design System: semantic colors, spacing, radii, dsFont text wrappers, Primary/SecondaryButtonStyle, CardModifier, theme switching (System/Light/Dark).
+- Accessibility: key actions have descriptive accessibilityLabels; minimum touch sizes applied where possible.
+
 ## Coding Style & Naming Conventions
 
 - Language: TypeScript (strict). Indentation: 2 spaces. Use ES modules.
