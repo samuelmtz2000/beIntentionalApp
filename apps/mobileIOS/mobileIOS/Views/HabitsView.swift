@@ -1,7 +1,7 @@
 import SwiftUI
 
 struct HabitsView: View {
-    enum SectionKind: String, CaseIterable { case player = "Player", habits = "Habits", areas = "Areas", store = "Store" }
+    enum SectionKind: String, CaseIterable { case player = "Player", habits = "Habits", areas = "Areas", store = "Store", archive = "Archive" }
 
     @EnvironmentObject private var app: AppModel
     @StateObject private var profileVM: ProfileViewModel
@@ -9,6 +9,7 @@ struct HabitsView: View {
     @StateObject private var badVM: BadHabitsViewModel
     @StateObject private var areasVM: AreasViewModel
     @StateObject private var storeVM: StoreViewModel
+    @StateObject private var archiveVM: ArchiveViewModel
 
     @State private var showingAddGood = false
     @State private var showingAddBad = false
@@ -24,6 +25,7 @@ struct HabitsView: View {
         _badVM = StateObject(wrappedValue: BadHabitsViewModel(api: app.api))
         _areasVM = StateObject(wrappedValue: AreasViewModel(api: app.api))
         _storeVM = StateObject(wrappedValue: StoreViewModel(api: app.api))
+        _archiveVM = StateObject(wrappedValue: ArchiveViewModel(api: app.api))
     }
 
     var body: some View {
@@ -63,6 +65,13 @@ struct HabitsView: View {
                     }
                     .padding(.horizontal)
                     StorePanel(vm: storeVM)
+                } else if selected == .archive {
+                    VStack(alignment: .leading, spacing: 16) {
+                        PlayerHeader(profile: profileVM.profile, onLogToday: { selected = .habits }, onOpenStore: { selected = .store })
+                        TileNav(selected: $selected, onConfig: { showingConfig = true })
+                    }
+                    .padding(.horizontal)
+                    ArchivePanel(vm: archiveVM, onRestored: { await refreshAll() })
                 } else {
                     ScrollView {
                         VStack(alignment: .leading, spacing: 16) {
@@ -105,16 +114,23 @@ struct HabitsView: View {
             case .habits: CombinedHabitsPanel(goodVM: goodVM, badVM: badVM, onAddGood: { showingAddGood = true }, onAddBad: { showingAddBad = true })
             case .areas: AreasPanel(vm: areasVM, onAdd: { showingAddArea = true })
             case .store: StorePanel(vm: storeVM)
+            case .archive: ArchivePanel(vm: archiveVM, onRestored: { await refreshAll() })
             }
         }
     }
 
+}
+
+extension HabitsView {
     private func refreshAll() async {
-        await profileVM.refresh()
-        await goodVM.refresh()
-        await badVM.refresh()
-        await areasVM.refresh()
-        await storeVM.refresh()
+        await withTaskGroup(of: Void.self) { group in
+            group.addTask { await profileVM.refresh() }
+            group.addTask { await areasVM.refresh() }
+            group.addTask { await goodVM.refresh() }
+            group.addTask { await badVM.refresh() }
+            group.addTask { await storeVM.refresh() }
+            group.addTask { await archiveVM.refresh() }
+        }
     }
 }
 
@@ -526,6 +542,59 @@ private struct StorePanel: View {
             }
         }
         .listStyle(.insetGrouped)
+    }
+}
+
+private struct ArchivePanel: View {
+    @ObservedObject var vm: ArchiveViewModel
+    var onRestored: () async -> Void
+    @State private var inFlight: Set<String> = []
+
+    var body: some View {
+        List {
+            if !vm.areas.isEmpty {
+                Section("Areas") {
+                    ForEach(vm.areas) { a in
+                        HStack { Text(a.icon ?? "🗂️"); Text(a.name); Spacer(); Text("XP/Level \(a.xpPerLevel)").font(.caption).foregroundStyle(.secondary) }
+                            .swipeActions {
+                                Button {
+                                    Task { await vm.restoreArea(id: a.id); await vm.refresh(); await onRestored() }
+                                } label: { Label("Restore", systemImage: "arrow.uturn.left.circle") }.tint(.green)
+                            }
+                    }
+                }
+            }
+            if !vm.habits.isEmpty {
+                Section("Habits") {
+                    ForEach(vm.habits) { h in
+                        HStack { Text(h.name); Spacer(); Text("XP +\(h.xpReward) • Coins +\(h.coinReward)").font(.caption).foregroundStyle(.secondary) }
+                            .swipeActions {
+                                Button {
+                                    Task { await vm.restoreHabit(id: h.id); await vm.refresh(); await onRestored() }
+                                } label: { Label("Restore", systemImage: "arrow.uturn.left.circle") }.tint(.green)
+                            }
+                    }
+                }
+            }
+            if !vm.badHabits.isEmpty {
+                Section("Bad Habits") {
+                    ForEach(vm.badHabits) { b in
+                        HStack { Text(b.name); Spacer(); Text("Penalty \(b.lifePenalty)").font(.caption).foregroundStyle(.secondary) }
+                            .swipeActions {
+                                Button {
+                                    Task { await vm.restoreBadHabit(id: b.id); await vm.refresh(); await onRestored() }
+                                } label: { Label("Restore", systemImage: "arrow.uturn.left.circle") }.tint(.green)
+                            }
+                    }
+                }
+            }
+            if vm.areas.isEmpty && vm.habits.isEmpty && vm.badHabits.isEmpty {
+                Section { Text("Archive is empty.").foregroundStyle(.secondary) }
+            }
+        }
+        .listStyle(.insetGrouped)
+        .task { await vm.refresh() }
+        .refreshable { await vm.refresh() }
     }
 }
 
