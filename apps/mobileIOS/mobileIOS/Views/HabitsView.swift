@@ -49,21 +49,18 @@ struct HabitsView: View {
                         PlayerHeader(profile: profileVM.profile, onLogToday: { selected = .habits }, onOpenStore: { selected = .store })
                         TileNav(selected: $selected, onConfig: { showingConfig = true })
                     }
-                    .padding(.horizontal)
                     AreasPanel(vm: areasVM, onAdd: { showingAddArea = true })
                 } else if selected == .areas {
                     VStack(alignment: .leading, spacing: 16) {
                         PlayerHeader(profile: profileVM.profile, onLogToday: { selected = .habits }, onOpenStore: { selected = .store })
                         TileNav(selected: $selected, onConfig: { showingConfig = true })
                     }
-                    .padding(.horizontal)
                     AreasPanel(vm: areasVM, onAdd: { showingAddArea = true })
                 } else if selected == .store {
                     VStack(alignment: .leading, spacing: 16) {
                         PlayerHeader(profile: profileVM.profile, onLogToday: { selected = .habits }, onOpenStore: { selected = .store })
                         TileNav(selected: $selected, onConfig: { showingConfig = true })
                     }
-                    .padding(.horizontal)
                     StorePanel(vm: storeVM)
                 } else if selected == .archive {
                     VStack(alignment: .leading, spacing: 16) {
@@ -78,13 +75,12 @@ struct HabitsView: View {
                             PlayerHeader(profile: profileVM.profile, onLogToday: { selected = .habits }, onOpenStore: { selected = .store })
                             TileNav(selected: $selected, onConfig: { showingConfig = true })
                             content
-                        }.padding()
+                        }.padding(.vertical)
                     }
                 }
             }
             // Toast overlay removed
-            .navigationTitle("Habits")
-            .navigationBarTitleDisplayMode(.inline)
+            .navigationTitle("")
             .background(DSTheme.colors(for: scheme).backgroundPrimary)
             .task { await refreshAll() }
             .refreshable { await refreshAll() }
@@ -172,6 +168,7 @@ private struct PlayerHeader: View {
             // Removed quick action buttons to simplify header; navigation chips below handle section switching
         }
         .accessibilityElement(children: .contain)
+        .padding(.horizontal, 16)
     }
 }
 
@@ -206,6 +203,7 @@ private struct TileNav: View {
                     .accessibilityAddTraits(.isButton)
                 }
             }
+            .padding(.horizontal, 16)
         }
     }
 }
