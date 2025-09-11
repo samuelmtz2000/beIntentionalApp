@@ -1,0 +1,180 @@
+{
+  "$schema": "./design-system.json",
+  "$themes": [
+    {
+      "id": "dark",
+      "name": "Dark",
+      "selectedTokenSets": {
+        "core": "source",
+        "palette/dark": "enabled",
+        "palette/light": "disabled",
+        "motion": "enabled"
+      }
+    },
+    {
+      "id": "light",
+      "name": "Light",
+      "selectedTokenSets": {
+        "core": "source",
+        "palette/dark": "disabled",
+        "palette/light": "enabled",
+        "motion": "enabled"
+      }
+    }
+  ],
+  "tokenSets": {
+    "core": {
+      "state": {
+        "opacity": {
+          "hover": { "value": "0.08" },
+          "pressed": { "value": "0.14" },
+          "disabled": { "value": "0.38" },
+          "focusRing": { "value": "0.32" }
+        },
+        "border": {
+          "focus": { "value": "2px solid {color.accent/secondary}" },
+          "disabled": { "value": "1px solid {color.border/divider}" }
+        }
+      },
+
+      "component": {
+        "button/primary": {
+          "background": { "value": "{color.accent/primary}" },
+          "labelColor": { "value": "{color.text/primary}" },
+          "radius": { "value": "{radii.lg}" },
+          "paddingX": { "value": "{spacing.lg}" },
+          "paddingY": { "value": "{spacing.sm}" },
+          "elevation": { "value": "{elevation.glow/accent}" },
+          "state/hover/backgroundOverlay": {
+            "value": "rgba(255,255,255,{state.opacity.hover})"
+          },
+          "state/pressed/backgroundOverlay": {
+            "value": "rgba(0,0,0,{state.opacity.pressed})"
+          },
+          "state/disabled/background": {
+            "value": "mix({color.accent/primary}, {color.bg/secondary}, {state.opacity.disabled})"
+          },
+          "state/disabled/label": {
+            "value": "mix({color.text/primary}, {color.text/secondary}, {state.opacity.disabled})"
+          },
+          "state/focus/ring": { "value": "{state.border.focus}" },
+          "motion/transition": {
+            "value": "{motion.duration.fast} {motion.easing.standard}"
+          }
+        },
+
+        "button/secondary": {
+          "background": { "value": "{color.surface/card}" },
+          "labelColor": { "value": "{color.accent/primary}" },
+          "border": { "value": "1px solid {color.accent/primary}" },
+          "radius": { "value": "{radii.md}" },
+          "paddingX": { "value": "{spacing.lg}" },
+          "paddingY": { "value": "{spacing.sm}" },
+          "state/hover/border": {
+            "value": "1px solid {color.accent/secondary}"
+          },
+          "state/pressed/backgroundOverlay": {
+            "value": "rgba(0,0,0,{state.opacity.pressed})"
+          },
+          "state/disabled/label": {
+            "value": "mix({color.accent/primary}, {color.text/secondary}, {state.opacity.disabled})"
+          },
+          "state/focus/ring": { "value": "{state.border.focus}" },
+          "motion/transition": {
+            "value": "{motion.duration.fast} {motion.easing.standard}"
+          }
+        },
+
+        "input/textfield": {
+          "background": { "value": "{color.surface/card}" },
+          "labelColor": { "value": "{color.text/secondary}" },
+          "textColor": { "value": "{color.text/primary}" },
+          "placeholderColor": {
+            "value": "mix({color.text/secondary}, {color.text/primary}, 0.5)"
+          },
+          "border": { "value": "1px solid {color.border/divider}" },
+          "radius": { "value": "{radii.md}" },
+          "state/focus/border": {
+            "value": "2px solid {color.accent/secondary}"
+          },
+          "state/error/border": { "value": "2px solid {color.feedback/error}" },
+          "state/disabled/background": {
+            "value": "mix({color.surface/card}, {color.border/divider}, {state.opacity.disabled})"
+          },
+          "motion/transition": {
+            "value": "{motion.duration.fast} {motion.easing.standard}"
+          }
+        },
+
+        "nav/tabbar": {
+          "background": { "value": "{color.bg/secondary}" },
+          "activeColor": { "value": "{color.accent/secondary}" },
+          "inactiveColor": { "value": "{color.text/secondary}" },
+          "state/pressed/iconOverlay": {
+            "value": "rgba(255,255,255,{state.opacity.pressed})"
+          },
+          "motion/selection": {
+            "value": "{motion.duration.medium} {motion.easing.decelerate}"
+          }
+        },
+
+        "list/checkItem": {
+          "checkedColor": { "value": "{color.feedback/success}" },
+          "uncheckedColor": { "value": "{color.border/divider}" },
+          "state/pressed/overlay": {
+            "value": "rgba(255,255,255,{state.opacity.pressed})"
+          },
+          "motion/check": {
+            "value": "{motion.duration.fast} {motion.easing.emphasized}"
+          }
+        },
+
+        "card/base": {
+          "background": { "value": "{color.surface/card}" },
+          "radius": { "value": "{radii.lg}" },
+          "padding": { "value": "{spacing.md}" },
+          "elevation": { "value": "{elevation.card}" },
+          "state/hover/elevation": { "value": "{elevation.card}" },
+          "state/pressed/elevation": { "value": "{elevation.card}" },
+          "motion/entry": {
+            "value": "{motion.duration.medium} {motion.easing.decelerate}"
+          }
+        }
+      }
+    },
+
+    "motion": {
+      "motion": {
+        "duration": {
+          "instant": { "value": "80ms" },
+          "fast": { "value": "140ms" },
+          "medium": { "value": "240ms" },
+          "slow": { "value": "360ms" }
+        },
+        "easing": {
+          "standard": { "value": "cubic-bezier(0.2, 0, 0, 1)" },
+          "decelerate": { "value": "cubic-bezier(0.05, 0.7, 0.1, 1)" },
+          "accelerate": { "value": "cubic-bezier(0.3, 0, 1, 1)" },
+          "emphasized": { "value": "cubic-bezier(0.2, 0, 0, 1.2)" }
+        },
+        "distance": {
+          "xs": { "value": "4px" },
+          "sm": { "value": "8px" },
+          "md": { "value": "16px" }
+        },
+        "blur": {
+          "background": { "value": "20px" },
+          "backgroundLight": { "value": "12px" }
+        },
+        "spring": {
+          "ui/response": {
+            "value": { "mass": 1, "stiffness": 220, "damping": 28 }
+          },
+          "sheet/present": {
+            "value": { "mass": 1.1, "stiffness": 260, "damping": 30 }
+          }
+        }
+      }
+    }
+  }
+}
