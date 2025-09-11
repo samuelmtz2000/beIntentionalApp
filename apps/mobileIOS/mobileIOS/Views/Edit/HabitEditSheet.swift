@@ -34,15 +34,18 @@ struct HabitEditSheet: View {
                     Stepper("XP: \(habit.xpReward)", value: $habit.xpReward, in: 1...1000)
                     Stepper("Coins: \(habit.coinReward)", value: $habit.coinReward, in: 0...1000)
                 }
-                Section {
+                Section { Button("Delete", role: .destructive) { onDelete(); dismiss() } }
+            }
+            .navigationTitle("Edit Habit")
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) { Button("Cancel") { dismiss() } }
+                ToolbarItem(placement: .confirmationAction) {
                     Button("Save") {
                         let updated = GoodHabit(id: habit.id, areaId: selectedAreaId, name: habit.name, xpReward: habit.xpReward, coinReward: habit.coinReward, cadence: habit.cadence, isActive: habit.isActive)
                         onSave(updated); dismiss()
-                    }.buttonStyle(.borderedProminent)
-                    Button("Delete", role: .destructive) { onDelete(); dismiss() }
+                    }.keyboardShortcut(.defaultAction)
                 }
             }
-            .navigationTitle("Edit Habit")
         }
         .task { await loadAreas() }
     }
@@ -57,4 +60,3 @@ struct HabitEditSheet: View {
         }
     }
 }
-

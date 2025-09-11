@@ -35,7 +35,12 @@ struct BadHabitEditSheet: View {
                     Stepper("Life Penalty: \(item.lifePenalty)", value: $item.lifePenalty, in: 1...100)
                     Stepper("Coin Cost: \(item.coinCost)", value: $item.coinCost, in: 0...100)
                 }
-                Section {
+                Section { Button("Delete", role: .destructive) { onDelete(); dismiss() } }
+            }
+            .navigationTitle("Edit Bad Habit")
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) { Button("Cancel") { dismiss() } }
+                ToolbarItem(placement: .confirmationAction) {
                     Button("Save") {
                         let updated = BadHabit(id: item.id,
                                                areaId: selectedAreaId.isEmpty ? nil : selectedAreaId,
@@ -45,11 +50,9 @@ struct BadHabitEditSheet: View {
                                                coinCost: item.coinCost,
                                                isActive: item.isActive)
                         onSave(updated); dismiss()
-                    }.buttonStyle(.borderedProminent)
-                    Button("Delete", role: .destructive) { onDelete(); dismiss() }
+                    }.keyboardShortcut(.defaultAction)
                 }
             }
-            .navigationTitle("Edit Bad Habit")
         }
         .task { await loadAreas() }
     }
@@ -66,4 +69,3 @@ struct BadHabitEditSheet: View {
         }
     }
 }
-

@@ -3,6 +3,22 @@ You are my AI pair-programmer operating INSIDE a multi-app monorepo. Act as a wo
 PRIMARY DIRECTIVE
 Before doing anything, reason step-by-step. Read and follow the repo’s own documentation and conventions first. If repo guidance conflicts with generic best practices, prefer the repo guidance and explain the trade-off.
 
+AGENT WORKFLOWS AND TEMPLATES (agents/)
+- iOS Design Review Workflow: `agents/design-review-ios/`
+  - Overview: `agents/design-review-ios/README.md`
+  - Agent spec: `agents/design-review-ios/design-review-agent.md`
+  - Principles checklist: `agents/design-review-ios/design-principles-example.md`
+  - Simulator MCP notes: `agents/design-review-ios/design-review-ios-xcode-simulator-mcp.md`
+  - Slash command: `agents/design-review-ios/design-review-slash-command.md`
+
+- Browser Design Review Workflow: `agents/design-review-browser/`
+  - Overview: `agents/design-review-browser/README.md`
+  - Agent spec: `agents/design-review-browser/design-review-agent.md`
+  - Principles checklist: `agents/design-review-browser/design-principles-example.md`
+  - Slash command: `agents/design-review-browser/design-review-slash-command.md`
+
+- Habit Hero (iOS-first) Agent Guide: `agents/habit-hero-agent.md`
+
 WORKSPACE CONTEXT (auto-discover)
 1) Detect package manager, workspaces, and app layout:
    - Look for pnpm/yarn/npm lockfiles and workspace configs.

@@ -36,6 +36,16 @@ struct UserConfigSheet: View {
                         .font(.caption)
                         .foregroundStyle(.secondary)
                 }
+                Section("Appearance") {
+                    Picker("Theme", selection: Binding(get: { app.appearance }, set: { app.setAppearance($0) })) {
+                        Text("System").tag(AppearancePreference.system)
+                        Text("Light").tag(AppearancePreference.light)
+                        Text("Dark").tag(AppearancePreference.dark)
+                    }.pickerStyle(.segmented)
+                    Text("Applies immediately. Stored in Settings.")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
             }
             .navigationTitle("User Config")
             .toolbar {
@@ -47,4 +57,3 @@ struct UserConfigSheet: View {
         }
     }
 }
-

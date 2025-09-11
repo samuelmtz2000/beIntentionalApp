@@ -23,6 +23,7 @@ Express + TypeScript + Prisma (SQLite). Strict ESM, Zod‑validated routes. Ship
 - `pnpm db:migrate` — run Prisma migrations
 - `pnpm db:seed` — seed demo data
 - `pnpm test` — run API tests (Vitest)
+ - `pnpm -F @habit-hero/api test:soft-delete` — run soft delete + archive smoke test
 
 ## Tech Stack
 
@@ -69,7 +70,7 @@ All bodies are JSON. Validation errors: HTTP 400 with Zod error details. Missing
   ```
 
 - Areas `/areas`
-  - GET — list areas for default user
+  - GET — list areas for default user (active only; archived excluded)
   - GET `/:id` — get by id
   - POST — create
     - Body: `{ name, icon?, xpPerLevel>=10, levelCurve: "linear"|"exp", levelMultiplier>=1? }`
@@ -77,7 +78,7 @@ All bodies are JSON. Validation errors: HTTP 400 with Zod error details. Missing
   - DELETE `/:id` — delete
 
 - Good Habits `/habits`
-  - GET — list (includes `area` relation)
+  - GET — list (active only; includes `area` relation)
   - GET `/:id` — get by id (includes `area`)
   - POST — create
     - Body: `{ areaId, name, xpReward>=1, coinReward>=0, cadence?, isActive }`
@@ -85,7 +86,7 @@ All bodies are JSON. Validation errors: HTTP 400 with Zod error details. Missing
   - DELETE `/:id` — delete
 
 - Bad Habits `/bad-habits`
-  - GET — list (includes `area` relation)
+  - GET — list (active only; includes `area` relation)
   - GET `/:id` — get by id (includes `area`)
   - POST — create
     - Body: `{ areaId?, name, lifePenalty>=1, controllable?, coinCost>=0, isActive }`
@@ -110,6 +111,14 @@ All bodies are JSON. Validation errors: HTTP 400 with Zod error details. Missing
   - Listing: use `GET /bad-habits` directly (no separate store listing). The store UI should display all bad habits from `/bad-habits` with their `coinCost`.
   - Inventory: use `GET /me` and read `ownedBadHabits[{ id, name, count }]` to show how many pre‑paid credits the user has per bad habit.
   - POST `/store/bad-habits/:id/buy` — purchases one credit for that bad habit using `coinCost` (multiple purchases supported).
+
+- Archive `/archive`
+  - GET — unified archive listing grouped by type: `{ areas, habits, badHabits }`
+
+- Restore
+  - POST `/areas/:id/restore` — restore archived area
+  - POST `/habits/:id/restore` — restore archived habit
+  - POST `/bad-habits/:id/restore` — restore archived bad habit
 
 - Users `/users`
   - GET `/users/:id/config` → user leveling config
@@ -167,7 +176,7 @@ curl -X PUT http://localhost:4000/areas/area-health \
   -d '{"name":"Health+","xpPerLevel":150}'
 ```
 
-- Delete Area
+- Delete Area (Soft)
 ```
 curl -X DELETE http://localhost:4000/areas/area-learning
 ```
@@ -186,7 +195,7 @@ curl -X PUT http://localhost:4000/habits/habit-pushups \
   -d '{"xpReward":12,"coinReward":6,"isActive":true}'
 ```
 
-- Delete Habit
+- Delete Habit (Soft)
 ```
 curl -X DELETE http://localhost:4000/habits/habit-reading
 ```
@@ -205,7 +214,7 @@ curl -X PUT http://localhost:4000/bad-habits/bad-doomscroll \
   -d '{"coinCost":5,"controllable":true,"isActive":true}'
 ```
 
-- Delete Bad Habit
+- Delete Bad Habit (Soft)
 ```
 curl -X DELETE http://localhost:4000/bad-habits/bad-junk-food
 ```
@@ -223,6 +232,18 @@ curl -X POST http://localhost:4000/actions/bad-habits/bad-doomscroll/record
 - Buy Controlled Bad Habit
 ```
 curl -X POST http://localhost:4000/store/bad-habits/bad-doomscroll/buy
+```
+
+Restore examples
+```
+curl -X POST http://localhost:4000/areas/<id>/restore
+curl -X POST http://localhost:4000/habits/<id>/restore
+curl -X POST http://localhost:4000/bad-habits/<id>/restore
+```
+
+Archive listing
+```
+curl http://localhost:4000/archive
 ```
 
 ## Leveling Helpers
