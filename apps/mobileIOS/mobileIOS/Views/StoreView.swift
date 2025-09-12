@@ -19,6 +19,7 @@ struct StoreView: View {
                 }
                 OwnedBadHabitsSection(items: vm.ownedBadHabits)
             }
+            .listStyle(.plain)
             .navigationTitle("Store")
             .toolbar { ToolbarItem(placement: .navigationBarTrailing) { Button { Task { await vm.refresh() } } label: { Image(systemName: "arrow.clockwise") } } }
             .task { await vm.refresh() }
