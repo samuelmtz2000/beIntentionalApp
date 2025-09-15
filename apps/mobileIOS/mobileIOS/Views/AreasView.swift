@@ -32,6 +32,7 @@ struct AreasView: View {
                     .listRowBackground(Color.clear)
                 }
             }
+            .listStyle(.plain)
             .navigationTitle("Areas")
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) { Button { showingAdd = true } label: { Image(systemName: "plus") } }

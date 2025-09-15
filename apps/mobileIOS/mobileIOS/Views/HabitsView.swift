@@ -45,30 +45,13 @@ struct HabitsView: View {
                         onAddBad: { showingAddBad = true }
                     )
                 } else if selected == .areas {
-                    VStack(alignment: .leading, spacing: 16) {
-                        PlayerHeader(profile: profileVM.profile, onLogToday: { selected = .habits }, onOpenStore: { selected = .store })
-                        TileNav(selected: $selected, onConfig: { showingConfig = true })
-                    }
-                    AreasPanel(vm: areasVM, onAdd: { showingAddArea = true })
-                } else if selected == .areas {
-                    VStack(alignment: .leading, spacing: 16) {
-                        PlayerHeader(profile: profileVM.profile, onLogToday: { selected = .habits }, onOpenStore: { selected = .store })
-                        TileNav(selected: $selected, onConfig: { showingConfig = true })
-                    }
-                    AreasPanel(vm: areasVM, onAdd: { showingAddArea = true })
+                    AreasPanel(vm: areasVM, onAdd: { showingAddArea = true }, header: PlayerHeaderWrapper<EmptyView>(profile: profileVM.profile, selected: $selected, onConfig: { showingConfig = true }))
                 } else if selected == .store {
-                    VStack(alignment: .leading, spacing: 16) {
-                        PlayerHeader(profile: profileVM.profile, onLogToday: { selected = .habits }, onOpenStore: { selected = .store })
-                        TileNav(selected: $selected, onConfig: { showingConfig = true })
-                    }
-                    StorePanel(vm: storeVM)
+                    StorePanel(vm: storeVM, header: PlayerHeaderWrapper<EmptyView>(profile: profileVM.profile, selected: $selected, onConfig: { showingConfig = true }))
                 } else if selected == .archive {
-                    VStack(alignment: .leading, spacing: 16) {
-                        PlayerHeader(profile: profileVM.profile, onLogToday: { selected = .habits }, onOpenStore: { selected = .store })
-                        TileNav(selected: $selected, onConfig: { showingConfig = true })
-                    }
-                    .padding(.horizontal)
-                    ArchivePanel(vm: archiveVM, onRestored: { await refreshAll() })
+                    ArchivePanel(vm: archiveVM, onRestored: { await refreshAll() }, header: PlayerHeaderWrapper<EmptyView>(profile: profileVM.profile, selected: $selected, onConfig: { showingConfig = true }))
+                } else if selected == .player {
+                    PlayerPanelList(profile: profileVM.profile, areasMeta: areasVM.areas, header: PlayerHeaderWrapper<EmptyView>(profile: profileVM.profile, selected: $selected, onConfig: { showingConfig = true }))
                 } else {
                     ScrollView {
                         VStack(alignment: .leading, spacing: 16) {
@@ -111,9 +94,9 @@ struct HabitsView: View {
             switch selected {
             case .player: PlayerPanel(profile: profileVM.profile, areasMeta: areasVM.areas)
             case .habits: CombinedHabitsPanel(goodVM: goodVM, badVM: badVM, onAddGood: { showingAddGood = true }, onAddBad: { showingAddBad = true })
-            case .areas: AreasPanel(vm: areasVM, onAdd: { showingAddArea = true })
-            case .store: StorePanel(vm: storeVM)
-            case .archive: ArchivePanel(vm: archiveVM, onRestored: { await refreshAll() })
+            case .areas: AreasPanel(vm: areasVM, onAdd: { showingAddArea = true }, header: EmptyView())
+            case .store: StorePanel(vm: storeVM, header: EmptyView())
+            case .archive: ArchivePanel(vm: archiveVM, onRestored: { await refreshAll() }, header: EmptyView())
             case .config: EmptyView()
             }
         }
@@ -139,37 +122,37 @@ private struct PlayerHeader: View {
     var onLogToday: () -> Void
     var onOpenStore: () -> Void
     var body: some View {
-        VStack(alignment: .leading, spacing: 16) {
-            HStack(spacing: 20) {
+        VStack(alignment: .leading, spacing: 8) {
+            HStack(spacing: 16) {
                 if let p = profile {
-                    VStack(alignment: .leading) {
-                        HStack { Text("Lvl \(p.level)").bold().padding(6).background(Capsule().fill(Color.blue.opacity(0.15))) }
+                    VStack(alignment: .leading, spacing: 4) {
+                        HStack { Text("Lvl \(p.level)").bold().padding(.horizontal, 6).padding(.vertical, 3).background(Capsule().fill(Color.blue.opacity(0.15))) }
                         let need = xpNeeded(level: p.level, base: p.xpPerLevel, curve: p.config?.levelCurve ?? "linear", multiplier: p.config?.levelMultiplier ?? 1.5)
                         ProgressView(value: Double(p.xp), total: Double(max(need,1))) {
-                            HStack(spacing: 6) {
-                                Text("XP to next")
+                            HStack(spacing: 4) {
+                                Text("XP")
                                 Image(systemName: "arrow.right")
-                                Text("\(p.xp) from \(need)")
+                                Text("\(p.xp)/\(need)")
                             }
-                            .font(.caption)
+                            .font(.caption2)
                             .foregroundStyle(.secondary)
                         }
                     }
                     Spacer()
-                    VStack(alignment: .trailing) {
-                        Label("\(p.coins)", systemImage: "creditcard").labelStyle(.titleAndIcon)
+                    VStack(alignment: .trailing, spacing: 4) {
+                        Label("\(p.coins)", systemImage: "creditcard").labelStyle(.titleAndIcon).font(.callout)
                         Label("Streak N/A", systemImage: "flame")
                             .foregroundStyle(.orange)
+                            .font(.caption)
                     }
                 } else {
                     Text("Loading...")
                 }
             }
-            .padding(.vertical, 8)
-            // Removed quick action buttons to simplify header; navigation chips below handle section switching
         }
+        .padding(.horizontal, 12)
+        .padding(.vertical, 8)
         .accessibilityElement(children: .contain)
-        .padding(.horizontal, 16)
     }
 }
 
@@ -188,15 +171,15 @@ private struct TileNav: View {
     var onConfig: (() -> Void)? = nil
     var body: some View {
         ScrollView(.horizontal, showsIndicators: false) {
-            HStack(spacing: 10) {
+            HStack(spacing: 8) {
                 ForEach(HabitsView.SectionKind.allCases, id: \.self) { kind in
                     let isSelected = (selected == kind)
                     Button(action: {
                         if kind == .config { onConfig?() } else { selected = kind }
                     }) {
-                        HStack(spacing: 6) {
-                            Image(systemName: iconName(for: kind))
-                            Text(kind.rawValue).font(.callout).fontWeight(.semibold)
+                        HStack(spacing: 4) {
+                            Image(systemName: iconName(for: kind)).font(.caption)
+                            Text(kind.rawValue).font(.caption).fontWeight(.semibold)
                         }
                     }
                     .buttonStyle(PillButtonStyle(isSelected: isSelected))
@@ -204,8 +187,9 @@ private struct TileNav: View {
                     .accessibilityAddTraits(.isButton)
                 }
             }
-            .padding(.horizontal, 16)
+            .padding(.horizontal, 12)
         }
+        .padding(.bottom, 4)
     }
 }
 
@@ -220,41 +204,102 @@ private func iconName(for kind: HabitsView.SectionKind) -> String {
     }
 }
 
+private struct PlayerHeaderWrapper<Content: View>: View {
+    let profile: Profile?
+    @Binding var selected: HabitsView.SectionKind
+    var onConfig: () -> Void
+    var content: () -> Content
+    
+    init(profile: Profile?, selected: Binding<HabitsView.SectionKind>, onConfig: @escaping () -> Void, @ViewBuilder content: @escaping () -> Content) {
+        self.profile = profile
+        self._selected = selected
+        self.onConfig = onConfig
+        self.content = content
+    }
+    
+    var body: some View {
+        Section {
+            VStack(alignment: .leading, spacing: 0) {
+                PlayerHeader(profile: profile, onLogToday: { selected = .habits }, onOpenStore: { selected = .store })
+                TileNav(selected: $selected, onConfig: onConfig)
+                content()
+            }
+        }
+        .listRowBackground(Color.clear)
+        .listRowInsets(EdgeInsets(top: 0, leading: 0, bottom: 0, trailing: 0))
+    }
+}
+
+extension PlayerHeaderWrapper where Content == EmptyView {
+    init(profile: Profile?, selected: Binding<HabitsView.SectionKind>, onConfig: @escaping () -> Void) {
+        self.profile = profile
+        self._selected = selected
+        self.onConfig = onConfig
+        self.content = { EmptyView() }
+    }
+}
+
+private struct PlayerPanelList: View {
+    let profile: Profile?
+    var areasMeta: [Area] = []
+    var header: PlayerHeaderWrapper<EmptyView>
+    
+    var body: some View {
+        List {
+            header
+            PlayerPanelContent(profile: profile, areasMeta: areasMeta)
+        }
+        .listStyle(.plain)
+    }
+}
+
 private struct PlayerPanel: View {
     let profile: Profile?
     var areasMeta: [Area] = []
     var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            if let p = profile {
-                Text("Overall").dsFont(.headerMD)
-                HStack { Label("Life", systemImage: "heart.fill"); Spacer(); Text("\(p.life)") }
-                HStack { Label("Coins", systemImage: "creditcard"); Spacer(); Text("\(p.coins)") }
-                Divider()
-                Text("Per Area").dsFont(.headerMD)
-                ForEach(p.areas, id: \.areaId) { a in
-                    VStack(alignment: .leading) {
-                        HStack { Text(a.name).bold(); Spacer(); Text("Lvl \(a.level)") }
-                        let meta = areasMeta.first(where: { $0.id == a.areaId })
-                        let curve = meta?.levelCurve ?? "linear"
-                        let mult = meta?.levelMultiplier ?? 1.5
-                        let need = areaNeed(level: a.level, base: a.xpPerLevel, curve: curve, multiplier: mult)
-                        let total = Double(max(need, 1))
-                        let value = min(total, max(0, Double(a.xp)))
-                        ProgressView(value: value, total: total) {
-                            HStack(spacing: 6) {
-                                Text("XP to next")
-                                Image(systemName: "arrow.right")
-                                Text("\(a.xp) from \(need)")
+        PlayerPanelContent(profile: profile, areasMeta: areasMeta)
+    }
+}
+
+private struct PlayerPanelContent: View {
+    let profile: Profile?
+    var areasMeta: [Area] = []
+    var body: some View {
+        Section {
+            VStack(alignment: .leading, spacing: 12) {
+                if let p = profile {
+                    Text("Overall").dsFont(.headerMD)
+                    HStack { Label("Life", systemImage: "heart.fill"); Spacer(); Text("\(p.life)") }
+                    HStack { Label("Coins", systemImage: "creditcard"); Spacer(); Text("\(p.coins)") }
+                    Divider()
+                    Text("Per Area").dsFont(.headerMD)
+                    ForEach(p.areas, id: \.areaId) { a in
+                        VStack(alignment: .leading) {
+                            HStack { Text(a.name).bold(); Spacer(); Text("Lvl \(a.level)") }
+                            let meta = areasMeta.first(where: { $0.id == a.areaId })
+                            let curve = meta?.levelCurve ?? "linear"
+                            let mult = meta?.levelMultiplier ?? 1.5
+                            let need = areaNeed(level: a.level, base: a.xpPerLevel, curve: curve, multiplier: mult)
+                            let total = Double(max(need, 1))
+                            let value = min(total, max(0, Double(a.xp)))
+                            ProgressView(value: value, total: total) {
+                                HStack(spacing: 6) {
+                                    Text("XP to next")
+                                    Image(systemName: "arrow.right")
+                                    Text("\(a.xp) from \(need)")
+                                }
+                                .dsFont(.caption)
+                                .foregroundStyle(.secondary)
                             }
-                            .dsFont(.caption)
-                            .foregroundStyle(.secondary)
                         }
                     }
+                } else {
+                    Text("Loading stats...")
                 }
-            } else {
-                Text("Loading stats...")
             }
+            .cardStyle()
         }
+        .listRowBackground(Color.clear)
     }
 }
 
@@ -363,13 +408,13 @@ private struct CombinedHabitsListPanel: View {
         List {
             // Collapsible header: scrolls away with list
             Section {
-                VStack(alignment: .leading, spacing: 16) {
+                VStack(alignment: .leading, spacing: 0) {
                     PlayerHeader(profile: profile, onLogToday: { selected = .habits }, onOpenStore: { selected = .store })
                     TileNav(selected: $selected, onConfig: onConfig)
                 }
-                .padding(.horizontal)
             }
             .listRowBackground(Color.clear)
+            .listRowInsets(EdgeInsets(top: 0, leading: 0, bottom: 0, trailing: 0))
             Section {
                 if goodVM.habits.isEmpty {
                     Text("No good habits yet").dsFont(.caption).foregroundStyle(.secondary)
@@ -443,7 +488,7 @@ private struct CombinedHabitsListPanel: View {
                 }
             }
         }
-        .listStyle(.insetGrouped)
+        .listStyle(.plain)
         .alert(item: Binding(get: {
             confirmDelete.map { ConfirmWrapper(id: $0.id, name: $0.name) }
         }, set: { newVal in
@@ -477,13 +522,18 @@ private struct ConfirmWrapper: Identifiable, Equatable {
 
 // Toast types removed per request
 
-private struct AreasPanel: View {
+private struct AreasPanel<Header: View>: View {
     @ObservedObject var vm: AreasViewModel
     var onAdd: () -> Void
+    var header: Header
     @State private var editingArea: Area? = nil
     @State private var confirmDelete: (id: String, name: String)? = nil
+    
     var body: some View {
         List {
+            if !(header is EmptyView) {
+                header
+            }
             Section {
                 ForEach(vm.areas) { area in
                     VStack(alignment: .leading, spacing: 6) {
@@ -515,6 +565,7 @@ private struct AreasPanel: View {
                 }
             }
         }
+        .listStyle(.plain)
         .alert(item: Binding(get: {
             confirmDelete.map { ConfirmWrapper(id: $0.id, name: $0.name) }
         }, set: { newVal in if newVal == nil { confirmDelete = nil } })) { wrap in
@@ -528,11 +579,17 @@ private struct AreasPanel: View {
     }
 }
 
-private struct StorePanel: View {
+private struct StorePanel<Header: View>: View {
     @ObservedObject var vm: StoreViewModel
+    var header: Header
+    
     var body: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: 12) {
+        List {
+            if !(header is EmptyView) {
+                header
+            }
+            Section {
+                VStack(alignment: .leading, spacing: 12) {
                 HStack {
                     Label("Bad Habits Store", systemImage: "cart").font(.headline)
                     Spacer()
@@ -563,19 +620,24 @@ private struct StorePanel: View {
                     }
                 }
             }
-            .padding(.horizontal)
-            .padding(.bottom, 16)
         }
+            .listRowBackground(Color.clear)
+        }
+        .listStyle(.plain)
     }
 }
 
-private struct ArchivePanel: View {
+private struct ArchivePanel<Header: View>: View {
     @ObservedObject var vm: ArchiveViewModel
     var onRestored: () async -> Void
+    var header: Header
     @State private var inFlight: Set<String> = []
 
     var body: some View {
         List {
+            if !(header is EmptyView) {
+                header
+            }
             if !vm.areas.isEmpty {
                 Section("Areas") {
                     ForEach(vm.areas) { a in
@@ -622,7 +684,7 @@ private struct ArchivePanel: View {
                 Section { Text("Archive is empty.").foregroundStyle(.secondary) }
             }
         }
-        .listStyle(.insetGrouped)
+        .listStyle(.plain)
         .task { await vm.refresh() }
         .refreshable { await vm.refresh() }
     }
