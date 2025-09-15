@@ -202,47 +202,37 @@ private struct TileNav: View {
     var onConfig: (() -> Void)? = nil
     
     var body: some View {
-        ZStack {
-            // Invisible overlay to capture swipe gestures
-            Color.clear
-                .contentShape(Rectangle())
-                .gesture(
-                    DragGesture(minimumDistance: 30)
-                        .onEnded { value in
-                            handleSwipe(translation: value.translation.width)
-                        }
-                )
-            
-            // ScrollView for layout but with interaction disabled
-            ScrollView(.horizontal, showsIndicators: false) {
-                HStack(spacing: 10) {
-                    ForEach(HabitsView.SectionKind.allCases, id: \.self) { kind in
-                        AnimatedPillButton(
-                            kind: kind,
-                            isSelected: selected == kind,
-                            action: {
-                                withAnimation(.easeInOut(duration: 0.3)) {
-                                    if kind == .config { 
-                                        onConfig?() 
-                                    } else { 
-                                        selected = kind 
-                                    }
+        ScrollView(.horizontal, showsIndicators: false) {
+            HStack(spacing: 10) {
+                ForEach(HabitsView.SectionKind.allCases, id: \.self) { kind in
+                    AnimatedPillButton(
+                        kind: kind,
+                        isSelected: selected == kind,
+                        action: {
+                            withAnimation(.easeInOut(duration: 0.3)) {
+                                if kind == .config { 
+                                    onConfig?() 
+                                } else { 
+                                    selected = kind 
                                 }
                             }
-                        )
-                    }
+                        }
+                    )
                 }
-                .padding(.horizontal, 12)
             }
-            .allowsHitTesting(true) // Allow pill buttons to be tapped
-            .simultaneousGesture(
-                DragGesture(minimumDistance: 30)
-                    .onEnded { value in
-                        handleSwipe(translation: value.translation.width)
-                    }
-            )
+            .padding(.horizontal, 12)
         }
         .padding(.bottom, 4)
+        .background(
+            Color.clear
+                .contentShape(Rectangle())
+        )
+        .simultaneousGesture(
+            DragGesture(minimumDistance: 30)
+                .onEnded { value in
+                    handleSwipe(translation: value.translation.width)
+                }
+        )
     }
     
     private func handleSwipe(translation: CGFloat) {
