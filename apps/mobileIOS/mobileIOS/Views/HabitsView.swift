@@ -242,8 +242,7 @@ private struct TileNav: View {
                     }
             )
         }
-        .padding(.top, 8)
-        .padding(.bottom, 12)
+        .padding(.bottom, 4)
     }
     
     private func handleSwipe(translation: CGFloat) {
