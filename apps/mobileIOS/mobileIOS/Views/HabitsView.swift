@@ -34,7 +34,7 @@ struct HabitsView: View {
             VStack(spacing: 0) {
                 // Fixed header section
                 VStack(spacing: 0) {
-                    PlayerHeader(profile: profileVM.profile, onLogToday: { selected = .habits }, onOpenStore: { selected = .store })
+                LegacyPlayerHeader(profile: profileVM.profile, onLogToday: { selected = .habits }, onOpenStore: { selected = .store })
                     TileNav(selected: $selected, onConfig: { showingConfig = true })
                 }
                 .background(DSTheme.colors(for: scheme).backgroundSecondary)
@@ -141,7 +141,7 @@ extension HabitsView {
     }
 }
 
-private struct PlayerHeader: View {
+private struct LegacyPlayerHeader: View {
     let profile: Profile?
     var onLogToday: () -> Void
     var onOpenStore: () -> Void
@@ -317,7 +317,7 @@ private struct PlayerHeaderWrapper<Content: View>: View {
     var body: some View {
         Section {
             VStack(alignment: .leading, spacing: 0) {
-                PlayerHeader(profile: profile, onLogToday: { selected = .habits }, onOpenStore: { selected = .store })
+                LegacyPlayerHeader(profile: profile, onLogToday: { selected = .habits }, onOpenStore: { selected = .store })
                 TileNav(selected: $selected, onConfig: onConfig)
                 content()
             }
