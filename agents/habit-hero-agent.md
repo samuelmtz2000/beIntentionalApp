@@ -5,6 +5,11 @@
 - Monorepo managed by `pnpm`. Workspace packages live under `apps/*`.
 - API (`apps/api`): Express + TypeScript with Prisma (SQLite). Entry at `src/index.ts`; Prisma client in `src/lib/prisma.ts`; schema/migrations under `prisma/` (database at `apps/api/prisma/dev.db`).
 - Mobile (primary, "Mark" iOS app): Native iOS app in `apps/mobileIOS` (SwiftUI, MVVM). Xcode project at `apps/mobileIOS/mobileIOS.xcodeproj`.
+  - Feature-first structure under `apps/mobileIOS/mobileIOS`:
+    - `Features/*/{Views,ViewModels,Components}`
+    - `Shared/{Components,Sheets,Extensions}`
+    - `Core/{Storage,Networking,Models}`
+    - `DesignSystem/*`
 - Mobile (React Native) in `apps/mobile` is currently paused. Do not modify unless explicitly requested.
 
 ## Build, Test, and Development Commands
@@ -12,6 +17,17 @@
 - `pnpm dev:api` — start the API locally (defaults to `:4000`).
 - React Native (paused): `pnpm dev:mobile` — Expo dev server; or `pnpm -F @habit-hero/mobile ios|android|web`.
 - iOS native app: open `apps/mobileIOS/mobileIOS.xcodeproj` in Xcode 15+, select an iOS 17+ simulator, and Run.
+- Parse-only compile checks from CLI (useful without signing):
+  ```bash
+  cd apps/mobileIOS
+  swiftc -parse -sdk "$(xcrun --show-sdk-path --sdk iphonesimulator)" \
+    mobileIOS/Models/Models.swift \
+    mobileIOS/Networking/APIClient.swift \
+    mobileIOS/DesignSystem/*.swift \
+    mobileIOS/Shared/**/*.swift \
+    mobileIOS/Features/**/*.swift \
+    mobileIOS/Core/**/*.swift
+  ```
 - `pnpm db:migrate` — run Prisma migrations for the API (SQLite).
 - `pnpm db:seed` — reserved for seeding; add `apps/api/prisma/seed.ts` before using.
 - `pnpm -F @habit-hero/api prisma generate` — regenerate Prisma client after schema changes.
@@ -34,11 +50,11 @@
 
 ## iOS App — Current UI Conventions
 
-- Pills with icons: Player, Habits, Areas, Store, Archive, Config. Config pill opens the user config sheet.
-- Habits screen: small inline nav title; content organized by Good Habits / Bad Habits section headers with icons.
+- Pills with icons: Player, Habits, Areas, Store, Archive, Config. Config pill opens the user config sheet. Use `MainNavigationBar`.
+- Habits screen: small inline nav title; content organized by Good Habits / Bad Habits with DS section headers and cards.
 - Store: two‑column DS card grid (not table rows). Cards include title, secondary text, and Primary Buy button.
-- Archive/Areas: DS card rows with dsFont type scale and clear row backgrounds.
-- Design System: semantic colors, spacing, radii, dsFont text wrappers, Primary/SecondaryButtonStyle, CardModifier, theme switching (System/Light/Dark).
+- Archive/Areas: DS card rows with `dsFont` type scale and clear row backgrounds.
+- Design System: `DSTheme` colors, `dsFont`, `cardStyle`, `DSButton`, `DSSectionHeader`, `DSProgressBar`, `DSEmptyState`, `DSSheet`.
 - Accessibility: key actions have descriptive accessibilityLabels; minimum touch sizes applied where possible.
 
 ## Coding Style & Naming Conventions
@@ -256,8 +272,9 @@ Key screens (SwiftUI): Today, Habits, Settings.
 
 Networking and models:
 - `Networking/APIClient.swift` wraps URLSession with async/await.
-- `Models/Models.swift` mirrors API contracts (Areas, Habits, BadHabits, AreaLevel, Profile, OwnedBadHabit, etc.).
+- `Models/Models.swift` mirrors API contracts (Area, GoodHabit, BadHabit, Profile, ProfileArea, etc.).
 - ViewModels orchestrate calls: `HabitsViewModel`, `BadHabitsViewModel`, `AreasViewModel`, `StoreViewModel`, `ProfileViewModel`.
+- Shared UI: `DesignSystem/*`, `Shared/Components/*`, `Shared/Sheets/DSSheet.swift`.
 
 Store and inventory:
 - Use `POST /store/bad-habits/:id/buy` to purchase credits and `POST /actions/bad-habits/:id/record` to consume credits or apply penalties.

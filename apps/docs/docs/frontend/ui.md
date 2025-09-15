@@ -6,9 +6,9 @@ SwiftUI views are small, composable, and previewable. Emphasize accessibility an
 
 UI Navigation Patterns
 - Tab navigation: Primary app sections are exposed via the bottom tab bar (Today, Habits, Settings, etc.). Screens should not hide the tab bar unless in a modal flow.
-- Pill navigation: Within a screen (e.g., Habits), use horizontal “chips” (peels) to switch between local sections (Player / Habits / Areas / Store). The selected pill is filled (blue), others are neutral. A Config pill appears at the end to open the User Config sheet.
+- Section navigation: Within Habits, use the reusable `MainNavigationBar` (animated pills) to switch Player / Habits / Areas / Store / Archive; a Config pill opens the config sheet.
 - Spotify‑like actions: Use swipe actions on list rows. Leading full swipe auto‑executes the primary action (Record). Trailing full swipe opens Edit; Delete is trailing and always asks for confirmation.
-- Forms: Use native SwiftUI Forms. For Habits, Area is chosen via a Picker populated from the Areas catalog. Bad Habits allow “None (Global)”. Avoid manual ID entry.
+- Forms: Use `DSSheet` for all create/edit flows with Cancel/Save in the navigation bar for consistency.
 
 Habits Header (Global XP)
 ```swift
@@ -35,7 +35,7 @@ VStack(alignment: .leading) {
 
 Config Entry (pill in chip bar)
 ```swift
-TileNav(selected: $selected, onConfig: { showingConfig = true })
+MainNavigationBar(selected: $selected, onConfig: { showingConfig = true })
   .sheet(isPresented: $showingConfig) { UserConfigSheet(onSaved: { Task { await profileVM.refresh() } }) }
 ```
 
@@ -59,31 +59,50 @@ ForEach(profile.areas, id: \.areaId) { a in
 }
 ```
 
-Example List
+Example Cards + Actions
 ```swift
 import SwiftUI
 
-struct HabitsView: View {
-    @State private var model: HabitsViewModel
-
-    init(model: HabitsViewModel) {
-        _model = State(initialValue: model)
-    }
+struct HabitsList: View {
+    @ObservedObject var goodVM: HabitsViewModel
 
     var body: some View {
-        List(model.items) { habit in
-            HStack {
-                Text(habit.name)
-                Spacer()
-                Button("I did it") { Task { await model.completeHabit(id: habit.id) } }
-                    .buttonStyle(.borderedProminent)
-                    .accessibilityLabel("Complete \(habit.name)")
+        ScrollView {
+            VStack(spacing: 12) {
+                ForEach(goodVM.habits) { habit in
+                    DSCard {
+                        HStack {
+                            VStack(alignment: .leading) {
+                                Text(habit.name).dsFont(.body)
+                                HStack(spacing: 8) {
+                                    Label("+\(habit.xpReward) XP", systemImage: "star.fill").font(.caption)
+                                    Label("+\(habit.coinReward)", systemImage: "creditcard").font(.caption)
+                                }
+                            }
+                            Spacer()
+                            DSButton("I did it", icon: "checkmark") {
+                                Task { _ = await goodVM.complete(id: habit.id) }
+                            }
+                        }
+                    }
+                }
             }
+            .padding()
         }
-        .overlay { if model.isLoading { ProgressView() } }
-        .task { await model.load() }
+        .overlay { if goodVM.isLoading { ProgressView() } }
         .navigationTitle("Habits")
     }
+}
+```
+
+DSSheet (Cancel/Save)
+```swift
+DSSheet(title: "New Good Habit", onCancel: { dismiss() }, onSave: { await save() }, canSave: isValid) {
+  DSFormField(label: "Name", text: $name)
+  DSPickerField(label: "Area", selection: $areaId, options: areas.map(\.id)) { id in
+    areas.first { $0.id == id }?.name ?? "Unknown"
+  }
+  DSFormField(label: "XP", text: $xp, keyboardType: .numberPad)
 }
 ```
 

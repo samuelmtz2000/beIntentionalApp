@@ -71,10 +71,10 @@ DOCUMENTATION FIRST POLICY
 - Consult repo docs BEFORE coding.
 - If docs are missing/outdated, propose doc updates and add them as part of the change (include examples, run commands, and troubleshooting).
  - Break down features into small, incremental changes and PRs. Prefer adding new, focused files (small sheets/components/services) and minimal edits to large, complex views to keep compile times fast and diffs reviewable.
- - When API or UI behavior changes, update the docs site under `apps/docs` (Docusaurus) in addition to in-repo READMEs:
-   - API: add/update pages under `apps/docs/docs/api/*` (endpoints, overview, store).
-   - Frontend: reflect UI/UX in `apps/docs/docs/frontend/*` (screens, networking, configuration).
-   - Keep `/me` payloads, new routes (e.g., `/users/:id/config`), and UI affordances (e.g., Habits header XP text, config gear) documented.
+- When API or UI behavior changes, update the docs site under `apps/docs` (Docusaurus) in addition to in-repo READMEs:
+  - API: add/update pages under `apps/docs/docs/api/*` (endpoints, overview, store).
+  - Frontend: reflect UI/UX in `apps/docs/docs/frontend/*` (screens, networking, configuration). Include DS components and feature-first structure.
+  - Keep `/me` payloads, new routes (e.g., `/users/:id/config`), and UI affordances (e.g., Habits header XP text, config gear, DS sheet patterns) documented.
 
 QUALITY & SAFETY BARS
 - All changes must compile, pass type-checks, pass linters/formatters, and pass tests.
