@@ -215,7 +215,7 @@ private struct TileNav: View {
             
             // ScrollView for layout but with interaction disabled
             ScrollView(.horizontal, showsIndicators: false) {
-                HStack(spacing: 10) {
+                HStack(spacing: 8) {
                     ForEach(HabitsView.SectionKind.allCases, id: \.self) { kind in
                         AnimatedPillButton(
                             kind: kind,
@@ -285,8 +285,8 @@ private struct AnimatedPillButton: View {
                         ))
                 }
             }
-            .padding(.horizontal, isSelected ? 16 : 12)
-            .padding(.vertical, 10)
+            .padding(.horizontal, isSelected ? 12 : 8)
+            .padding(.vertical, 6)
             .background(
                 Capsule()
                     .fill(isSelected ? Color.blue : Color.gray.opacity(0.2))
