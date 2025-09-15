@@ -35,16 +35,17 @@ struct HabitsView: View {
                 // Fixed header section
                 VStack(spacing: 0) {
                     PlayerHeader(profile: profileVM.profile, onLogToday: { selected = .habits }, onOpenStore: { selected = .store })
-                        .gesture(
-                            DragGesture(minimumDistance: 50)
-                                .onEnded { value in
-                                    handleHeaderSwipe(translation: value.translation.width)
-                                }
-                        )
                     TileNav(selected: $selected, onConfig: { showingConfig = true })
                 }
                 .background(DSTheme.colors(for: scheme).backgroundSecondary)
                 .shadow(color: Color.black.opacity(0.1), radius: 4, x: 0, y: 2)
+                .contentShape(Rectangle())
+                .gesture(
+                    DragGesture(minimumDistance: 30)
+                        .onEnded { value in
+                            handleHeaderSwipe(translation: value.translation.width)
+                        }
+                )
                 
                 // Scrollable body content
                 Group {
@@ -127,11 +128,11 @@ extension HabitsView {
         guard let currentIndex = navigableCases.firstIndex(of: selected) else { return }
         
         withAnimation(.easeInOut(duration: 0.3)) {
-            if translation < -50 {
+            if translation < -30 {
                 // Swipe left - go to next
                 let nextIndex = (currentIndex + 1) % navigableCases.count
                 selected = navigableCases[nextIndex]
-            } else if translation > 50 {
+            } else if translation > 30 {
                 // Swipe right - go to previous
                 let previousIndex = currentIndex == 0 ? navigableCases.count - 1 : currentIndex - 1
                 selected = navigableCases[previousIndex]
@@ -201,34 +202,48 @@ private struct TileNav: View {
     var onConfig: (() -> Void)? = nil
     
     var body: some View {
-        ScrollView(.horizontal, showsIndicators: false) {
-            HStack(spacing: 10) {
-                ForEach(HabitsView.SectionKind.allCases, id: \.self) { kind in
-                    AnimatedPillButton(
-                        kind: kind,
-                        isSelected: selected == kind,
-                        action: {
-                            withAnimation(.easeInOut(duration: 0.3)) {
-                                if kind == .config { 
-                                    onConfig?() 
-                                } else { 
-                                    selected = kind 
+        ZStack {
+            // Invisible overlay to capture swipe gestures
+            Color.clear
+                .contentShape(Rectangle())
+                .gesture(
+                    DragGesture(minimumDistance: 30)
+                        .onEnded { value in
+                            handleSwipe(translation: value.translation.width)
+                        }
+                )
+            
+            // ScrollView for layout but with interaction disabled
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: 10) {
+                    ForEach(HabitsView.SectionKind.allCases, id: \.self) { kind in
+                        AnimatedPillButton(
+                            kind: kind,
+                            isSelected: selected == kind,
+                            action: {
+                                withAnimation(.easeInOut(duration: 0.3)) {
+                                    if kind == .config { 
+                                        onConfig?() 
+                                    } else { 
+                                        selected = kind 
+                                    }
                                 }
                             }
-                        }
-                    )
+                        )
+                    }
                 }
+                .padding(.horizontal, 12)
             }
-            .padding(.horizontal, 12)
+            .allowsHitTesting(true) // Allow pill buttons to be tapped
+            .simultaneousGesture(
+                DragGesture(minimumDistance: 30)
+                    .onEnded { value in
+                        handleSwipe(translation: value.translation.width)
+                    }
+            )
         }
         .padding(.top, 8)
         .padding(.bottom, 12)
-        .gesture(
-            DragGesture(minimumDistance: 50)
-                .onEnded { value in
-                    handleSwipe(translation: value.translation.width)
-                }
-        )
     }
     
     private func handleSwipe(translation: CGFloat) {
@@ -237,11 +252,11 @@ private struct TileNav: View {
         guard let currentIndex = navigableCases.firstIndex(of: selected) else { return }
         
         withAnimation(.easeInOut(duration: 0.3)) {
-            if translation < -50 {
+            if translation < -30 {
                 // Swipe left - go to next
                 let nextIndex = (currentIndex + 1) % navigableCases.count
                 selected = navigableCases[nextIndex]
-            } else if translation > 50 {
+            } else if translation > 30 {
                 // Swipe right - go to previous
                 let previousIndex = currentIndex == 0 ? navigableCases.count - 1 : currentIndex - 1
                 selected = navigableCases[previousIndex]
