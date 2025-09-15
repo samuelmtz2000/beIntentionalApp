@@ -178,7 +178,7 @@ private struct TileNav: View {
     
     var body: some View {
         ScrollView(.horizontal, showsIndicators: false) {
-            HStack(spacing: 8) {
+            HStack(spacing: 10) {
                 ForEach(HabitsView.SectionKind.allCases, id: \.self) { kind in
                     AnimatedPillButton(
                         kind: kind,
@@ -197,7 +197,8 @@ private struct TileNav: View {
             }
             .padding(.horizontal, 12)
         }
-        .padding(.bottom, 4)
+        .padding(.top, 8)
+        .padding(.bottom, 12)
     }
 }
 
@@ -208,23 +209,22 @@ private struct AnimatedPillButton: View {
     
     var body: some View {
         Button(action: action) {
-            HStack(spacing: 4) {
+            HStack(spacing: 6) {
                 Image(systemName: iconName(for: kind))
-                    .font(.caption)
-                    .frame(width: 16, height: 16)
+                    .font(.system(size: 16))
+                    .frame(width: 20, height: 20)
                 
                 if isSelected {
                     Text(kind.rawValue)
-                        .font(.caption)
-                        .fontWeight(.semibold)
+                        .font(.system(size: 14, weight: .semibold))
                         .transition(.asymmetric(
                             insertion: .move(edge: .leading).combined(with: .opacity),
                             removal: .move(edge: .trailing).combined(with: .opacity)
                         ))
                 }
             }
-            .padding(.horizontal, isSelected ? 12 : 8)
-            .padding(.vertical, 6)
+            .padding(.horizontal, isSelected ? 16 : 12)
+            .padding(.vertical, 10)
             .background(
                 Capsule()
                     .fill(isSelected ? Color.blue : Color.gray.opacity(0.2))
