@@ -222,7 +222,7 @@ private struct TileNav: View {
             }
             .padding(.horizontal, 12)
         }
-        .padding(.bottom, 4)
+        .padding(.vertical, 8)
         .background(
             Color.clear
                 .contentShape(Rectangle())
