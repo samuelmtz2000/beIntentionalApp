@@ -4,11 +4,45 @@ title: UI & Components
 
 SwiftUI views are small, composable, and previewable. Emphasize accessibility and performance.
 
+<<<<<<< HEAD
+## UI Navigation Patterns
+
+- **Tab Navigation**: Streamlined 2-tab interface (Habits, Settings) for primary app sections. The Today tab has been removed for simplified navigation.
+- **Pill Navigation**: Within screens, use horizontal "chips" to switch between sub-sections (Player / Habits / Areas / Store / Archive). The selected pill is filled (blue), others are neutral. A Config pill opens the User Config sheet.
+- **Swipe Actions**: Use swipe actions on list rows. Leading full swipe auto-executes the primary action (Record habit). Trailing swipe reveals Edit/Delete with confirmation prompts.
+- **Toast Notifications**: Provide immediate feedback for user actions with top-sliding toast messages that auto-dismiss after 3 seconds.
+- **Forms**: Use native SwiftUI Forms. Areas are selected via Picker from the Areas catalog. Bad Habits can be "None (Global)". Avoid manual ID entry.
+
+## Toast Notification System
+
+Toast messages provide immediate visual feedback for habit completions:
+
+```swift
+// Usage example
+@State private var toast: ToastMessage? = nil
+
+// Show success toast
+toast = ToastMessage(message: "✅ Exercise completed! +10 XP, +5 coins", type: .success)
+
+// Show error toast
+toast = ToastMessage(message: "⚠️ Smoking recorded. -10 life", type: .error)
+
+// Apply to view
+YourView()
+  .toast($toast)
+```
+
+Toast types:
+- **Success** (green with checkmark): Good habit completions showing XP/coin rewards
+- **Error** (red with exclamation): Bad habit records showing life penalties
+- **Info** (blue with info icon): General informational messages
+=======
 UI Navigation Patterns
 - Tab navigation: Primary app sections are exposed via the bottom tab bar (Today, Habits, Settings, etc.). Screens should not hide the tab bar unless in a modal flow.
 - Section navigation: Within Habits, use the reusable `MainNavigationBar` (animated pills) to switch Player / Habits / Areas / Store / Archive; a Config pill opens the config sheet.
 - Spotify‑like actions: Use swipe actions on list rows. Leading full swipe auto‑executes the primary action (Record). Trailing full swipe opens Edit; Delete is trailing and always asks for confirmation.
 - Forms: Use `DSSheet` for all create/edit flows with Cancel/Save in the navigation bar for consistency.
+>>>>>>> origin/main
 
 Habits Header (Global XP)
 ```swift
