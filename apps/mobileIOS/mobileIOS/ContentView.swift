@@ -12,8 +12,6 @@ struct MainTabView: View {
     var body: some View {
         let c = DSTheme.colors(for: scheme)
         return TabView {
-            TodayView()
-                .tabItem { Label("Today", systemImage: "sun.max.fill") }
             HabitsView()
                 .tabItem { Label("Habits", systemImage: "checklist") }
             SettingsView()

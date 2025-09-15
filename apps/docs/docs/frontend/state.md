@@ -14,9 +14,13 @@ Preferences
 
 ```swift
 enum Preferences {
-    @AppStorage("apiBaseURL") static var apiBaseURL: String = "http://localhost:4000"
+    static let apiBaseURLKey = "API_BASE_URL"
 }
 ```
+
+Storage Abstraction
+- `StorageProtocol` defines profile/areas/habits/bad habits operations
+- Default is API-backed (`APIStorage(api:)`); can swap to SwiftData later without touching views
 
 Offline
 - Graceful error UI; retry buttons

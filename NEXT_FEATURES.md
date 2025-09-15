@@ -30,11 +30,19 @@ A running list of upcoming features/tasks to track and prioritize.
 4. Remove the first page/tab called "Today" (it will not be used).
 5. Game configurations for when Health reaches zero and for starting/restoring the game (details to be determined later).
 6. Streak configuration: add a global streak and per‑habit streaks; track missed days ("not registered" streak) as part of the model.
-7. create MPC server and an UI chat to do all the actions from the backend.
-8. add emojis to habits
-9. configure good habits to have general frequency configurations (like google tasks have, daily weekly monthly, per day of the week with selection of the days etc)
-10. create table configurations to be hable to filter and group habits
-11. Production hardening for the first release (stability, performance, error handling, analytics, QA checklist, and release notes).
+7. add emojis to habits
+8. Create a area view page where you can see the good and bad habits per area and the log and a general view fow the same grouping per area.
+9. create MPC server and an UI chat to do all the actions from the backend.
+10. configure good habits to have general frequency configurations (like google tasks have, daily weekly monthly, per day of the week with selection of the days etc)
+11. create table configurations to be able to filter and group habits, areas, bad habits
+12. Production hardening for the first release (stability, performance, error handling, analytics, QA checklist, and release notes).
+
+Sprint 2
+
+1. Change exp and coin configuration instead of configuring a specific xp and coines gained by good habit, make parameters: level of will needed, time consumed in habit, etc. do a creative process and psicological effects to configure this. Same with bad habits to determine the price and life lost.
+2. Prepare app to work with login using google and storing data separated for each user/player.
+3. Prepare for multiplayer gaming
+4. Create an avatar/mascot and iterations of how good habits make good things to the avatar (weapons health cleaning) and how bad habits do the contrary
 
 Sprint 2
 

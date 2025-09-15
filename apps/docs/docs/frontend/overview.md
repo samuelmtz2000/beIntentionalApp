@@ -4,6 +4,15 @@ title: iOS Frontend Overview
 
 Native SwiftUI app targeting iOS 17+. The app follows Apple and Swift API Design Guidelines and prefers clarity, value semantics, and testability.
 
+Architecture at a glance
+- Feature-first modular structure under `apps/mobileIOS/mobileIOS`
+  - `Features/*/{Views,ViewModels,Components}`
+  - `Shared/{Components,Sheets,Extensions}`
+  - `Core/{Storage,Networking,Models}`
+  - `DesignSystem/*` (tokens, components, styles)
+- Reusable sheets with Cancel/Save in nav bar via `DSSheet`
+- Storage abstraction via `StorageProtocol` with current `APIStorage` implementation
+
 Highlights
 - Swift 5.9+, SwiftUI, MVVM, Combine where appropriate, async/await networking
 - Clean layering: Views → ViewModels → Services → API Client
