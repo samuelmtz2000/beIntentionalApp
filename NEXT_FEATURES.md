@@ -36,4 +36,11 @@ A running list of upcoming features/tasks to track and prioritize.
 10. create table configurations to be hable to filter and group habits
 11. Production hardening for the first release (stability, performance, error handling, analytics, QA checklist, and release notes).
 
+Sprint 2
+
+1. Change exp and coin configuration instead of configuring a specific xp and coines gained by good habit, make parameters: level of will needed, time consumed in habit, etc. do a creative process and psicological effects to configure this. Same with bad habits to determine the price and life lost.
+2. Prepare app to work with login using google and storing data separated for each user/player.
+3. Prepare for multiplayer gaming
+4. Create an avatar/mascot and iterations of how good habits make good things to the avatar (weapons health cleaning) and how bad habits do the contrary
+
 > Note: This document is a living list; we’ll refine scope and ordering as we move forward.

@@ -10,16 +10,16 @@ Native iOS client for Habit Hero, built with Swift 5.9+, SwiftUI, MVVM, async/aw
 
 ## Features
 
-- Tabs: Today, Habits, Stats, Settings
-- Habits CRUD, quick completion (awards XP/coins)
-- Small inline header for Habits; section headers for Good/Bad with icons
-- Global profile stats: life, coins, and global Level/XP derived from your activity
-- Clear progress: Habits player header shows “XP to next → {current} from {required}”
-- Pill navigation with icons: Player, Habits, Areas, Store, Archive, Config
-- Store redesigned as DS card grid with Buy actions (no table rows)
-- Archive/Areas rows styled as DS cards with consistent typography
-- User Config (via Config pill): XP per Level, Level curve (linear/exp), multiplier, XP computation mode (logs vs stored), and Appearance (System/Light/Dark)
-- Settings: editable API base URL
+- **Core Navigation**: Streamlined 2-tab interface (Habits, Settings) with pill-based sub-navigation
+- **Habit Management**: Complete CRUD operations for good and bad habits with swipe actions
+- **Real-time Feedback**: Toast notifications for habit completions showing XP/coin rewards and life penalties
+- **Player Stats**: Global profile with life, coins, and level progression with XP tracking
+- **Multi-Area Support**: Organize habits by areas with individual level curves and multipliers
+- **Store System**: Purchase controllable bad habits with coins in a card-based interface
+- **Archive & Restore**: Soft-delete system for habits and areas with restoration capabilities
+- **Theme Support**: System/Light/Dark mode switching with consistent design system
+- **User Configuration**: Customizable XP curves, level multipliers, and appearance settings
+- **API Integration**: Full backend synchronization with offline-friendly error handling
 
 ## Getting Started
 
@@ -62,19 +62,28 @@ Ensure the backend is running and seeded so the app has demo data.
 
 ## UI Patterns
 
-- Tab navigation: primary screens via bottom tabs.
-- Pill navigation with icons: Player / Habits / Areas / Store / Archive / Config.
-- Habits title: small inline nav title; Good/Bad sections have icon headers.
-- Store: two‑column card grid (Design System), each card shows title, secondary text, Buy button.
-- Archive/Areas: DS cards for rows (rounded, shadow), consistent dsFont typography.
-- Swipe actions: leading swipe → Record; trailing swipe → Edit/Delete (with confirm).
-- Forms: Good/Bad create & edit forms use Area pickers sourced from the Areas catalog. Bad can be “None (Global)”.
+- **Tab Navigation**: Streamlined 2-tab interface (Habits, Settings) for primary app sections
+- **Pill Navigation**: Horizontal scrolling chips for sub-sections (Player, Habits, Areas, Store, Archive, Config)
+- **Swipe Actions**: Leading swipe → Record habit; trailing swipe → Edit/Delete (with confirmation)
+- **Toast Notifications**: Top-sliding feedback messages for habit completions with auto-dismiss
+  - Success toasts (green): "✅ [Habit] completed! +[XP] XP, +[coins] coins"
+  - Warning toasts (red): "⚠️ [Habit] recorded. -[penalty] life"
+- **Card-based Lists**: All content uses Design System cards with consistent shadows and typography
+- **Store Interface**: Two-column card grid with Buy buttons and coin cost display
+- **Forms**: Good/Bad habit creation with Area pickers; Bad habits can be "None (Global)"
+- **Progressive Disclosure**: Player stats and area details expand with context-appropriate information
 
 ## Design System
 
-- Tokens: semantic colors, spacing, radii, typography wrappers (dsFont), button styles (Primary/Secondary), card modifier.
-- Theme switching: System/Light/Dark from Config; applied app‑wide.
-- Accessibility: buttons have descriptive labels, 44×44pt targets where applicable.
+- **Design Tokens**: Semantic colors, spacing, radii, typography scales with `dsFont()` wrapper
+- **Component Library**: Button styles (Primary/Secondary), card modifier, toast notifications
+- **Toast System**: 
+  - `ToastMessage` model with type-safe messaging
+  - `ToastType` enum (success, error, info) with appropriate icons and colors
+  - `.toast()` view modifier for easy integration
+  - Auto-dismiss with smooth animations (slide from top)
+- **Theme Support**: System/Light/Dark mode with consistent color schemes applied app-wide
+- **Accessibility**: Descriptive labels, 44×44pt touch targets, dynamic type support, semantic colors
 
 ## Testing
 

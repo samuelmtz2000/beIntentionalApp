@@ -17,7 +17,7 @@ struct HabitsView: View {
     @State private var showingAddArea = false
     @State private var showingConfig = false
     @State private var selected: SectionKind = .habits
-    // toast removed
+    @State private var toast: ToastMessage? = nil
 
     init() {
         let app = AppModel()
@@ -55,7 +55,9 @@ struct HabitsView: View {
                             badVM: badVM,
                             onRefresh: { await refreshAll() },
                             onAddGood: { showingAddGood = true },
-                            onAddBad: { showingAddBad = true }
+                            onAddBad: { showingAddBad = true },
+                            onShowSuccessToast: showSuccessToast,
+                            onShowErrorToast: showErrorToast
                         )
                     } else if selected == .areas {
                         AreasPanelBody(vm: areasVM, onAdd: { showingAddArea = true })
@@ -92,6 +94,7 @@ struct HabitsView: View {
             }
             .sheet(isPresented: $showingAddArea) { NewAreaSheet { name, icon, xp, curve, mult in Task { await areasVM.create(name: name, icon: icon, xpPerLevel: xp, levelCurve: curve, levelMultiplier: mult); await refreshAll() } } }
             .sheet(isPresented: $showingConfig) { UserConfigSheet(onSaved: { Task { await profileVM.refresh() } }) }
+            .toast($toast)
         }
     }
 
@@ -137,6 +140,18 @@ extension HabitsView {
                 let previousIndex = currentIndex == 0 ? navigableCases.count - 1 : currentIndex - 1
                 selected = navigableCases[previousIndex]
             }
+        }
+    }
+    
+    private func showSuccessToast(message: String) {
+        withAnimation {
+            toast = ToastMessage(message: message, type: .success)
+        }
+    }
+    
+    private func showErrorToast(message: String) {
+        withAnimation {
+            toast = ToastMessage(message: message, type: .error)
         }
     }
 }
@@ -490,6 +505,8 @@ private struct CombinedHabitsBodyPanel: View {
     var onRefresh: () async -> Void
     var onAddGood: () -> Void
     var onAddBad: () -> Void
+    var onShowSuccessToast: (String) -> Void
+    var onShowErrorToast: (String) -> Void
     
     @State private var editingGood: GoodHabit? = nil
     @State private var editingBad: BadHabit? = nil
@@ -516,6 +533,11 @@ private struct CombinedHabitsBodyPanel: View {
                                 defer { inFlightIds.remove(habit.id) }
                                 _ = await goodVM.complete(id: habit.id)
                                 await onRefresh()
+                                
+                                // Show success toast
+                                await MainActor.run {
+                                    onShowSuccessToast("✅ \(habit.name) completed! +\(habit.xpReward) XP, +\(habit.coinReward) coins")
+                                }
                             }
                         } label: { Label("Record", systemImage: "checkmark.circle.fill") }
                         .tint(.green)
@@ -552,6 +574,11 @@ private struct CombinedHabitsBodyPanel: View {
                                 defer { inFlightIds.remove(item.id) }
                                 await badVM.record(id: item.id)
                                 await onRefresh()
+                                
+                                // Show warning toast
+                                await MainActor.run {
+                                    onShowErrorToast("⚠️ \(item.name) recorded. -\(item.lifePenalty) life")
+                                }
                             }
                         } label: { Label("Record", systemImage: "exclamationmark.circle") }
                         .tint(.red)
