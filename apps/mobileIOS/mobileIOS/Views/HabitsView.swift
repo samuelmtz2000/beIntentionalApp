@@ -35,6 +35,12 @@ struct HabitsView: View {
                 // Fixed header section
                 VStack(spacing: 0) {
                     PlayerHeader(profile: profileVM.profile, onLogToday: { selected = .habits }, onOpenStore: { selected = .store })
+                        .gesture(
+                            DragGesture(minimumDistance: 50)
+                                .onEnded { value in
+                                    handleHeaderSwipe(translation: value.translation.width)
+                                }
+                        )
                     TileNav(selected: $selected, onConfig: { showingConfig = true })
                 }
                 .background(DSTheme.colors(for: scheme).backgroundSecondary)
@@ -112,6 +118,24 @@ extension HabitsView {
             group.addTask { await badVM.refresh() }
             group.addTask { await storeVM.refresh() }
             group.addTask { await archiveVM.refresh() }
+        }
+    }
+    
+    private func handleHeaderSwipe(translation: CGFloat) {
+        // Filter out config from navigation
+        let navigableCases = SectionKind.allCases.filter { $0 != .config }
+        guard let currentIndex = navigableCases.firstIndex(of: selected) else { return }
+        
+        withAnimation(.easeInOut(duration: 0.3)) {
+            if translation < -50 {
+                // Swipe left - go to next
+                let nextIndex = (currentIndex + 1) % navigableCases.count
+                selected = navigableCases[nextIndex]
+            } else if translation > 50 {
+                // Swipe right - go to previous
+                let previousIndex = currentIndex == 0 ? navigableCases.count - 1 : currentIndex - 1
+                selected = navigableCases[previousIndex]
+            }
         }
     }
 }
@@ -199,6 +223,30 @@ private struct TileNav: View {
         }
         .padding(.top, 8)
         .padding(.bottom, 12)
+        .gesture(
+            DragGesture(minimumDistance: 50)
+                .onEnded { value in
+                    handleSwipe(translation: value.translation.width)
+                }
+        )
+    }
+    
+    private func handleSwipe(translation: CGFloat) {
+        // Filter out config from navigation
+        let navigableCases = HabitsView.SectionKind.allCases.filter { $0 != .config }
+        guard let currentIndex = navigableCases.firstIndex(of: selected) else { return }
+        
+        withAnimation(.easeInOut(duration: 0.3)) {
+            if translation < -50 {
+                // Swipe left - go to next
+                let nextIndex = (currentIndex + 1) % navigableCases.count
+                selected = navigableCases[nextIndex]
+            } else if translation > 50 {
+                // Swipe right - go to previous
+                let previousIndex = currentIndex == 0 ? navigableCases.count - 1 : currentIndex - 1
+                selected = navigableCases[previousIndex]
+            }
+        }
     }
 }
 
