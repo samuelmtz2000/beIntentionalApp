@@ -37,6 +37,24 @@ struct HabitsView: View {
                 VStack(spacing: 0) {
                 LegacyPlayerHeader(profile: profileVM.profile, onLogToday: { selected = .habits }, onOpenStore: { selected = .store })
                     TileNav(selected: $selected, onConfig: { showingConfig = true })
+                    if app.game.state != .active {
+                        HStack(alignment: .center, spacing: 12) {
+                            Image(systemName: app.game.state == .recovery ? "figure.run" : "exclamationmark.triangle.fill")
+                                .foregroundStyle(app.game.state == .recovery ? .orange : .red)
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text(app.game.state == .recovery ? "Recovery in progress" : "Game Over")
+                                    .dsFont(.body)
+                                Text("Bad habits are disabled until recovery is complete.")
+                                    .dsFont(.caption)
+                                    .foregroundStyle(.secondary)
+                            }
+                            Spacer()
+                            Button("Details") { showGameOverModal = true }
+                                .buttonStyle(SecondaryButtonStyle())
+                        }
+                        .padding(.horizontal, 12)
+                        .padding(.vertical, 8)
+                    }
                 }
                 .background(DSTheme.colors(for: scheme).backgroundSecondary)
                 .shadow(color: Color.black.opacity(0.1), radius: 4, x: 0, y: 2)
@@ -58,6 +76,7 @@ struct HabitsView: View {
                             onAddGood: { showingAddGood = true },
                             onAddBad: { showingAddBad = true },
                             onBadHabitRecorded: { await onBadHabitRecorded() },
+                            onRequireGameOverModal: { showGameOverModal = true },
                             onShowSuccessToast: showSuccessToast,
                             onShowErrorToast: showErrorToast
                         )
@@ -547,6 +566,7 @@ private struct CombinedHabitsBodyPanel: View {
     var onAddGood: () -> Void
     var onAddBad: () -> Void
     var onBadHabitRecorded: () async -> Void
+    var onRequireGameOverModal: () -> Void
     var onShowSuccessToast: (String) -> Void
     var onShowErrorToast: (String) -> Void
     
@@ -582,7 +602,6 @@ private struct CombinedHabitsBodyPanel: View {
                                 }
                             }
                         } label: { Label("Record", systemImage: "checkmark.circle.fill") }
-                        .disabled(app.game.state != .active)
                         .tint(.green)
                     }
                     .swipeActions(edge: .trailing, allowsFullSwipe: true) {
@@ -615,6 +634,10 @@ private struct CombinedHabitsBodyPanel: View {
                                 guard inFlightIds.contains(item.id) == false else { return }
                                 inFlightIds.insert(item.id)
                                 defer { inFlightIds.remove(item.id) }
+                                if app.game.state != .active {
+                                    onRequireGameOverModal()
+                                    return
+                                }
                                 await badVM.record(id: item.id)
                                 await onBadHabitRecorded()
                                 
@@ -629,7 +652,6 @@ private struct CombinedHabitsBodyPanel: View {
                                 }
                             }
                         } label: { Label("Record", systemImage: "exclamationmark.circle") }
-                        .disabled(app.game.state != .active)
                         .tint(.red)
                     }
                     .swipeActions(edge: .trailing, allowsFullSwipe: true) {
