@@ -602,6 +602,7 @@ private struct CombinedHabitsBodyPanel: View {
                                 }
                             }
                         } label: { Label("Record", systemImage: "checkmark.circle.fill") }
+                        .disabled(app.game.state != .active)
                         .tint(.green)
                     }
                     .swipeActions(edge: .trailing, allowsFullSwipe: true) {
@@ -652,6 +653,7 @@ private struct CombinedHabitsBodyPanel: View {
                                 }
                             }
                         } label: { Label("Record", systemImage: "exclamationmark.circle") }
+                        .disabled(app.game.state != .active)
                         .tint(.red)
                     }
                     .swipeActions(edge: .trailing, allowsFullSwipe: true) {
