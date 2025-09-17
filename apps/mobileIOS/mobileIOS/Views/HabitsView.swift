@@ -384,6 +384,19 @@ private struct PlayerPanelList: View {
     
     var body: some View {
         List {
+            if app.game.state != .active {
+                Section {
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text(app.game.state == .recovery ? "Recovery in progress" : "Game Over")
+                            .dsFont(.headerMD)
+                        Text("Habit actions are disabled until you complete recovery.")
+                            .dsFont(.caption)
+                            .foregroundStyle(.secondary)
+                    }
+                    .cardStyle()
+                    .listRowBackground(Color.clear)
+                }
+            }
             header
             PlayerPanelContent(profile: profile, areasMeta: areasMeta)
         }
@@ -526,6 +539,7 @@ private struct CombinedHabitsPanel: View {
 
 // New body panels without headers for fixed header layout
 private struct CombinedHabitsBodyPanel: View {
+    @EnvironmentObject private var app: AppModel
     @ObservedObject var goodVM: HabitsViewModel
     @ObservedObject var badVM: BadHabitsViewModel
     var onRefresh: () async -> Void
@@ -567,6 +581,7 @@ private struct CombinedHabitsBodyPanel: View {
                                 }
                             }
                         } label: { Label("Record", systemImage: "checkmark.circle.fill") }
+                        .disabled(app.game.state != .active)
                         .tint(.green)
                     }
                     .swipeActions(edge: .trailing, allowsFullSwipe: true) {
@@ -606,8 +621,14 @@ private struct CombinedHabitsBodyPanel: View {
                                 await MainActor.run {
                                     onShowErrorToast("⚠️ \(item.name) recorded. -\(item.lifePenalty) life")
                                 }
+                                if let e = badVM.apiError, e.status == 409 {
+                                    await MainActor.run {
+                                        onShowErrorToast("Game is not active. Start or continue recovery.")
+                                    }
+                                }
                             }
                         } label: { Label("Record", systemImage: "exclamationmark.circle") }
+                        .disabled(app.game.state != .active)
                         .tint(.red)
                     }
                     .swipeActions(edge: .trailing, allowsFullSwipe: true) {
