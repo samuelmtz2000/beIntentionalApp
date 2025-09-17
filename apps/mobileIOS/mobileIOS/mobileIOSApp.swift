@@ -19,26 +19,36 @@ struct HabitHeroApp: App {
                 .environmentObject(appModel)
                 .preferredColorScheme(appModel.colorSchemeOverride)
                 // Navigation appearance can be customized later with tokenized colors if needed.
+                .task { appModel.bootstrap() }
         }
     }
 }
 
+@MainActor
 final class AppModel: ObservableObject {
     @Published var apiBaseURL: URL
     let api: APIClient
     let persistence: PersistenceController
     @Published var appearance: AppearancePreference
+    let game: GameStateManager
+    let healthKit: HealthKitService
 
     init() {
         let base = URL(string: UserDefaults.standard.string(forKey: "API_BASE_URL") ?? "http://localhost:4000")!
         self.apiBaseURL = base
         self.persistence = PersistenceController.shared
         self.api = APIClient(baseURL: base)
+        self.game = GameStateManager(api: api)
+        self.healthKit = HealthKitService()
         if let raw = UserDefaults.standard.string(forKey: "APPEARANCE"), let pref = AppearancePreference(rawValue: raw) {
             self.appearance = pref
         } else {
             self.appearance = .system
         }
+    }
+
+    func bootstrap() {
+        game.loadCached()
     }
 
     var colorSchemeOverride: ColorScheme? {
