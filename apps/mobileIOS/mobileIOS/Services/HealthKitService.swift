@@ -24,12 +24,22 @@ final class HealthKitService {
     }
 
     func distanceSince(date: Date) async throws -> Double {
-        #if canImport(HealthKit)
-        // Implementation will be added during integration.
+#if canImport(HealthKit)
+        guard HKHealthStore.isHealthDataAvailable() else { return 0 }
+        let type = HKQuantityType.quantityType(forIdentifier: .distanceWalkingRunning)!
+        let predicate = HKQuery.predicateForSamples(withStart: date, end: Date(), options: .strictStartDate)
+        return try await withCheckedThrowingContinuation { cont in
+            let query = HKSampleQuery(sampleType: type, predicate: predicate, limit: HKObjectQueryNoLimit, sortDescriptors: nil) { _, samples, error in
+                if let error = error { cont.resume(throwing: error); return }
+                let total = (samples as? [HKQuantitySample])?.reduce(0.0) { acc, s in
+                    acc + s.quantity.doubleValue(for: HKUnit.meter())
+                } ?? 0
+                cont.resume(returning: total)
+            }
+            healthStore.execute(query)
+        }
+#else
         return 0
-        #else
-        return 0
-        #endif
+#endif
     }
 }
-

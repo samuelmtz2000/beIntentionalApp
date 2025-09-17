@@ -53,5 +53,21 @@ final class GameStateManager: ObservableObject {
         recoveryPercentage = info.recoveryPercentage ?? 0
         persist()
     }
-}
 
+    func setRecoveryProgress(meters: Int) {
+        recoveryDistance = max(0, meters)
+        let pct = Double(recoveryDistance) / Double(max(1, recoveryTarget))
+        recoveryPercentage = min(100, Int(pct * 100.0))
+        persist()
+    }
+
+    func refreshDistance(using healthKit: HealthKitService) async {
+        guard let start = gameOverAt else { return }
+        do {
+            let meters = try await healthKit.distanceSince(date: start)
+            setRecoveryProgress(meters: Int(meters))
+        } catch {
+            // Swallow errors here; UI can surface via toasts if desired
+        }
+    }
+}

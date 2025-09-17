@@ -3,6 +3,7 @@ import SwiftUI
 struct MarathonRecoveryView: View {
     @ObservedObject var game: GameStateManager
     var onRequestHealthAccess: () -> Void
+    var onUpdateProgress: () -> Void
 
     var progress: Double {
         let total = max(1, game.recoveryTarget)
@@ -22,10 +23,13 @@ struct MarathonRecoveryView: View {
             .font(.callout)
             .foregroundStyle(.secondary)
 
-            Button("Enable Health Access") { onRequestHealthAccess() }
-                .buttonStyle(SecondaryButtonStyle())
+            HStack(spacing: 12) {
+                Button("Enable Health Access") { onRequestHealthAccess() }
+                    .buttonStyle(SecondaryButtonStyle())
+                Button("Update Progress") { onUpdateProgress() }
+                    .buttonStyle(PrimaryButtonStyle())
+            }
         }
         .padding(24)
     }
 }
-

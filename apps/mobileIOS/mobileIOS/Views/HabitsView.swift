@@ -19,6 +19,7 @@ struct HabitsView: View {
     @State private var selected: SectionKind = .habits
     @State private var toast: ToastMessage? = nil
     @State private var showGameOverModal = false
+    @State private var showingRecovery = false
 
     init() {
         let app = AppModel()
@@ -125,7 +126,15 @@ struct HabitsView: View {
                     // Transition to recovery state locally; backend state is already set by trigger.
                     app.game.state = .recovery
                     if app.game.gameOverAt == nil { app.game.gameOverAt = Date() }
+                    showingRecovery = true
                 })
+            }
+            .sheet(isPresented: $showingRecovery) {
+                MarathonRecoveryView(
+                    game: app.game,
+                    onRequestHealthAccess: { Task { try? await app.healthKit.requestAuthorization() } },
+                    onUpdateProgress: { Task { await app.game.refreshDistance(using: app.healthKit) } }
+                )
             }
         }
     }
