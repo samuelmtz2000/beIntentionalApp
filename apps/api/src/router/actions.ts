@@ -6,6 +6,11 @@ const DEFAULT_USER_ID = "seed-user-1";
 const router = Router();
 
 router.post("/habits/:id/complete", async (req, res) => {
+  // block actions if user not in active state
+  const actingUser = await prisma.user.findUnique({ where: { id: DEFAULT_USER_ID } });
+  if (!actingUser) return res.status(404).json({ message: "User not found" });
+  if (actingUser.gameState !== "active") return res.status(409).json({ message: "Game is not active. Complete recovery to continue." });
+
   const habit = await prisma.goodHabit.findFirst({ where: { id: req.params.id, deletedAt: null }, include: { area: true } });
   if (!habit || !habit.area || (habit.area as any).deletedAt) return res.status(404).json({ message: "Habit not found" });
 
@@ -26,8 +31,7 @@ router.post("/habits/:id/complete", async (req, res) => {
   );
 
   // fetch user to compute global leveling or skip if logs-mode
-  const user = await prisma.user.findUnique({ where: { id: DEFAULT_USER_ID } });
-  if (!user) return res.status(404).json({ message: "User not found" });
+  const user = actingUser;
   const logsMode = (user.xpComputationMode as any) === "logs";
   const nextUser = logsMode
     ? { level: user.level, xp: user.xp } // do not update stored xp/level when computing from logs
@@ -49,6 +53,11 @@ router.post("/habits/:id/complete", async (req, res) => {
 });
 
 router.post("/bad-habits/:id/record", async (req, res) => {
+  // block actions if user not in active state
+  const actingUser = await prisma.user.findUnique({ where: { id: DEFAULT_USER_ID } });
+  if (!actingUser) return res.status(404).json({ message: "User not found" });
+  if (actingUser.gameState !== "active") return res.status(409).json({ message: "Game is not active. Complete recovery to continue." });
+
   const bad = await prisma.badHabit.findFirst({ where: { id: req.params.id, deletedAt: null } });
   if (!bad) return res.status(404).json({ message: "Bad habit not found" });
 
@@ -71,6 +80,25 @@ router.post("/bad-habits/:id/record", async (req, res) => {
   }
 
   await prisma.badHabitLog.create({ data: { userId: DEFAULT_USER_ID, badHabitId: bad.id, avoidedPenalty } });
+
+  // Trigger Game Over when life reaches 0 or below
+  if (!avoidedPenalty && userAfter && userAfter.life <= 0) {
+    const now = new Date();
+    const current = await prisma.user.findUnique({ where: { id: DEFAULT_USER_ID } });
+    if (current && current.gameState === "active") {
+      await prisma.user.update({
+        where: { id: DEFAULT_USER_ID },
+        data: {
+          gameState: "game_over",
+          gameOverAt: now,
+          recoveryStartedAt: now,
+          recoveryDistance: 0,
+          totalGameOvers: { increment: 1 },
+        },
+      });
+    }
+  }
+
   res.json({ user: { life: userAfter!.life }, avoidedPenalty });
 });
 
