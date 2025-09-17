@@ -378,6 +378,7 @@ extension PlayerHeaderWrapper where Content == EmptyView {
 }
 
 private struct PlayerPanelList: View {
+    @EnvironmentObject private var app: AppModel
     let profile: Profile?
     var areasMeta: [Area] = []
     var header: PlayerHeaderWrapper<EmptyView>
