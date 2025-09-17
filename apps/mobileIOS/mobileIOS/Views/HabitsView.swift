@@ -18,6 +18,7 @@ struct HabitsView: View {
     @State private var showingConfig = false
     @State private var selected: SectionKind = .habits
     @State private var toast: ToastMessage? = nil
+    @State private var showGameOverModal = false
 
     init() {
         let app = AppModel()
@@ -56,6 +57,7 @@ struct HabitsView: View {
                             onRefresh: { await refreshAll() },
                             onAddGood: { showingAddGood = true },
                             onAddBad: { showingAddBad = true },
+                            onBadHabitRecorded: { await onBadHabitRecorded() },
                             onShowSuccessToast: showSuccessToast,
                             onShowErrorToast: showErrorToast
                         )
@@ -75,7 +77,10 @@ struct HabitsView: View {
             .navigationTitle("Habits")
             .navigationBarTitleDisplayMode(.inline)
             .background(DSTheme.colors(for: scheme).backgroundPrimary)
-            .task { await refreshAll() }
+            .task {
+                await refreshAll()
+                await checkAndPresentGameOver()
+            }
             .sheet(isPresented: $showingAddGood) {
                 NewHabitSheet(areas: areasVM.areas) { areaId, name, xp, coins, cadence, active in
                     Task {
@@ -95,6 +100,14 @@ struct HabitsView: View {
             .sheet(isPresented: $showingAddArea) { NewAreaSheet { name, icon, xp, curve, mult in Task { await areasVM.create(name: name, icon: icon, xpPerLevel: xp, levelCurve: curve, levelMultiplier: mult); await refreshAll() } } }
             .sheet(isPresented: $showingConfig) { UserConfigSheet(onSaved: { Task { await profileVM.refresh() } }) }
             .toast($toast)
+            .sheet(isPresented: $showGameOverModal) {
+                GameOverModal(onStartRecovery: {
+                    withAnimation { showGameOverModal = false }
+                    // Transition to recovery state locally; backend state is already set by trigger.
+                    app.game.state = .recovery
+                    if app.game.gameOverAt == nil { app.game.gameOverAt = Date() }
+                })
+            }
         }
     }
 
@@ -122,6 +135,19 @@ extension HabitsView {
             group.addTask { await badVM.refresh() }
             group.addTask { await storeVM.refresh() }
             group.addTask { await archiveVM.refresh() }
+        }
+    }
+
+    private func onBadHabitRecorded() async {
+        await refreshAll()
+        await checkAndPresentGameOver()
+    }
+
+    private func checkAndPresentGameOver() async {
+        if let life = profileVM.profile?.life, life <= 0 {
+            app.game.state = .gameOver
+            app.game.gameOverAt = app.game.gameOverAt ?? Date()
+            await MainActor.run { showGameOverModal = true }
         }
     }
     
@@ -505,6 +531,7 @@ private struct CombinedHabitsBodyPanel: View {
     var onRefresh: () async -> Void
     var onAddGood: () -> Void
     var onAddBad: () -> Void
+    var onBadHabitRecorded: () async -> Void
     var onShowSuccessToast: (String) -> Void
     var onShowErrorToast: (String) -> Void
     
@@ -573,7 +600,7 @@ private struct CombinedHabitsBodyPanel: View {
                                 inFlightIds.insert(item.id)
                                 defer { inFlightIds.remove(item.id) }
                                 await badVM.record(id: item.id)
-                                await onRefresh()
+                                await onBadHabitRecorded()
                                 
                                 // Show warning toast
                                 await MainActor.run {
@@ -622,135 +649,7 @@ private struct CombinedHabitsBodyPanel: View {
     }
 }
 
-private struct CombinedHabitsListPanel: View {
-    // Header content
-    let profile: Profile?
-    var areasMeta: [Area] = []
-    @Binding var selected: HabitsView.SectionKind
-    var onConfig: () -> Void
-    // Data
-    @ObservedObject var goodVM: HabitsViewModel
-    @ObservedObject var badVM: BadHabitsViewModel
-    var onRefresh: () async -> Void
-    var onAddGood: () -> Void
-    var onAddBad: () -> Void
-
-    @State private var editingGood: GoodHabit? = nil
-    @State private var editingBad: BadHabit? = nil
-    @State private var confirmDelete: (id: String, name: String)? = nil
-    @State private var inFlightIds: Set<String> = []
-
-    var body: some View {
-        List {
-            // Collapsible header: scrolls away with list
-            Section {
-                VStack(alignment: .leading, spacing: 0) {
-                    PlayerHeader(profile: profile, onLogToday: { selected = .habits }, onOpenStore: { selected = .store })
-                    TileNav(selected: $selected, onConfig: onConfig)
-                }
-            }
-            .listRowBackground(Color.clear)
-            .listRowInsets(EdgeInsets(top: 0, leading: 0, bottom: 0, trailing: 0))
-            Section {
-                if goodVM.habits.isEmpty {
-                    Text("No good habits yet").dsFont(.caption).foregroundStyle(.secondary)
-                }
-                ForEach(goodVM.habits) { habit in
-                    VStack(alignment: .leading, spacing: 6) {
-                        HStack { Text(habit.name).dsFont(.headerMD); Spacer(); Text("XP +\(habit.xpReward) • Coins +\(habit.coinReward)").dsFont(.caption).foregroundStyle(.secondary) }
-                    }
-                    .cardStyle()
-                    .listRowBackground(Color.clear)
-                    .swipeActions(edge: .leading, allowsFullSwipe: true) {
-                        Button {
-                            Task {
-                                guard inFlightIds.contains(habit.id) == false else { return }
-                                inFlightIds.insert(habit.id)
-                                defer { inFlightIds.remove(habit.id) }
-                                _ = await goodVM.complete(id: habit.id)
-                                await onRefresh()
-                            }
-                        } label: { Label("Record", systemImage: "checkmark.circle.fill") }
-                        .tint(.green)
-                    }
-                    .swipeActions(edge: .trailing, allowsFullSwipe: true) {
-                        Button { editingGood = habit } label: { Label("Edit", systemImage: "pencil") }.tint(.blue)
-                        Button(role: .destructive) { confirmDelete = (habit.id, habit.name) } label: { Label("Delete", systemImage: "trash") }
-                    }
-                }
-            } header: {
-                HStack(spacing: 8) {
-                    Image(systemName: "checkmark.seal.fill").foregroundStyle(.green)
-                    Text("Good Habits").dsFont(.headerMD).bold()
-                    Spacer()
-                    Button { onAddGood() } label: { Image(systemName: "plus.circle.fill").foregroundStyle(.blue) }
-                        .accessibilityLabel(Text("New Good Habit"))
-                }
-            }
-            Section {
-                if badVM.items.isEmpty {
-                    Text("No bad habits yet").dsFont(.caption).foregroundStyle(.secondary)
-                }
-                ForEach(badVM.items) { item in
-                    VStack(alignment: .leading, spacing: 6) {
-                        HStack { Text(item.name).dsFont(.headerMD); Spacer(); Text("Penalty \(item.lifePenalty)").dsFont(.caption).foregroundStyle(.secondary) }
-                    }
-                    .cardStyle()
-                    .listRowBackground(Color.clear)
-                    .swipeActions(edge: .leading, allowsFullSwipe: true) {
-                        Button {
-                            Task {
-                                guard inFlightIds.contains(item.id) == false else { return }
-                                inFlightIds.insert(item.id)
-                                defer { inFlightIds.remove(item.id) }
-                                await badVM.record(id: item.id)
-                                await onRefresh()
-                            }
-                        } label: { Label("Record", systemImage: "exclamationmark.circle") }
-                        .tint(.red)
-                    }
-                    .swipeActions(edge: .trailing, allowsFullSwipe: true) {
-                        Button { editingBad = item } label: { Label("Edit", systemImage: "pencil") }.tint(.blue)
-                        Button(role: .destructive) { confirmDelete = (item.id, item.name) } label: { Label("Delete", systemImage: "trash") }
-                    }
-                }
-            } header: {
-                HStack(spacing: 8) {
-                    Image(systemName: "exclamationmark.triangle.fill").foregroundStyle(.orange)
-                    Text("Bad Habits").dsFont(.headerMD).bold()
-                    Spacer()
-                    Button { onAddBad() } label: { Image(systemName: "plus.circle.fill").foregroundStyle(.red) }
-                        .accessibilityLabel(Text("New Bad Habit"))
-                }
-            }
-        }
-        .listStyle(.plain)
-        .alert(item: Binding(get: {
-            confirmDelete.map { ConfirmWrapper(id: $0.id, name: $0.name) }
-        }, set: { newVal in
-            if newVal == nil { confirmDelete = nil }
-        })) { wrap in
-            Alert(title: Text("Delete \(wrap.name)?"), message: Text("Are you sure you want to delete \(wrap.name)?"), primaryButton: .destructive(Text("Delete")) {
-                Task {
-                    if goodVM.habits.contains(where: { $0.id == wrap.id }) { await goodVM.delete(id: wrap.id) }
-                    else if badVM.items.contains(where: { $0.id == wrap.id }) { await badVM.delete(id: wrap.id) }
-                    await onRefresh()
-                }
-            }, secondaryButton: .cancel())
-        }
-        .sheet(item: $editingGood) { h in
-            HabitEditSheet(habit: h, onSave: { updated in Task { await goodVM.update(habit: updated); await onRefresh() } }, onDelete: { Task { await goodVM.delete(id: h.id); await onRefresh() } })
-        }
-        .sheet(item: $editingBad) { b in
-            BadHabitEditSheet(item: b, onSave: { updated in Task { await badVM.update(item: updated); await onRefresh() } }, onDelete: { Task { await badVM.delete(id: b.id); await onRefresh() } })
-        }
-        .refreshable { await onRefresh() }
-    }
-
-    private var headerView: some View {
-        EmptyView()
-    }
-}
+// NOTE: Legacy CombinedHabitsListPanel removed to reduce compile complexity and duplication.
 private struct ConfirmWrapper: Identifiable, Equatable {
     var id: String
     var name: String
