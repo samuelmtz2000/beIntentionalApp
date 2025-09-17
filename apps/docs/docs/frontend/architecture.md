@@ -4,6 +4,29 @@ title: Architecture (MVVM)
 
 The app uses MVVM with unidirectional data flow.
 
+Folder structure (feature-first)
+```
+apps/mobileIOS/mobileIOS
+├── Features/
+│   ├── Player/{Views,ViewModels,Components}
+│   ├── Habits/{Views,ViewModels,Components}
+│   ├── Areas/{Views,ViewModels,Components}
+│   ├── Store/{Views,ViewModels,Components}
+│   └── Archive/{Views,ViewModels,Components}
+├── Shared/{Components,Sheets,Extensions}
+├── Core/{Storage,Networking,Models}
+└── DesignSystem/*
+```
+
+Storage abstraction
+- `Core/Storage/StorageProtocol.swift` defines a protocol for persistence (Profile, Areas, Habits, BadHabits)
+- Default runtime impl is `APIStorage(api: APIClient)`, allowing future swap to SwiftData/GRDB/Realm
+- `StorageManager` holds the active storage instance
+
+Navigation and composition
+- Use a lightweight coordinator per screen where helpful (e.g., `HabitsCoordinator`) to wire VMs and refresh logic
+- Views bind to `@ObservedObject` VMs and compose small `Shared/` and `DesignSystem/` components
+
 Layers
 - Views (SwiftUI): render `@Observable` state and trigger intents
 - ViewModels: translate intents to service calls; map domain → UI models

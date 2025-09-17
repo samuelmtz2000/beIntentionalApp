@@ -239,6 +239,18 @@ Restore examples
 curl -X POST http://localhost:4000/areas/<id>/restore
 curl -X POST http://localhost:4000/habits/<id>/restore
 curl -X POST http://localhost:4000/bad-habits/<id>/restore
+
+## Game Over & Marathon Recovery
+
+When life reaches 0 via `/actions/bad-habits/:id/record`, the API sets the user `gameState` to `game_over`, records timestamps, and disables habit actions until recovery completes.
+
+Endpoints:
+- GET `/users/:id/game-state` → `{ state, life, game_over_date, recovery_started_at, recovery_distance, recovery_target, recovery_percentage }`
+- PUT `/users/:id/recovery-progress` with `{ distance }` meters (cumulative since `game_over_date`) → `{ recovery_distance, recovery_percentage, remaining_distance, is_complete }`
+- POST `/users/:id/complete-recovery` (requires distance ≥ 42195) → sets `gameState`=`active` and restores `life` to 100
+
+Notes:
+- While `gameState` is not `active`, `/actions/habits/:id/complete` and `/actions/bad-habits/:id/record` return `409` to prevent further gameplay.
 ```
 
 Archive listing

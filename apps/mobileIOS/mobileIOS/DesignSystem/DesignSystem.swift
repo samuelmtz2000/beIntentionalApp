@@ -137,7 +137,103 @@ struct SecondaryButtonStyle: ButtonStyle {
     }
 }
 
+// MARK: - Toast Components
+
+struct ToastMessage: Identifiable {
+    let id = UUID()
+    let message: String
+    let type: ToastType
+    let duration: TimeInterval
+    
+    init(message: String, type: ToastType, duration: TimeInterval = 3.0) {
+        self.message = message
+        self.type = type
+        self.duration = duration
+    }
+}
+
+enum ToastType {
+    case success, error, info
+    
+    func icon() -> String {
+        switch self {
+        case .success: return "checkmark.circle.fill"
+        case .error: return "exclamationmark.circle.fill"
+        case .info: return "info.circle.fill"
+        }
+    }
+    
+    func color(_ colors: DSTheme.Colors) -> Color {
+        switch self {
+        case .success: return colors.success
+        case .error: return colors.error
+        case .info: return colors.accentSecondary
+        }
+    }
+}
+
+struct ToastView: View {
+    let toast: ToastMessage
+    @Environment(\.colorScheme) private var scheme
+    
+    var body: some View {
+        let colors = DSTheme.colors(for: scheme)
+        
+        HStack(spacing: 12) {
+            Image(systemName: toast.type.icon())
+                .foregroundStyle(toast.type.color(colors))
+                .font(.system(size: 16, weight: .medium))
+            
+            Text(toast.message)
+                .dsFont(.body)
+                .foregroundStyle(colors.textPrimary)
+                .multilineTextAlignment(.leading)
+            
+            Spacer(minLength: 0)
+        }
+        .padding(.horizontal, 16)
+        .padding(.vertical, 12)
+        .background(
+            RoundedRectangle(cornerRadius: 16)
+                .fill(colors.surfaceCard)
+                .shadow(color: Color.black.opacity(scheme == .dark ? 0.4 : 0.15), radius: 12, x: 0, y: 4)
+        )
+        .padding(.horizontal, 16)
+    }
+}
+
+struct ToastModifier: ViewModifier {
+    @Binding var toast: ToastMessage?
+    
+    func body(content: Content) -> some View {
+        ZStack {
+            content
+            
+            if let toast = toast {
+                VStack {
+                    ToastView(toast: toast)
+                        .transition(.asymmetric(
+                            insertion: .move(edge: .top).combined(with: .opacity),
+                            removal: .move(edge: .top).combined(with: .opacity)
+                        ))
+                    Spacer()
+                }
+                .zIndex(1000)
+                .animation(.spring(response: 0.6, dampingFraction: 0.8), value: toast.id)
+                .onAppear {
+                    DispatchQueue.main.asyncAfter(deadline: .now() + toast.duration) {
+                        withAnimation(.easeInOut(duration: 0.4)) {
+                            self.toast = nil
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
 extension View {
     func cardStyle() -> some View { modifier(CardModifier()) }
     func dsFont(_ scale: DSTheme.TypeScale) -> some View { self.font(scale.font) }
+    func toast(_ toast: Binding<ToastMessage?>) -> some View { modifier(ToastModifier(toast: toast)) }
 }
