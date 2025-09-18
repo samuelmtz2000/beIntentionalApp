@@ -36,6 +36,40 @@ A running list of upcoming features/tasks to track and prioritize.
 10. configure good habits to have general frequency configurations (like google tasks have, daily weekly monthly, per day of the week with selection of the days etc)
 11. create table configurations to be able to filter and group habits, areas, bad habits
 12. Production hardening for the first release (stability, performance, error handling, analytics, QA checklist, and release notes).
+   - HealthKit (prod readiness)
+     - Capabilities & signing
+       - Add HealthKit capability for Debug/Release; ensure CODE_SIGN_ENTITLEMENTS is set and provisioning profiles include `com.apple.developer.healthkit`.
+       - Request read-only access (no write). Limit to `distanceWalkingRunning` and `workout` types.
+     - Privacy & App Store
+       - Localize `NSHealthShareUsageDescription` (avoid “marathon” wording; use “running challenge”).
+       - Complete App Store privacy questionnaires and provide a privacy policy explaining Health data usage.
+       - Add App Review notes describing the feature and data handling.
+     - UX & consent
+       - Add pre-permission education screen. Handle `notDetermined`, `denied/restricted` with clear guidance and deep link to Settings.
+       - Do not block broader app usage when Health access is denied; only gate Running Challenge.
+     - Data pipeline & correctness
+       - Switch distance updates to `HKObserverQuery` + `HKAnchoredObjectQuery` with stored anchors for background updates; de-duplicate samples.
+       - Clamp cumulative distance; enforce monotonic increases; handle backfilled workouts and timezone/DST shifts.
+       - Standardize units (meters internally; format km/mi by locale). Define rounding/display rules.
+       - Anti-cheat: add server validations (max km/day, reasonable pace checks, exclude manual entries optionally).
+     - Background behavior
+       - Evaluate BGTask scheduling to refresh progress when observers fire; throttle frequency and power usage.
+     - Error handling & resiliency
+       - Add retry/backoff for network sync; queue offline progress; ensure idempotent PUTs for recovery-progress.
+       - Surface recoverable errors with toasts; log non-fatal errors (disable verbose logs in release).
+     - QA & testing
+       - Test on real devices (simulator Health data is limited). Seed workouts; verify denied/restricted flows.
+       - Cover time changes, DST, locale changes, airplane mode/offline, low power mode.
+       - Add unit tests for distance windowing and completion detection (mock HK layer behind protocol).
+     - Analytics & monitoring
+       - Track Health permission funnel, recoveries started/completed, average completion time/distance.
+       - Add crash/ANR monitoring for the feature flow.
+     - Security & storage
+       - Store only minimal progress state locally (no raw Health samples). Secure tokens/secrets; ensure TLS.
+     - Internationalization
+       - Localize copy; use NumberFormatter/MeasurementFormatter; support right-to-left if needed.
+     - Documentation & runbooks
+       - Document troubleshooting steps for HealthKit (no data, denied, restricted, background). Provide on-call runbook.
 
 Sprint 2
 
