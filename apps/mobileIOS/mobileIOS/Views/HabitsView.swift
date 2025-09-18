@@ -171,6 +171,9 @@ struct HabitsView: View {
                                     showRecoveryCompletion = true
                                     showingRecovery = false
                                 }
+                                // Refresh global/profile state to reflect completion immediately
+                                await app.game.refreshFromServer()
+                                await profileVM.refresh()
                             }
                         }
                     }
@@ -304,7 +307,7 @@ private struct LegacyPlayerHeader: View {
                     VStack(alignment: .trailing, spacing: 4) {
                         HStack(spacing: 12) {
                             if app.game.state == .gameOver || p.life <= 0 {
-                                Label("", systemImage: "skull.fill")
+                                Label("", systemImage: "skull")
                                     .foregroundStyle(.red)
                                     .font(.callout)
                             } else {

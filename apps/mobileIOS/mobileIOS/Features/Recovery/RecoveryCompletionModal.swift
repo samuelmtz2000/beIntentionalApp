@@ -10,10 +10,9 @@ private struct ConfettiPiece: Identifiable {
 }
 
 private struct ConfettiView: View {
-    @State private var time: Double = 0
     let pieces: [ConfettiPiece]
-    
-    init(count: Int = 24) {
+
+    init(count: Int = 28) {
         let emojis = ["🎉","✨","🎊","💥","⭐️","🥳"]
         var arr: [ConfettiPiece] = []
         for _ in 0..<count {
@@ -22,29 +21,34 @@ private struct ConfettiView: View {
                 x: CGFloat.random(in: -140...140),
                 scale: CGFloat.random(in: 0.8...1.3),
                 rotation: Double.random(in: -30...30),
-                speed: Double.random(in: 0.7...1.3)
+                speed: Double.random(in: 0.6...1.2)
             ))
         }
         self.pieces = arr
     }
     
     var body: some View {
-        TimelineView(.animation) { context in
-            let t = context.date.timeIntervalSinceReferenceDate
-            ZStack {
-                ForEach(pieces) { p in
-                    let progress = (t * p.speed).truncatingRemainder(dividingBy: 3.0) / 3.0
-                    let y = -200 + progress * 480
-                    Text(p.emoji)
-                        .font(.system(size: 24))
-                        .scaleEffect(p.scale)
-                        .rotationEffect(.degrees(p.rotation * progress * 6))
-                        .position(x: 180 + p.x, y: y)
-                        .opacity(progress < 0.95 ? 1 : 0)
+        GeometryReader { geo in
+            TimelineView(.animation) { context in
+                let t = context.date.timeIntervalSinceReferenceDate
+                ZStack {
+                    ForEach(pieces) { p in
+                        let duration = 3.0
+                        let progress = (t * p.speed).truncatingRemainder(dividingBy: duration) / duration
+                        let y = -40 + progress * (geo.size.height + 80)
+                        let midX = geo.size.width / 2
+                        Text(p.emoji)
+                            .font(.system(size: 24))
+                            .scaleEffect(p.scale)
+                            .rotationEffect(.degrees(p.rotation * progress * 8))
+                            .position(x: midX + p.x, y: y)
+                            .opacity(progress < 0.95 ? 1 : 0)
+                    }
                 }
             }
         }
         .allowsHitTesting(false)
+        .ignoresSafeArea()
     }
 }
 
