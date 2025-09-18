@@ -24,6 +24,7 @@ struct HabitsView: View {
     @State private var showingRecovery = false
     @State private var hasHealthAccessConfigured = false
     @State private var showRecoveryCompletion = false
+    @State private var pendingLocalCompletion = false
 
     init() {
         let app = AppModel()
@@ -162,18 +163,14 @@ struct HabitsView: View {
                     onUpdateProgress: {
                         Task {
                             await app.game.refreshDistance(using: app.healthKit)
-                            await app.game.pushRecoveryProgress()
-                            await app.game.completeRecoveryIfEligible()
-                            if app.game.state == .active {
-                                let gen = UINotificationFeedbackGenerator()
-                                gen.notificationOccurred(.success)
+                            // If locally eligible, show celebration first; complete after user closes modal
+                            if app.game.recoveryDistance >= app.game.recoveryTarget {
                                 await MainActor.run {
+                                    pendingLocalCompletion = true
                                     showRecoveryCompletion = true
-                                    showingRecovery = false
                                 }
-                                // Refresh global/profile state to reflect completion immediately
-                                await app.game.refreshFromServer()
-                                await profileVM.refresh()
+                            } else {
+                                await app.game.pushRecoveryProgress()
                             }
                         }
                     }
@@ -181,7 +178,19 @@ struct HabitsView: View {
                 .task { hasHealthAccessConfigured = await app.healthKit.hasConfiguredAccess() }
             }
             .sheet(isPresented: $showRecoveryCompletion) {
-                RecoveryCompletionModal(onDone: { showRecoveryCompletion = false })
+                RecoveryCompletionModal(onDone: {
+                    Task {
+                        showRecoveryCompletion = false
+                        // Now finalize on server and refresh global/profile state
+                        if pendingLocalCompletion {
+                            await app.game.pushRecoveryProgress()
+                            await app.game.completeRecoveryIfEligible()
+                            pendingLocalCompletion = false
+                        }
+                        await app.game.refreshFromServer()
+                        await profileVM.refresh()
+                    }
+                })
             }
             .onChange(of: scenePhase) { _, phase in
                 if phase == .active { handleForeground() }
@@ -212,12 +221,9 @@ extension HabitsView {
             await app.game.refreshFromServer()
             if app.game.state == .recovery, await app.healthKit.hasConfiguredAccess() {
                 await app.game.refreshDistance(using: app.healthKit)
-                await app.game.pushRecoveryProgress()
-                await app.game.completeRecoveryIfEligible()
-                if app.game.state == .active {
-                    let gen = UINotificationFeedbackGenerator()
-                    gen.notificationOccurred(.success)
-                    showSuccessToast(message: "🎉 Recovery complete! Health restored.")
+                if app.game.recoveryDistance >= app.game.recoveryTarget {
+                    pendingLocalCompletion = true
+                    showRecoveryCompletion = true
                 }
             }
         }
