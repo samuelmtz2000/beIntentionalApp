@@ -88,7 +88,10 @@ struct HabitsView: View {
                             onAddGood: { showingAddGood = true },
                             onAddBad: { showingAddBad = true },
                             onBadHabitRecorded: { await onBadHabitRecorded() },
-                            onRequireGameOverModal: { showGameOverModal = true },
+                            onOpenRecovery: { configured in
+                                hasHealthAccessConfigured = configured
+                                showingRecovery = true
+                            },
                             onShowSuccessToast: showSuccessToast,
                             onShowErrorToast: showErrorToast
                         )
@@ -593,7 +596,7 @@ private struct CombinedHabitsBodyPanel: View {
     var onAddGood: () -> Void
     var onAddBad: () -> Void
     var onBadHabitRecorded: () async -> Void
-    var onRequireGameOverModal: () -> Void
+    var onOpenRecovery: (Bool) -> Void
     var onShowSuccessToast: (String) -> Void
     var onShowErrorToast: (String) -> Void
     
@@ -629,7 +632,6 @@ private struct CombinedHabitsBodyPanel: View {
                                 }
                             }
                         } label: { Label("Record", systemImage: "checkmark.circle.fill") }
-                        .disabled(app.game.state != .active)
                         .tint(.green)
                     }
                     .swipeActions(edge: .trailing, allowsFullSwipe: true) {
@@ -663,7 +665,13 @@ private struct CombinedHabitsBodyPanel: View {
                                 inFlightIds.insert(item.id)
                                 defer { inFlightIds.remove(item.id) }
                                 if app.game.state != .active {
-                                    onRequireGameOverModal()
+                                    let configured = await app.healthKit.hasConfiguredAccess()
+                                    await MainActor.run { onOpenRecovery(configured) }
+                                    if !configured {
+                                        await MainActor.run {
+                                            onShowErrorToast("Enable Health Access from Details to start recovery.")
+                                        }
+                                    }
                                     return
                                 }
                                 await badVM.record(id: item.id)
@@ -680,7 +688,6 @@ private struct CombinedHabitsBodyPanel: View {
                                 }
                             }
                         } label: { Label("Record", systemImage: "exclamationmark.circle") }
-                        .disabled(app.game.state != .active)
                         .tint(.red)
                     }
                     .swipeActions(edge: .trailing, allowsFullSwipe: true) {
