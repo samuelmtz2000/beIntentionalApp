@@ -6,6 +6,7 @@ final class GameStateManager: ObservableObject {
     @Published var state: GameState = .active
     @Published var health: Int = 1000
     @Published var gameOverAt: Date? = nil
+    private var lastGameOverSeen: Date? = nil
     @Published var recoveryDistance: Int = 0
     @Published var recoveryTarget: Int = 42195
     @Published var recoveryPercentage: Int = 0
@@ -66,6 +67,16 @@ final class GameStateManager: ObservableObject {
     }
 
     func updateFrom(info: GameStateInfo) {
+        // Detect new game-over start on server and reset progress window
+        if let srvGO = info.gameOverDate, lastGameOverSeen == nil || (lastGameOverSeen! < srvGO) {
+            gameOverAt = srvGO
+            lastGameOverSeen = srvGO
+            recoveryDistance = 0
+            recoveryPercentage = 0
+        } else {
+            gameOverAt = info.gameOverDate ?? gameOverAt
+        }
+
         // Enforce client-side invariant: if health <= 0 => game over; else active unless in recovery
         health = info.health
         if health <= 0 {
@@ -75,10 +86,19 @@ final class GameStateManager: ObservableObject {
         } else {
             state = info.state
         }
-        gameOverAt = info.gameOverDate
         recoveryDistance = info.recoveryDistance ?? 0
         recoveryTarget = info.recoveryTarget ?? 42195
         recoveryPercentage = info.recoveryPercentage ?? 0
+        persist()
+    }
+
+    func markLocalGameOverNow() {
+        let now = Date()
+        state = .gameOver
+        gameOverAt = now
+        lastGameOverSeen = now
+        recoveryDistance = 0
+        recoveryPercentage = 0
         persist()
     }
 

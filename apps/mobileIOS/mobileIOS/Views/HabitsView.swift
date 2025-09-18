@@ -235,8 +235,7 @@ extension HabitsView {
     private func checkAndPresentGameOver() async {
         if let life = profileVM.profile?.life {
             if life <= 0 {
-                app.game.state = .gameOver
-                app.game.gameOverAt = app.game.gameOverAt ?? Date()
+                app.game.markLocalGameOverNow()
                 await MainActor.run { showGameOverModal = true }
             } else {
                 app.game.state = .active
