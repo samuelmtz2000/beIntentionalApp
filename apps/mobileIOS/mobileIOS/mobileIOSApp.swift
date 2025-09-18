@@ -49,6 +49,7 @@ final class AppModel: ObservableObject {
 
     func bootstrap() {
         game.loadCached()
+        Task { await game.refreshFromServer() }
     }
 
     var colorSchemeOverride: ColorScheme? {

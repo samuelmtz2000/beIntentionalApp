@@ -153,7 +153,13 @@ struct HabitsView: View {
                             hasHealthAccessConfigured = await app.healthKit.hasConfiguredAccess()
                         }
                     },
-                    onUpdateProgress: { Task { await app.game.refreshDistance(using: app.healthKit) } }
+                    onUpdateProgress: {
+                        Task {
+                            await app.game.refreshDistance(using: app.healthKit)
+                            await app.game.pushRecoveryProgress()
+                            await app.game.completeRecoveryIfEligible()
+                        }
+                    }
                 )
                 .task { hasHealthAccessConfigured = await app.healthKit.hasConfiguredAccess() }
             }

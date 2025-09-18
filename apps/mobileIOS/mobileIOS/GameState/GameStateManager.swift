@@ -11,9 +11,11 @@ final class GameStateManager: ObservableObject {
     @Published var recoveryPercentage: Int = 0
 
     private let api: APIClient
+    private let userId: String
 
-    init(api: APIClient) {
+    init(api: APIClient, userId: String = "seed-user-1") {
         self.api = api
+        self.userId = userId
     }
 
     func loadCached() {
@@ -38,10 +40,29 @@ final class GameStateManager: ObservableObject {
     }
 
     func refreshFromServer() async {
-        // Endpoint path to be aligned with backend; using placeholder until wired.
-        struct Dummy: Decodable {}
-        _ = Dummy.self
-        // No-op for now; wiring will be added during integration phase.
+        struct Response: Decodable {
+            let state: GameState
+            let health: Int
+            let gameOverDate: Date?
+            let recoveryStartedAt: Date?
+            let recoveryDistance: Int?
+            let recoveryTarget: Int?
+            let recoveryPercentage: Int?
+        }
+        do {
+            let info: Response = try await api.get("users/\(userId)/game-state")
+            updateFrom(info: GameStateInfo(
+                state: info.state,
+                health: info.health,
+                gameOverDate: info.gameOverDate,
+                recoveryStartedAt: info.recoveryStartedAt,
+                recoveryDistance: info.recoveryDistance,
+                recoveryTarget: info.recoveryTarget,
+                recoveryPercentage: info.recoveryPercentage
+            ))
+        } catch {
+            // Keep local state if fetch fails
+        }
     }
 
     func updateFrom(info: GameStateInfo) {
@@ -68,6 +89,35 @@ final class GameStateManager: ObservableObject {
             setRecoveryProgress(meters: Int(meters))
         } catch {
             // Swallow errors here; UI can surface via toasts if desired
+        }
+    }
+
+    func pushRecoveryProgress() async {
+        struct Body: Encodable { let distance: Int }
+        struct Resp: Decodable { let recoveryDistance: Int?; let recoveryPercentage: Int?; let remainingDistance: Int?; let isComplete: Bool? }
+        do {
+            let resp: Resp = try await api.put("users/\(userId)/recovery-progress", body: Body(distance: recoveryDistance))
+            if let d = resp.recoveryDistance { recoveryDistance = d }
+            if let p = resp.recoveryPercentage { recoveryPercentage = p }
+            persist()
+        } catch {
+            // Ignore network errors for now
+        }
+    }
+
+    func completeRecoveryIfEligible() async {
+        guard recoveryDistance >= recoveryTarget else { return }
+        struct Resp: Decodable { let gameState: GameState; let health: Int }
+        do {
+            let resp: Resp = try await api.post("users/\(userId)/complete-recovery", body: [String:Int]())
+            state = resp.gameState
+            health = resp.health
+            gameOverAt = nil
+            recoveryDistance = 0
+            recoveryPercentage = 0
+            persist()
+        } catch {
+            // ignore for now
         }
     }
 }
