@@ -7,6 +7,7 @@ final class GameStateManager: ObservableObject {
     @Published var health: Int = 1000
     @Published var gameOverAt: Date? = nil
     private var lastGameOverSeen: Date? = nil
+    @Published var recoveryStartedAt: Date? = nil
     @Published var recoveryDistance: Int = 0
     @Published var recoveryTarget: Int = 42195
     @Published var recoveryPercentage: Int = 0
@@ -24,6 +25,7 @@ final class GameStateManager: ObservableObject {
             state = s
         }
         if let d = UserDefaults.standard.object(forKey: "GAME_OVER_AT") as? Date { gameOverAt = d }
+        if let rs = UserDefaults.standard.object(forKey: "RECOVERY_STARTED_AT") as? Date { recoveryStartedAt = rs }
         recoveryDistance = UserDefaults.standard.integer(forKey: "RECOVERY_DISTANCE")
         let target = UserDefaults.standard.integer(forKey: "RECOVERY_TARGET")
         recoveryTarget = target > 0 ? target : 42195
@@ -34,6 +36,7 @@ final class GameStateManager: ObservableObject {
     private func persist() {
         UserDefaults.standard.set(state.rawValue, forKey: "GAME_STATE")
         UserDefaults.standard.set(gameOverAt, forKey: "GAME_OVER_AT")
+        UserDefaults.standard.set(recoveryStartedAt, forKey: "RECOVERY_STARTED_AT")
         UserDefaults.standard.set(recoveryDistance, forKey: "RECOVERY_DISTANCE")
         UserDefaults.standard.set(recoveryTarget, forKey: "RECOVERY_TARGET")
         UserDefaults.standard.set(recoveryPercentage, forKey: "RECOVERY_PCT")
@@ -76,6 +79,7 @@ final class GameStateManager: ObservableObject {
         } else {
             gameOverAt = info.gameOverDate ?? gameOverAt
         }
+        recoveryStartedAt = info.recoveryStartedAt ?? recoveryStartedAt
 
         // Enforce client-side invariant: if health <= 0 => game over; else active unless in recovery
         health = info.health
@@ -102,6 +106,17 @@ final class GameStateManager: ObservableObject {
         persist()
     }
 
+    func startRecoveryNow() {
+        let now = Date()
+        state = .recovery
+        // Ensure gameOverAt is set if missing
+        if gameOverAt == nil { gameOverAt = now; lastGameOverSeen = now }
+        recoveryStartedAt = now
+        recoveryDistance = 0
+        recoveryPercentage = 0
+        persist()
+    }
+
     func setRecoveryProgress(meters: Int) {
         recoveryDistance = max(0, meters)
         let pct = Double(recoveryDistance) / Double(max(1, recoveryTarget))
@@ -110,7 +125,8 @@ final class GameStateManager: ObservableObject {
     }
 
     func refreshDistance(using healthKit: HealthKitService) async {
-        guard let start = gameOverAt else { return }
+        // Use recovery start time if available; else fall back to gameOverAt
+        guard let start = recoveryStartedAt ?? gameOverAt else { return }
         do {
             let meters = try await healthKit.distanceSince(date: start)
             setRecoveryProgress(meters: Int(meters))

@@ -23,6 +23,7 @@ struct HabitsView: View {
     @State private var showGameOverModal = false
     @State private var showingRecovery = false
     @State private var hasHealthAccessConfigured = false
+    @State private var showRecoveryCompletion = false
 
     init() {
         let app = AppModel()
@@ -41,12 +42,12 @@ struct HabitsView: View {
                 VStack(spacing: 0) {
                 LegacyPlayerHeader(profile: profileVM.profile, onLogToday: { selected = .habits }, onOpenStore: { selected = .store })
                     TileNav(selected: $selected, onConfig: { showingConfig = true })
-                    if app.game.state == .gameOver {
+                    if app.game.state == .recovery {
                         HStack(alignment: .center, spacing: 12) {
-                            Image(systemName: app.game.state == .recovery ? "figure.run" : "exclamationmark.triangle.fill")
-                                .foregroundStyle(app.game.state == .recovery ? .orange : .red)
+                            Image(systemName: "figure.run")
+                                .foregroundStyle(.orange)
                             VStack(alignment: .leading, spacing: 2) {
-                                Text(app.game.state == .recovery ? "Recovery in progress" : "Game Over")
+                                Text("Recovery in progress")
                                     .dsFont(.body)
                                 Text("Bad habits are disabled until recovery is complete.")
                                     .dsFont(.caption)
@@ -140,9 +141,8 @@ struct HabitsView: View {
             .sheet(isPresented: $showGameOverModal) {
                 GameOverModal(onStartRecovery: {
                     withAnimation { showGameOverModal = false }
-                    // Transition to recovery state locally; backend state is already set by trigger.
-                    app.game.state = .recovery
-                    if app.game.gameOverAt == nil { app.game.gameOverAt = Date() }
+                    // Mark recovery start locally; backend state is already set by trigger.
+                    app.game.startRecoveryNow()
                     showingRecovery = true
                 })
             }
@@ -168,7 +168,7 @@ struct HabitsView: View {
                                 let gen = UINotificationFeedbackGenerator()
                                 gen.notificationOccurred(.success)
                                 await MainActor.run {
-                                    showSuccessToast(message: "🎉 Recovery complete! Health restored.")
+                                    showRecoveryCompletion = true
                                     showingRecovery = false
                                 }
                             }
@@ -176,6 +176,9 @@ struct HabitsView: View {
                     }
                 )
                 .task { hasHealthAccessConfigured = await app.healthKit.hasConfiguredAccess() }
+            }
+            .sheet(isPresented: $showRecoveryCompletion) {
+                RecoveryCompletionModal(onDone: { showRecoveryCompletion = false })
             }
             .onChange(of: scenePhase) { _, phase in
                 if phase == .active { handleForeground() }
@@ -300,8 +303,12 @@ private struct LegacyPlayerHeader: View {
                     Spacer()
                     VStack(alignment: .trailing, spacing: 4) {
                         HStack(spacing: 12) {
-                            if app.game.state != .gameOver, p.life > 0 {
-                                Label("\(p.life)/100", systemImage: "heart.fill")
+                            if app.game.state == .gameOver || p.life <= 0 {
+                                Label("", systemImage: "skull.fill")
+                                    .foregroundStyle(.red)
+                                    .font(.callout)
+                            } else {
+                                Label("\(p.life)/1000", systemImage: "heart.fill")
                                     .foregroundStyle(.red)
                                     .font(.callout)
                             }
