@@ -20,6 +20,7 @@ struct HabitsView: View {
     @State private var toast: ToastMessage? = nil
     @State private var showGameOverModal = false
     @State private var showingRecovery = false
+    @State private var hasHealthAccessConfigured = false
 
     init() {
         let app = AppModel()
@@ -50,7 +51,17 @@ struct HabitsView: View {
                                     .foregroundStyle(.secondary)
                             }
                             Spacer()
-                            Button("Details") { showGameOverModal = true }
+                            Button("Details") {
+                                Task {
+                                    let configured = await app.healthKit.hasConfiguredAccess()
+                                    if app.game.state == .recovery || configured {
+                                        hasHealthAccessConfigured = configured
+                                        showingRecovery = true
+                                    } else {
+                                        showGameOverModal = true
+                                    }
+                                }
+                            }
                                 .buttonStyle(SecondaryButtonStyle())
                         }
                         .padding(.horizontal, 12)
@@ -132,9 +143,16 @@ struct HabitsView: View {
             .sheet(isPresented: $showingRecovery) {
                 MarathonRecoveryView(
                     game: app.game,
-                    onRequestHealthAccess: { Task { try? await app.healthKit.requestAuthorization() } },
+                    isHealthAccessConfigured: hasHealthAccessConfigured,
+                    onRequestHealthAccess: {
+                        Task {
+                            try? await app.healthKit.requestAuthorization()
+                            hasHealthAccessConfigured = await app.healthKit.hasConfiguredAccess()
+                        }
+                    },
                     onUpdateProgress: { Task { await app.game.refreshDistance(using: app.healthKit) } }
                 )
+                .task { hasHealthAccessConfigured = await app.healthKit.hasConfiguredAccess() }
             }
         }
     }

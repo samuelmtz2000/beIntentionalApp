@@ -42,4 +42,21 @@ final class HealthKitService {
         return 0
 #endif
     }
+
+    func hasConfiguredAccess() async -> Bool {
+#if canImport(HealthKit)
+        guard HKHealthStore.isHealthDataAvailable() else { return false }
+        let toRead: Set<HKObjectType> = [
+            HKObjectType.quantityType(forIdentifier: .distanceWalkingRunning)!,
+            HKObjectType.workoutType()
+        ]
+        return await withCheckedContinuation { cont in
+            healthStore.getRequestStatusForAuthorization(toShare: [], read: toRead) { status, _ in
+                cont.resume(returning: status == .unnecessary)
+            }
+        }
+#else
+        return false
+#endif
+    }
 }

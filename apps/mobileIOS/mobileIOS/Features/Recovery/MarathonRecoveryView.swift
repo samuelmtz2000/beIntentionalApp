@@ -2,6 +2,7 @@ import SwiftUI
 
 struct MarathonRecoveryView: View {
     @ObservedObject var game: GameStateManager
+    var isHealthAccessConfigured: Bool
     var onRequestHealthAccess: () -> Void
     var onUpdateProgress: () -> Void
 
@@ -23,11 +24,12 @@ struct MarathonRecoveryView: View {
             .font(.callout)
             .foregroundStyle(.secondary)
 
-            HStack(spacing: 12) {
-                Button("Enable Health Access") { onRequestHealthAccess() }
-                    .buttonStyle(SecondaryButtonStyle())
+            if isHealthAccessConfigured {
                 Button("Update Progress") { onUpdateProgress() }
                     .buttonStyle(PrimaryButtonStyle())
+            } else {
+                Button("Enable Health Access") { onRequestHealthAccess() }
+                    .buttonStyle(SecondaryButtonStyle())
             }
         }
         .padding(24)
