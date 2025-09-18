@@ -11,6 +11,7 @@ const sidebars: SidebarsConfig = {
         'api/overview',
         'api/quick-start',
         'api/data-model',
+        'api/running-challenge',
         'api/endpoints',
         'api/actions',
         'api/store',

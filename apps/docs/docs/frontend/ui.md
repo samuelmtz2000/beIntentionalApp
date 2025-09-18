@@ -36,13 +36,24 @@ Toast types:
 - **Success** (green with checkmark): Good habit completions showing XP/coin rewards
 - **Error** (red with exclamation): Bad habit records showing life penalties
 - **Info** (blue with info icon): General informational messages
-=======
-UI Navigation Patterns
+## Running Challenge UX
+
+- Game Over (health ≤ 0)
+  - Header shows a skull icon instead of the heart; banner is hidden in this state.
+  - Game Over modal explains the running challenge with the per‑user target distance in km.
+  - Bad habits are disabled while in game over.
+
+- Recovery (running challenge)
+  - Banner appears with a Details button; Details opens the Running Challenge sheet if Health access is configured, otherwise shows the Game Over modal to start.
+  - Running Challenge sheet shows dynamic target (km), a progress bar, and a Started date.
+  - “Enable Health Access” is shown until configured; then only “Update Progress” appears.
+  - UI‑first completion: when target is reached, show a confetti modal immediately; after dismissing, the app finalizes with the backend, restores health=1000, and returns to active.
+
+## UI Navigation Patterns
 - Tab navigation: Primary app sections are exposed via the bottom tab bar (Today, Habits, Settings, etc.). Screens should not hide the tab bar unless in a modal flow.
 - Section navigation: Within Habits, use the reusable `MainNavigationBar` (animated pills) to switch Player / Habits / Areas / Store / Archive; a Config pill opens the config sheet.
 - Spotify‑like actions: Use swipe actions on list rows. Leading full swipe auto‑executes the primary action (Record). Trailing full swipe opens Edit; Delete is trailing and always asks for confirmation.
 - Forms: Use `DSSheet` for all create/edit flows with Cancel/Save in the navigation bar for consistency.
->>>>>>> origin/main
 
 Habits Header (Global XP)
 ```swift
