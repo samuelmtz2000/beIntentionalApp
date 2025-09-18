@@ -69,6 +69,16 @@ final class GameStateManager: ObservableObject {
         }
     }
 
+    func refreshTargetFromConfig() async {
+        struct Cfg: Decodable { let runningChallengeTarget: Int? }
+        do {
+            let cfg: Cfg = try await api.get("users/\(userId)/config")
+            if let t = cfg.runningChallengeTarget, t > 0 { recoveryTarget = t; persist() }
+        } catch {
+            // ignore
+        }
+    }
+
     func updateFrom(info: GameStateInfo) {
         // Detect new game-over start on server and reset progress window
         if let srvGO = info.gameOverDate, lastGameOverSeen == nil || (lastGameOverSeen! < srvGO) {

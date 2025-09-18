@@ -57,6 +57,9 @@ struct HabitsView: View {
                             Spacer()
                             Button("Details") {
                                 Task {
+                            // Ensure latest target is loaded
+                            await app.game.refreshFromServer()
+                            await app.game.refreshTargetFromConfig()
                                     let configured = await app.healthKit.hasConfiguredAccess()
                                     if app.game.state == .recovery || configured {
                                         hasHealthAccessConfigured = configured
@@ -140,7 +143,7 @@ struct HabitsView: View {
             .sheet(isPresented: $showingConfig) { UserConfigSheet(onSaved: { Task { await profileVM.refresh() } }) }
             .toast($toast)
             .sheet(isPresented: $showGameOverModal) {
-                GameOverModal(onStartRecovery: {
+                GameOverModal(targetMeters: app.game.recoveryTarget, onStartRecovery: {
                     withAnimation { showGameOverModal = false }
                     // Mark recovery start locally; backend state is already set by trigger.
                     app.game.startRecoveryNow()
@@ -247,6 +250,9 @@ extension HabitsView {
     private func checkAndPresentGameOver() async {
         if let life = profileVM.profile?.life {
             if life <= 0 {
+                // Refresh server state and target to ensure correct running challenge target
+                await app.game.refreshFromServer()
+                await app.game.refreshTargetFromConfig()
                 app.game.markLocalGameOverNow()
                 await MainActor.run { showGameOverModal = true }
             } else {

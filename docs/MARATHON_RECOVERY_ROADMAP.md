@@ -1,14 +1,14 @@
-# Marathon Recovery Feature - Development Roadmap
+# Running Challenge Recovery Feature - Development Roadmap
 
 ## 🎯 Project Overview
 
-**Feature**: Game Over & Marathon Recovery System  
+**Feature**: Game Over & Running Challenge System  
 **Duration**: 4 weeks  
 **Team**: iOS Developer, Backend Developer, QA  
 **Priority**: High (Point 5 in NEXT_FEATURES.md)
 
-**Current Status**: Backend foundation complete; PR open (feature/marathon-recovery-backend → feature/game-over-config).  
-PR: https://github.com/samuelmtz2000/beIntentionalApp/pull/25
+**Current Status**: Backend foundation complete; PR open (feature/ios-game-over-presentation → feature/game-over-config).  
+PR: https://github.com/samuelmtz2000/beIntentionalApp/pull/27
 
 ## 📋 Pre-Development Checklist
 
@@ -80,9 +80,9 @@ PR: https://github.com/samuelmtz2000/beIntentionalApp/pull/25
 - [ ] Handle authorization states
 ```
 
-## 🎮 Week 3: Recovery System
+## 🎮 Week 3: Running Challenge System
 
-### Day 1-2: Recovery UI
+### Day 1-2: Running Challenge UI
 
 ```swift
 // UI Components
@@ -104,11 +104,11 @@ PR: https://github.com/samuelmtz2000/beIntentionalApp/pull/25
 - [ ] Store local progress cache
 ```
 
-### Day 5: Completion Logic
+### Day 5: Completion Logic (UI‑first)
 
 ```swift
 // Implementation tasks
-- [ ] Detect 42km completion
+- [ ] Detect dynamic target completion (per‑user)
 - [ ] Trigger celebration screen
 - [ ] Restore health to 1000
 - [ ] Reset game state
@@ -177,7 +177,7 @@ PR: https://github.com/samuelmtz2000/beIntentionalApp/pull/25
 4. HealthKit permission request works
 5. Distance tracking is accurate
 6. Progress bar updates correctly
-7. 42km completion triggers recovery
+7. Dynamic target completion triggers recovery
 8. Health restores to 1000
 9. Game returns to normal state
 

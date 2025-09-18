@@ -1,7 +1,11 @@
 import request from "supertest";
 import { app } from "../src/index";
+import prisma from "../src/lib/prisma";
 
 describe("Global user leveling", () => {
+  beforeAll(async () => {
+    await prisma.user.update({ where: { id: "seed-user-1" }, data: { gameState: "active", life: 1000 } });
+  });
   it("/me includes global level/xp/xpPerLevel", async () => {
     const res = await request(app).get("/me");
     expect(res.status).toBe(200);
@@ -11,6 +15,13 @@ describe("Global user leveling", () => {
   });
 
   it("completing habit increases user xp (and possibly level)", async () => {
+    // Ensure active right before action to avoid cross-test interference
+    await prisma.user.update({ where: { id: "seed-user-1" }, data: { gameState: "active", life: 1000 } });
+    // Ensure stored XP mode for deterministic assertions
+    await request(app)
+      .put(`/users/seed-user-1/config`)
+      .send({ xpPerLevel: 100, levelCurve: "linear", levelMultiplier: 1.5, xpComputationMode: "stored" });
+
     // Read profile
     const before = await request(app).get("/me");
     expect(before.status).toBe(200);
@@ -43,4 +54,3 @@ describe("Global user leveling", () => {
     }
   });
 });
-

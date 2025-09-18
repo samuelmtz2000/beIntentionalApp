@@ -3,6 +3,7 @@ import express from "express";
 import helmet from "helmet";
 import cors from "cors";
 import rateLimit from "express-rate-limit";
+import type { RequestHandler } from "express";
 import api from "./router/index.js";
 import areas from "./router/areas.js";
 import { exec } from "node:child_process";
@@ -20,7 +21,8 @@ export const app = express();
 app.use(express.json());
 app.use(helmet());
 app.use(cors());
-app.use(rateLimit({ windowMs: 60_000, max: 120 }));
+const limiter = rateLimit({ windowMs: 60_000, max: 120 }) as unknown as RequestHandler;
+app.use(limiter);
 
 app.get("/health", (_req, res) => res.json({ ok: true }));
 // Debug: log router stack length

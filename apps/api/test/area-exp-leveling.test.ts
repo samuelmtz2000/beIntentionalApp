@@ -1,7 +1,12 @@
 import request from "supertest";
 import { app } from "../src/index";
+import prisma from "../src/lib/prisma";
 
 describe("Area exp leveling with multiplier", () => {
+  beforeAll(async () => {
+    // Ensure user is in active state and healthy
+    await prisma.user.update({ where: { id: "seed-user-1" }, data: { gameState: "active", life: 1000 } });
+  });
   it("applies exp multiplier for area progression", async () => {
     // Create area with exp curve and multiplier 2.0
     const areaRes = await request(app)
@@ -30,4 +35,3 @@ describe("Area exp leveling with multiplier", () => {
     expect(c2.body.areaLevel.xp).toBe(100);
   });
 });
-
