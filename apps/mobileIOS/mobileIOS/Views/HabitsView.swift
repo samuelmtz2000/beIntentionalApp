@@ -41,7 +41,7 @@ struct HabitsView: View {
                 VStack(spacing: 0) {
                 LegacyPlayerHeader(profile: profileVM.profile, onLogToday: { selected = .habits }, onOpenStore: { selected = .store })
                     TileNav(selected: $selected, onConfig: { showingConfig = true })
-                    if app.game.state != .active {
+                    if app.game.state == .gameOver {
                         HStack(alignment: .center, spacing: 12) {
                             Image(systemName: app.game.state == .recovery ? "figure.run" : "exclamationmark.triangle.fill")
                                 .foregroundStyle(app.game.state == .recovery ? .orange : .red)
@@ -114,6 +114,7 @@ struct HabitsView: View {
             .navigationBarTitleDisplayMode(.inline)
             .background(DSTheme.colors(for: scheme).backgroundPrimary)
             .task {
+                await app.game.refreshFromServer()
                 await refreshAll()
                 await checkAndPresentGameOver()
             }
@@ -232,10 +233,15 @@ extension HabitsView {
     }
 
     private func checkAndPresentGameOver() async {
-        if let life = profileVM.profile?.life, life <= 0 {
-            app.game.state = .gameOver
-            app.game.gameOverAt = app.game.gameOverAt ?? Date()
-            await MainActor.run { showGameOverModal = true }
+        if let life = profileVM.profile?.life {
+            if life <= 0 {
+                app.game.state = .gameOver
+                app.game.gameOverAt = app.game.gameOverAt ?? Date()
+                await MainActor.run { showGameOverModal = true }
+            } else {
+                app.game.state = .active
+                await MainActor.run { showGameOverModal = false }
+            }
         }
     }
     
@@ -271,6 +277,7 @@ extension HabitsView {
 }
 
 private struct LegacyPlayerHeader: View {
+    @EnvironmentObject private var app: AppModel
     let profile: Profile?
     var onLogToday: () -> Void
     var onOpenStore: () -> Void
@@ -294,9 +301,11 @@ private struct LegacyPlayerHeader: View {
                     Spacer()
                     VStack(alignment: .trailing, spacing: 4) {
                         HStack(spacing: 12) {
-                            Label("\(p.life)/100", systemImage: "heart.fill")
-                                .foregroundStyle(.red)
-                                .font(.callout)
+                            if app.game.state != .gameOver, p.life > 0 {
+                                Label("\(p.life)/100", systemImage: "heart.fill")
+                                    .foregroundStyle(.red)
+                                    .font(.callout)
+                            }
                             Label("\(p.coins)", systemImage: "creditcard")
                                 .font(.callout)
                         }
@@ -473,7 +482,7 @@ private struct PlayerPanelList: View {
     
     var body: some View {
         List {
-            if app.game.state != .active {
+            if app.game.state == .gameOver {
                 Section {
                     VStack(alignment: .leading, spacing: 8) {
                         Text(app.game.state == .recovery ? "Recovery in progress" : "Game Over")

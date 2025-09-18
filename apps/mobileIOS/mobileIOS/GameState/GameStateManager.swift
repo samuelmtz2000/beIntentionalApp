@@ -66,8 +66,15 @@ final class GameStateManager: ObservableObject {
     }
 
     func updateFrom(info: GameStateInfo) {
-        state = info.state
+        // Enforce client-side invariant: if health <= 0 => game over; else active unless in recovery
         health = info.health
+        if health <= 0 {
+            state = .gameOver
+        } else if state == .gameOver {
+            state = .active
+        } else {
+            state = info.state
+        }
         gameOverAt = info.gameOverDate
         recoveryDistance = info.recoveryDistance ?? 0
         recoveryTarget = info.recoveryTarget ?? 42195
