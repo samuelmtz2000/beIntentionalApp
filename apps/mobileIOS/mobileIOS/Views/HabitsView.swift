@@ -3,6 +3,7 @@ import UIKit
 
 struct HabitsView: View {
     @Environment(\.colorScheme) private var scheme
+    @Environment(\.scenePhase) private var scenePhase
     enum SectionKind: String, CaseIterable { case player = "Player", habits = "Habits", areas = "Areas", store = "Store", archive = "Archive", config = "Config" }
 
     @EnvironmentObject private var app: AppModel
@@ -152,6 +153,9 @@ struct HabitsView: View {
                         Task {
                             try? await app.healthKit.requestAuthorization()
                             hasHealthAccessConfigured = await app.healthKit.hasConfiguredAccess()
+                            if !hasHealthAccessConfigured {
+                                await MainActor.run { showErrorToast(message: "Health access not granted. Please enable to track recovery.") }
+                            }
                         }
                     },
                     onUpdateProgress: {
@@ -172,6 +176,9 @@ struct HabitsView: View {
                 )
                 .task { hasHealthAccessConfigured = await app.healthKit.hasConfiguredAccess() }
             }
+            .onChange(of: scenePhase) { _, phase in
+                if phase == .active { handleForeground() }
+            }
         }
     }
 
@@ -191,6 +198,23 @@ struct HabitsView: View {
 }
 
 extension HabitsView {
+    // Foreground refresh for recovery progress and server state
+    @MainActor
+    private func handleForeground() {
+        Task {
+            await app.game.refreshFromServer()
+            if app.game.state == .recovery, await app.healthKit.hasConfiguredAccess() {
+                await app.game.refreshDistance(using: app.healthKit)
+                await app.game.pushRecoveryProgress()
+                await app.game.completeRecoveryIfEligible()
+                if app.game.state == .active {
+                    let gen = UINotificationFeedbackGenerator()
+                    gen.notificationOccurred(.success)
+                    showSuccessToast(message: "🎉 Recovery complete! Health restored.")
+                }
+            }
+        }
+    }
     private func refreshAll() async {
         await withTaskGroup(of: Void.self) { group in
             group.addTask { await profileVM.refresh() }
