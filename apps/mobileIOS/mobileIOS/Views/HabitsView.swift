@@ -52,7 +52,7 @@ struct HabitsView: View {
                                     .foregroundStyle(.secondary)
                             }
                             Spacer()
-                            Button(app.game.state == .recovery ? "Continue Recovery" : "Details") {
+                            Button("Details") {
                                 Task {
                                     let configured = await app.healthKit.hasConfiguredAccess()
                                     if app.game.state == .recovery || configured {
