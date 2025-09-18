@@ -14,6 +14,15 @@ struct MarathonRecoveryView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
             Text("🏃 Marathon Recovery").font(.title2).bold()
+            if let started = game.recoveryStartedAt ?? game.gameOverAt {
+                HStack(spacing: 8) {
+                    Image(systemName: "calendar")
+                        .foregroundStyle(.secondary)
+                    Text("Started: \(format(date: started))")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+            }
             ProgressView(value: progress)
                 .tint(.orange)
             HStack {
@@ -33,5 +42,12 @@ struct MarathonRecoveryView: View {
             }
         }
         .padding(24)
+    }
+
+    private func format(date: Date) -> String {
+        let df = DateFormatter()
+        df.dateStyle = .medium
+        df.timeStyle = .short
+        return df.string(from: date)
     }
 }
