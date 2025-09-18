@@ -1245,7 +1245,7 @@ struct NewBadHabitSheet: View {
     let areas: [Area]
     @State private var selectedAreaId: String = "" // empty is Global
     @State private var name: String = ""
-    @State private var lifePenalty: Int = 5
+    @State private var lifePenaltyInput: String = "5"
     @State private var controllable: Bool = false
     @State private var coinCost: Int = 0
     @State private var active: Bool = true
@@ -1267,14 +1267,23 @@ struct NewBadHabitSheet: View {
                     Toggle("Active", isOn: $active)
                 }
                 Section("Penalty / Cost") {
-                    Stepper("Life Penalty: \(lifePenalty)", value: $lifePenalty, in: 1...100)
+                    TextField("Life Penalty (1-1000)", text: $lifePenaltyInput)
+                        .keyboardType(.numberPad)
                     Stepper("Coin Cost: \(coinCost)", value: $coinCost, in: 0...100)
                 }
             }
             .navigationTitle("New Bad Habit")
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) { Button("Cancel") { dismiss() } }
-                ToolbarItem(placement: .confirmationAction) { Button("Create") { onCreate(selectedAreaId, name, lifePenalty, controllable, coinCost, active); dismiss() }.buttonStyle(PrimaryButtonStyle()).disabled(name.isEmpty) }
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("Create") {
+                        let penalty = max(1, min(1000, Int(lifePenaltyInput) ?? 5))
+                        onCreate(selectedAreaId, name, penalty, controllable, coinCost, active)
+                        dismiss()
+                    }
+                    .buttonStyle(PrimaryButtonStyle())
+                    .disabled(name.isEmpty)
+                }
             }
         }
         .presentationDetents([.medium, .large])
@@ -1304,7 +1313,17 @@ struct BadHabitDetailView: View {
                 Toggle("Active", isOn: $item.isActive)
             }
             Section("Costs") {
-                Stepper("Life Penalty: \(item.lifePenalty)", value: $item.lifePenalty, in: 1...100)
+                // Life Penalty (1-1000) as text input for easier editing
+                HStack {
+                    Text("Life Penalty")
+                    Spacer()
+                    TextField("1-1000", value: $item.lifePenalty, format: .number)
+                        .keyboardType(.numberPad)
+                        .multilineTextAlignment(.trailing)
+                        .onChange(of: item.lifePenalty) { _, newVal in
+                            item.lifePenalty = max(1, min(1000, newVal))
+                        }
+                }
                 Stepper("Coin Cost: \(item.coinCost)", value: $item.coinCost, in: 0...100)
             }
             Section {
