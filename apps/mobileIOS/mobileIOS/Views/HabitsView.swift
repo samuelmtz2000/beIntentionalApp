@@ -1,4 +1,5 @@
 import SwiftUI
+import UIKit
 
 struct HabitsView: View {
     @Environment(\.colorScheme) private var scheme
@@ -51,7 +52,7 @@ struct HabitsView: View {
                                     .foregroundStyle(.secondary)
                             }
                             Spacer()
-                            Button("Details") {
+                            Button(app.game.state == .recovery ? "Continue Recovery" : "Details") {
                                 Task {
                                     let configured = await app.healthKit.hasConfiguredAccess()
                                     if app.game.state == .recovery || configured {
@@ -62,7 +63,7 @@ struct HabitsView: View {
                                     }
                                 }
                             }
-                                .buttonStyle(SecondaryButtonStyle())
+                            .buttonStyle(SecondaryButtonStyle())
                         }
                         .padding(.horizontal, 12)
                         .padding(.vertical, 8)
@@ -158,6 +159,14 @@ struct HabitsView: View {
                             await app.game.refreshDistance(using: app.healthKit)
                             await app.game.pushRecoveryProgress()
                             await app.game.completeRecoveryIfEligible()
+                            if app.game.state == .active {
+                                let gen = UINotificationFeedbackGenerator()
+                                gen.notificationOccurred(.success)
+                                await MainActor.run {
+                                    showSuccessToast(message: "🎉 Recovery complete! Health restored.")
+                                    showingRecovery = false
+                                }
+                            }
                         }
                     }
                 )
