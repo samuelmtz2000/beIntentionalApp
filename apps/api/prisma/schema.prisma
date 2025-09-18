@@ -20,6 +20,13 @@ model User {
   levelCurve   String        @default("linear")
   levelMultiplier Float      @default(1.5)
   xpComputationMode String   @default("logs") // "logs" | "stored"
+  // Game Over & Recovery
+  gameState    String        @default("active") // "active" | "game_over" | "recovery"
+  gameOverAt   DateTime?
+  recoveryStartedAt DateTime?
+  recoveryDistance Int       @default(0) // meters
+  recoveryCompletedAt DateTime?
+  totalGameOvers Int         @default(0)
   areas        Area[]
   areaLevels   AreaLevel[]
   transactions Transaction[]

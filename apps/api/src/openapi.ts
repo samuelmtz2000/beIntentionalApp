@@ -217,6 +217,65 @@ const spec = {
         responses: { "200": { description: "Purchased" }, "400": { description: "Invalid or insufficient coins" }, "409": { description: "Already purchased" } },
       },
     },
+
+    // User Config
+    "/users/{id}/config": {
+      get: {
+        summary: "Get user config",
+        parameters: [{ name: "id", in: "path", required: true, schema: { type: "string" } }],
+        responses: { "200": { description: "User config" }, "404": { description: "User not found" } },
+      },
+      put: {
+        summary: "Update user config",
+        parameters: [{ name: "id", in: "path", required: true, schema: { type: "string" } }],
+        requestBody: {
+          required: true,
+          content: {
+            "application/json": {
+              schema: {
+                type: "object",
+                properties: {
+                  xpPerLevel: { type: "integer", minimum: 10 },
+                  levelCurve: { type: "string", enum: ["linear", "exp"] },
+                  levelMultiplier: { type: "number", minimum: 1 },
+                  xpComputationMode: { type: "string", enum: ["stored", "logs"] },
+                  runningChallengeTarget: { type: "integer", minimum: 1000, maximum: 500000 },
+                },
+                required: ["xpPerLevel", "levelCurve", "levelMultiplier", "xpComputationMode"],
+              },
+            },
+          },
+        },
+        responses: { "200": { description: "Updated" }, "404": { description: "User not found" } },
+      },
+    },
+
+    // Game Over & Running Challenge
+    "/users/{id}/game-state": {
+      get: {
+        summary: "Get game state + recovery progress",
+        parameters: [{ name: "id", in: "path", required: true, schema: { type: "string" } }],
+        responses: { "200": { description: "Game state" }, "404": { description: "User not found" } },
+      },
+    },
+    "/users/{id}/recovery-progress": {
+      put: {
+        summary: "Update recovery progress (cumulative meters since game over/recovery start)",
+        parameters: [{ name: "id", in: "path", required: true, schema: { type: "string" } }],
+        requestBody: {
+          required: true,
+          content: { "application/json": { schema: { type: "object", properties: { distance: { type: "integer", minimum: 0 } }, required: ["distance"] } } },
+        },
+        responses: { "200": { description: "Progress updated" }, "400": { description: "Invalid distance" }, "404": { description: "User not found" }, "409": { description: "Recovery not active" } },
+      },
+    },
+    "/users/{id}/complete-recovery": {
+      post: {
+        summary: "Complete recovery (requires distance ≥ target)",
+        parameters: [{ name: "id", in: "path", required: true, schema: { type: "string" } }],
+        responses: { "200": { description: "Recovery completed" }, "400": { description: "Not complete yet" }, "404": { description: "User not found" } },
+      },
+    },
   },
 };
 

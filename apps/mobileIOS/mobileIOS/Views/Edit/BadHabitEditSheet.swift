@@ -32,7 +32,16 @@ struct BadHabitEditSheet: View {
                     Toggle("Active", isOn: $item.isActive)
                 }
                 Section("Costs") {
-                    Stepper("Life Penalty: \(item.lifePenalty)", value: $item.lifePenalty, in: 1...100)
+                    HStack {
+                        Text("Life Penalty")
+                        Spacer()
+                        TextField("1-1000", value: $item.lifePenalty, format: .number)
+                            .keyboardType(.numberPad)
+                            .multilineTextAlignment(.trailing)
+                            .onChange(of: item.lifePenalty) { _, newVal in
+                                item.lifePenalty = max(1, min(1000, newVal))
+                            }
+                    }
                     Stepper("Coin Cost: \(item.coinCost)", value: $item.coinCost, in: 0...100)
                 }
                 Section { Button("Delete", role: .destructive) { onDelete(); dismiss() } }

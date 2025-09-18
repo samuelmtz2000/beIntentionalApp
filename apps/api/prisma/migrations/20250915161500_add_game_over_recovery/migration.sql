@@ -1,0 +1,7 @@
+-- Use ALTER TABLE ADD COLUMN to extend existing User table in-place
+ALTER TABLE "User" ADD COLUMN "gameState" TEXT NOT NULL DEFAULT 'active';
+ALTER TABLE "User" ADD COLUMN "gameOverAt" DATETIME;
+ALTER TABLE "User" ADD COLUMN "recoveryStartedAt" DATETIME;
+ALTER TABLE "User" ADD COLUMN "recoveryDistance" INTEGER NOT NULL DEFAULT 0;
+ALTER TABLE "User" ADD COLUMN "recoveryCompletedAt" DATETIME;
+ALTER TABLE "User" ADD COLUMN "totalGameOvers" INTEGER NOT NULL DEFAULT 0;
