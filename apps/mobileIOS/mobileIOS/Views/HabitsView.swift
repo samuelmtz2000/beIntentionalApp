@@ -1,7 +1,9 @@
 import SwiftUI
+import UIKit
 
 struct HabitsView: View {
     @Environment(\.colorScheme) private var scheme
+    @Environment(\.scenePhase) private var scenePhase
     enum SectionKind: String, CaseIterable { case player = "Player", habits = "Habits", areas = "Areas", store = "Store", archive = "Archive", config = "Config" }
 
     @EnvironmentObject private var app: AppModel
@@ -19,6 +21,10 @@ struct HabitsView: View {
     @State private var selected: SectionKind = .habits
     @State private var toast: ToastMessage? = nil
     @State private var showGameOverModal = false
+    @State private var showingRecovery = false
+    @State private var hasHealthAccessConfigured = false
+    @State private var showRecoveryCompletion = false
+    @State private var pendingLocalCompletion = false
 
     init() {
         let app = AppModel()
@@ -37,6 +43,37 @@ struct HabitsView: View {
                 VStack(spacing: 0) {
                 LegacyPlayerHeader(profile: profileVM.profile, onLogToday: { selected = .habits }, onOpenStore: { selected = .store })
                     TileNav(selected: $selected, onConfig: { showingConfig = true })
+                    if app.game.state == .recovery {
+                        HStack(alignment: .center, spacing: 12) {
+                            Image(systemName: "figure.run")
+                                .foregroundStyle(.orange)
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text("Recovery in progress")
+                                    .dsFont(.body)
+                                Text("Bad habits are disabled until recovery is complete.")
+                                    .dsFont(.caption)
+                                    .foregroundStyle(.secondary)
+                            }
+                            Spacer()
+                            Button("Details") {
+                                Task {
+                            // Ensure latest target is loaded
+                            await app.game.refreshFromServer()
+                            await app.game.refreshTargetFromConfig()
+                                    let configured = await app.healthKit.hasConfiguredAccess()
+                                    if app.game.state == .recovery || configured {
+                                        hasHealthAccessConfigured = configured
+                                        showingRecovery = true
+                                    } else {
+                                        showGameOverModal = true
+                                    }
+                                }
+                            }
+                            .buttonStyle(SecondaryButtonStyle())
+                        }
+                        .padding(.horizontal, 12)
+                        .padding(.vertical, 8)
+                    }
                 }
                 .background(DSTheme.colors(for: scheme).backgroundSecondary)
                 .shadow(color: Color.black.opacity(0.1), radius: 4, x: 0, y: 2)
@@ -58,6 +95,10 @@ struct HabitsView: View {
                             onAddGood: { showingAddGood = true },
                             onAddBad: { showingAddBad = true },
                             onBadHabitRecorded: { await onBadHabitRecorded() },
+                            onOpenRecovery: { configured in
+                                hasHealthAccessConfigured = configured
+                                showingRecovery = true
+                            },
                             onShowSuccessToast: showSuccessToast,
                             onShowErrorToast: showErrorToast
                         )
@@ -78,6 +119,7 @@ struct HabitsView: View {
             .navigationBarTitleDisplayMode(.inline)
             .background(DSTheme.colors(for: scheme).backgroundPrimary)
             .task {
+                await app.game.refreshFromServer()
                 await refreshAll()
                 await checkAndPresentGameOver()
             }
@@ -101,12 +143,60 @@ struct HabitsView: View {
             .sheet(isPresented: $showingConfig) { UserConfigSheet(onSaved: { Task { await profileVM.refresh() } }) }
             .toast($toast)
             .sheet(isPresented: $showGameOverModal) {
-                GameOverModal(onStartRecovery: {
+                GameOverModal(targetMeters: app.game.recoveryTarget, onStartRecovery: {
                     withAnimation { showGameOverModal = false }
-                    // Transition to recovery state locally; backend state is already set by trigger.
-                    app.game.state = .recovery
-                    if app.game.gameOverAt == nil { app.game.gameOverAt = Date() }
+                    // Mark recovery start locally; backend state is already set by trigger.
+                    app.game.startRecoveryNow()
+                    showingRecovery = true
                 })
+            }
+            .sheet(isPresented: $showingRecovery) {
+                MarathonRecoveryView(
+                    game: app.game,
+                    isHealthAccessConfigured: hasHealthAccessConfigured,
+                    onRequestHealthAccess: {
+                        Task {
+                            try? await app.healthKit.requestAuthorization()
+                            hasHealthAccessConfigured = await app.healthKit.hasConfiguredAccess()
+                            if !hasHealthAccessConfigured {
+                                await MainActor.run { showErrorToast(message: "Health access not granted. Please enable to track recovery.") }
+                            }
+                        }
+                    },
+                    onUpdateProgress: {
+                        Task {
+                            await app.game.refreshDistance(using: app.healthKit)
+                            // If locally eligible, show celebration first; complete after user closes modal
+                            if app.game.recoveryDistance >= app.game.recoveryTarget {
+                                await MainActor.run {
+                                    pendingLocalCompletion = true
+                                    showRecoveryCompletion = true
+                                }
+                            } else {
+                                await app.game.pushRecoveryProgress()
+                            }
+                        }
+                    }
+                )
+                .task { hasHealthAccessConfigured = await app.healthKit.hasConfiguredAccess() }
+            }
+            .sheet(isPresented: $showRecoveryCompletion) {
+                RecoveryCompletionModal(onDone: {
+                    Task {
+                        showRecoveryCompletion = false
+                        // Now finalize on server and refresh global/profile state
+                        if pendingLocalCompletion {
+                            await app.game.pushRecoveryProgress()
+                            await app.game.completeRecoveryIfEligible()
+                            pendingLocalCompletion = false
+                        }
+                        await app.game.refreshFromServer()
+                        await profileVM.refresh()
+                    }
+                })
+            }
+            .onChange(of: scenePhase) { _, phase in
+                if phase == .active { handleForeground() }
             }
         }
     }
@@ -127,6 +217,20 @@ struct HabitsView: View {
 }
 
 extension HabitsView {
+    // Foreground refresh for recovery progress and server state
+    @MainActor
+    private func handleForeground() {
+        Task {
+            await app.game.refreshFromServer()
+            if app.game.state == .recovery, await app.healthKit.hasConfiguredAccess() {
+                await app.game.refreshDistance(using: app.healthKit)
+                if app.game.recoveryDistance >= app.game.recoveryTarget {
+                    pendingLocalCompletion = true
+                    showRecoveryCompletion = true
+                }
+            }
+        }
+    }
     private func refreshAll() async {
         await withTaskGroup(of: Void.self) { group in
             group.addTask { await profileVM.refresh() }
@@ -144,10 +248,17 @@ extension HabitsView {
     }
 
     private func checkAndPresentGameOver() async {
-        if let life = profileVM.profile?.life, life <= 0 {
-            app.game.state = .gameOver
-            app.game.gameOverAt = app.game.gameOverAt ?? Date()
-            await MainActor.run { showGameOverModal = true }
+        if let life = profileVM.profile?.life {
+            if life <= 0 {
+                // Refresh server state and target to ensure correct running challenge target
+                await app.game.refreshFromServer()
+                await app.game.refreshTargetFromConfig()
+                app.game.markLocalGameOverNow()
+                await MainActor.run { showGameOverModal = true }
+            } else {
+                app.game.state = .active
+                await MainActor.run { showGameOverModal = false }
+            }
         }
     }
     
@@ -183,6 +294,7 @@ extension HabitsView {
 }
 
 private struct LegacyPlayerHeader: View {
+    @EnvironmentObject private var app: AppModel
     let profile: Profile?
     var onLogToday: () -> Void
     var onOpenStore: () -> Void
@@ -206,9 +318,15 @@ private struct LegacyPlayerHeader: View {
                     Spacer()
                     VStack(alignment: .trailing, spacing: 4) {
                         HStack(spacing: 12) {
-                            Label("\(p.life)/100", systemImage: "heart.fill")
-                                .foregroundStyle(.red)
-                                .font(.callout)
+                            if app.game.state == .gameOver || p.life <= 0 {
+                                Label("", systemImage: "skull")
+                                    .foregroundStyle(.red)
+                                    .font(.callout)
+                            } else {
+                                Label("\(p.life)/1000", systemImage: "heart.fill")
+                                    .foregroundStyle(.red)
+                                    .font(.callout)
+                            }
                             Label("\(p.coins)", systemImage: "creditcard")
                                 .font(.callout)
                         }
@@ -378,12 +496,26 @@ extension PlayerHeaderWrapper where Content == EmptyView {
 }
 
 private struct PlayerPanelList: View {
+    @EnvironmentObject private var app: AppModel
     let profile: Profile?
     var areasMeta: [Area] = []
     var header: PlayerHeaderWrapper<EmptyView>
     
     var body: some View {
         List {
+            if app.game.state == .gameOver {
+                Section {
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text(app.game.state == .recovery ? "Recovery in progress" : "Game Over")
+                            .dsFont(.headerMD)
+                        Text("Habit actions are disabled until you complete recovery.")
+                            .dsFont(.caption)
+                            .foregroundStyle(.secondary)
+                    }
+                    .cardStyle()
+                    .listRowBackground(Color.clear)
+                }
+            }
             header
             PlayerPanelContent(profile: profile, areasMeta: areasMeta)
         }
@@ -526,12 +658,14 @@ private struct CombinedHabitsPanel: View {
 
 // New body panels without headers for fixed header layout
 private struct CombinedHabitsBodyPanel: View {
+    @EnvironmentObject private var app: AppModel
     @ObservedObject var goodVM: HabitsViewModel
     @ObservedObject var badVM: BadHabitsViewModel
     var onRefresh: () async -> Void
     var onAddGood: () -> Void
     var onAddBad: () -> Void
     var onBadHabitRecorded: () async -> Void
+    var onOpenRecovery: (Bool) -> Void
     var onShowSuccessToast: (String) -> Void
     var onShowErrorToast: (String) -> Void
     
@@ -599,12 +733,27 @@ private struct CombinedHabitsBodyPanel: View {
                                 guard inFlightIds.contains(item.id) == false else { return }
                                 inFlightIds.insert(item.id)
                                 defer { inFlightIds.remove(item.id) }
+                                if app.game.state != .active {
+                                    let configured = await app.healthKit.hasConfiguredAccess()
+                                    await MainActor.run { onOpenRecovery(configured) }
+                                    if !configured {
+                                        await MainActor.run {
+                                            onShowErrorToast("Enable Health Access from Details to start recovery.")
+                                        }
+                                    }
+                                    return
+                                }
                                 await badVM.record(id: item.id)
                                 await onBadHabitRecorded()
                                 
                                 // Show warning toast
                                 await MainActor.run {
                                     onShowErrorToast("⚠️ \(item.name) recorded. -\(item.lifePenalty) life")
+                                }
+                                if let e = badVM.apiError, e.status == 409 {
+                                    await MainActor.run {
+                                        onShowErrorToast("Game is not active. Start or continue recovery.")
+                                    }
                                 }
                             }
                         } label: { Label("Record", systemImage: "exclamationmark.circle") }
@@ -1117,7 +1266,7 @@ struct NewBadHabitSheet: View {
     let areas: [Area]
     @State private var selectedAreaId: String = "" // empty is Global
     @State private var name: String = ""
-    @State private var lifePenalty: Int = 5
+    @State private var lifePenaltyInput: String = "5"
     @State private var controllable: Bool = false
     @State private var coinCost: Int = 0
     @State private var active: Bool = true
@@ -1139,14 +1288,23 @@ struct NewBadHabitSheet: View {
                     Toggle("Active", isOn: $active)
                 }
                 Section("Penalty / Cost") {
-                    Stepper("Life Penalty: \(lifePenalty)", value: $lifePenalty, in: 1...100)
+                    TextField("Life Penalty (1-1000)", text: $lifePenaltyInput)
+                        .keyboardType(.numberPad)
                     Stepper("Coin Cost: \(coinCost)", value: $coinCost, in: 0...100)
                 }
             }
             .navigationTitle("New Bad Habit")
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) { Button("Cancel") { dismiss() } }
-                ToolbarItem(placement: .confirmationAction) { Button("Create") { onCreate(selectedAreaId, name, lifePenalty, controllable, coinCost, active); dismiss() }.buttonStyle(PrimaryButtonStyle()).disabled(name.isEmpty) }
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("Create") {
+                        let penalty = max(1, min(1000, Int(lifePenaltyInput) ?? 5))
+                        onCreate(selectedAreaId, name, penalty, controllable, coinCost, active)
+                        dismiss()
+                    }
+                    .buttonStyle(PrimaryButtonStyle())
+                    .disabled(name.isEmpty)
+                }
             }
         }
         .presentationDetents([.medium, .large])
@@ -1176,7 +1334,17 @@ struct BadHabitDetailView: View {
                 Toggle("Active", isOn: $item.isActive)
             }
             Section("Costs") {
-                Stepper("Life Penalty: \(item.lifePenalty)", value: $item.lifePenalty, in: 1...100)
+                // Life Penalty (1-1000) as text input for easier editing
+                HStack {
+                    Text("Life Penalty")
+                    Spacer()
+                    TextField("1-1000", value: $item.lifePenalty, format: .number)
+                        .keyboardType(.numberPad)
+                        .multilineTextAlignment(.trailing)
+                        .onChange(of: item.lifePenalty) { _, newVal in
+                            item.lifePenalty = max(1, min(1000, newVal))
+                        }
+                }
                 Stepper("Coin Cost: \(item.coinCost)", value: $item.coinCost, in: 0...100)
             }
             Section {

@@ -109,8 +109,9 @@ struct AddBadHabitSheet: View {
     }
     
     private var isFormValid: Bool {
-        !name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty &&
-        (Int(lifePenalty) ?? 0) > 0 &&
+        let penalty = Int(lifePenalty) ?? 0
+        return !name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty &&
+        penalty > 0 && penalty <= 1000 &&
         (!controllable || (Int(coinCost) ?? 0) > 0) &&
         (isGlobalHabit || !selectedAreaId.isEmpty)
     }
@@ -128,6 +129,8 @@ struct AddBadHabitSheet: View {
         
         if let penalty = Int(lifePenalty), penalty <= 0 {
             errors.append("Life penalty must be greater than 0")
+        } else if let penalty = Int(lifePenalty), penalty > 1000 {
+            errors.append("Life penalty cannot exceed 1000")
         } else if Int(lifePenalty) == nil && !lifePenalty.isEmpty {
             errors.append("Life penalty must be a valid number")
         }

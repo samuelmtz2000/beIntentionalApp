@@ -4,7 +4,10 @@ title: Data Model
 
 Prisma models (SQLite):
 
-- User(id, name?, life=100, coins=0, avatar Json?)
+- User(id, name?, life=1000, coins=0, avatar Json?,
+  level, xp, xpPerLevel=100, levelCurve, levelMultiplier=1.5, xpComputationMode,
+  gameState, gameOverAt?, recoveryStartedAt?, recoveryDistance=0, recoveryCompletedAt?, totalGameOvers=0,
+  runningChallengeTarget=42195)
 - Area(id, userId, name, icon?, xpPerLevel=100, levelCurve, levelMultiplier=1.5)
 - GoodHabit(id, areaId, name, xpReward, coinReward, cadence?, isActive)
 - BadHabit(id, areaId?, name, lifePenalty, coinCost, isActive)
@@ -28,6 +31,22 @@ erDiagram
     int life
     int coins
     json avatar
+    // Leveling
+    int level
+    int xp
+    int xpPerLevel
+    string levelCurve
+    float levelMultiplier
+    string xpComputationMode
+    // Game Over & Running Challenge
+    string gameState
+    date gameOverAt
+    date recoveryStartedAt
+    int recoveryDistance
+    date recoveryCompletedAt
+    int totalGameOvers
+    // Config
+    int runningChallengeTarget
   }
 
   AREA {

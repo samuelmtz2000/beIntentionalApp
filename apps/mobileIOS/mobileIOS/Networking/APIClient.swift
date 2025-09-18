@@ -1,6 +1,15 @@
 import Foundation
 
-struct APIError: Error, LocalizedError, Identifiable { let id = UUID(); let message: String; var errorDescription: String? { message } }
+struct APIError: Error, LocalizedError, Identifiable {
+    let id = UUID()
+    let message: String
+    let status: Int?
+    var errorDescription: String? { message }
+    init(message: String, status: Int? = nil) {
+        self.message = message
+        self.status = status
+    }
+}
 
 final class APIClient {
     private let baseURL: URL
@@ -53,9 +62,14 @@ final class APIClient {
         do {
             let (data, resp) = try await session.data(for: req)
             guard let http = resp as? HTTPURLResponse else { throw APIError(message: "Invalid response") }
-            guard 200..<300 ~= http.statusCode else { throw APIError(message: "HTTP \(http.statusCode)") }
+            guard 200..<300 ~= http.statusCode else {
+                let body = String(data: data, encoding: .utf8)
+                let msg = body?.isEmpty == false ? body! : "HTTP \(http.statusCode)"
+                throw APIError(message: msg, status: http.statusCode)
+            }
             return data
         } catch {
+            if let e = error as? APIError { throw e }
             throw APIError(message: error.localizedDescription)
         }
     }
@@ -69,4 +83,3 @@ extension JSONDecoder {
         return d
     }()
 }
-
