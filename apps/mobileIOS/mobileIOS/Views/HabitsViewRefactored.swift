@@ -153,9 +153,33 @@ struct HabitsViewRefactored: View {
                                 return
                             }
                         }
-                        _ = await coordinator.badVM.record(id: b.id, payWithCoins: false)
+                        let resp = await coordinator.badVM.record(id: b.id, payWithCoins: false)
+                        if let r = resp {
+                            await MainActor.run {
+                                if var p = coordinator.profileVM.profile {
+                                    // Rebuild Profile with updated life; keep other fields
+                                    let updated = Profile(
+                                        life: r.user.life,
+                                        coins: p.coins,
+                                        level: p.level,
+                                        xp: p.xp,
+                                        xpPerLevel: p.xpPerLevel,
+                                        config: p.config,
+                                        areas: p.areas,
+                                        ownedBadHabits: p.ownedBadHabits
+                                    )
+                                    coordinator.profileVM.profile = updated
+                                }
+                            }
+                        }
                         await coordinator.refreshAll()
-                        await MainActor.run { toast = ToastMessage(message: "⚠️ \(b.name) recorded. -\(b.lifePenalty) life", type: .error) }
+                        await MainActor.run {
+                            if let avoided = resp?.avoidedPenalty, avoided {
+                                toast = ToastMessage(message: "🙂 \(b.name) forgiven (used credit)", type: .success)
+                            } else {
+                                toast = ToastMessage(message: "⚠️ \(b.name) recorded. -\(b.lifePenalty) life", type: .error)
+                            }
+                        }
                     },
                     onBadEdit: { b in editingBad = b },
                     onBadDelete: { b in await MainActor.run { confirmDelete = ConfirmDeleteWrapper(kind: .bad, good: nil, bad: b) } }
