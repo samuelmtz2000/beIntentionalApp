@@ -12,12 +12,9 @@
 - Implemented Player detail panel (stats card + per‑area progress) and Areas list with edit/delete flows.
 - Unified add/edit sheets for Good/Bad/Area using shared sheet pattern; wired save/delete to refresh.
 
-**Known Build Errors**
-- apps/mobileIOS/mobileIOS/Views/HabitsViewRefactored.swift:201:13 Cannot find `StoreListView` in scope
-- apps/mobileIOS/mobileIOS/Views/HabitsViewRefactored.swift:203:13 Cannot find `ArchiveListView` in scope
-
-Notes:
-- Both `StoreListView` and `ArchiveListView` are declared in the same file (lines ~441 and ~518 respectively). Investigation needed into scoping/brace placement or name collisions causing these to be unresolved at call site.
+**Build Errors (Resolved)**
+- Fixed scope resolution by properly closing `AreasListView` and hoisting `StoreListView`/`ArchiveListView` to file scope.
+- Compile clean on `stabilize-new-refactored-habitsview`.
 
 **Extras Beyond Original Plan**
 - Player Stats Card + Area progress visuals (was not explicitly in the migration checklist).
@@ -25,6 +22,10 @@ Notes:
 - Fine‑grained toast copy for credit forgiveness vs. penalty on bad‑habit record.
 - Store: “Owned (Credits)” section with counts; swipe‑to‑buy on controllable bad habits.
 - Archive: Restore flows for Areas/Good/Bad with swipe actions and immediate refresh callback.
+ - Header‑level banners via `DSInfoBanner` for Game Over and Recovery Complete with a “Details” CTA that opens the Running Challenge modal.
+ - Gating logic: blocks bad‑habit record when in Game Over (life ≤ 0), opens Recovery instead.
+ - Health access UX: pre-checks existing permissions before prompting; shows “Update Progress” when authorized.
+ - Backend alignment: `/users/:id/game-state` derives `state` from `life <= 0`, returns camelCase; recovery endpoints aligned for client state sync.
 
 **What’s Missing From the Plan**
 - Parity verification pass for all legacy swipe/toast flows (checklist items exist, final verification pending).
@@ -39,6 +40,7 @@ Notes:
 - Remove/rename legacy `HabitsView` after parity sign‑off; update references.
 - Add lightweight tests for ViewModels (create/update/delete, record flows, recovery gating).
 - Extract Store/Archive views to their feature folders to align with structure and avoid scope issues.
+ - Move on to Feature #6 (Streaks): general streak configuration in the header (type scale, thresholds, color semantics, celebratory animations), with docs and toggles.
 
 **Affected Files (key)**
 - `apps/mobileIOS/mobileIOS/ContentView.swift` → switched to `HabitsViewRefactored()`.
@@ -49,4 +51,3 @@ Notes:
 **Open Questions**
 - Should Player detail and area progress remain in Habits module or move under Player feature with a dedicated route?
 - Confirm final copy for recovery gating toasts and Health access prompts.
-

@@ -8,7 +8,7 @@ Phase 1 — Compute & Derive
 
 Phase 2 — Core UI
 
-- Header: general streak with today’s progress and celebration when 80%+ with no unforgiven bad.
+- Header: general streak with today’s progress and celebration when 80%+ with no unforgiven bad. Integrate into the refactored `NavigationHeaderContainer`/`PlayerHeader` as the canonical header.
 - Habit list: per‑habit badges (good flame, bad shield) and 7‑day mini‑calendar markers.
 - Empty states and at‑risk states (e.g., unforgiven bad recorded today).
 
@@ -23,4 +23,3 @@ Phase 4 — Reliability & Analytics
 - Backfill within 24h; background recalculation for affected days.
 - Telemetry, milestone celebrations, and nudges.
 - Document timezone behavior and any known limitations until per‑user timezone lands.
-
