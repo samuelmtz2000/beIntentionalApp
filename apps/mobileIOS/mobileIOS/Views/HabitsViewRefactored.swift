@@ -153,7 +153,7 @@ struct HabitsViewRefactored: View {
                                 return
                             }
                         }
-                        await coordinator.badVM.record(id: b.id, payWithCoins: false)
+                        _ = await coordinator.badVM.record(id: b.id, payWithCoins: false)
                         await coordinator.refreshAll()
                         await MainActor.run { toast = ToastMessage(message: "⚠️ \(b.name) recorded. -\(b.lifePenalty) life", type: .error) }
                     },

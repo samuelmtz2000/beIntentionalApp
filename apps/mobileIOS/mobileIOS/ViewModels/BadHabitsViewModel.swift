@@ -40,11 +40,18 @@ final class BadHabitsViewModel: ObservableObject {
         catch let err { apiError = APIError(message: err.localizedDescription) }
     }
 
-    func record(id: String, payWithCoins: Bool = false) async {
+    func record(id: String, payWithCoins: Bool = false) async -> RecordBadResponse? {
         struct Body: Encodable { let payWithCoins: Bool }
-        struct VoidResp: Decodable {}
-        do { _ = try await api.post("actions/bad-habits/\(id)/record", body: Body(payWithCoins: payWithCoins)) as VoidResp }
-        catch let e as APIError { apiError = e }
-        catch let err { apiError = APIError(message: err.localizedDescription) }
+        do {
+            let resp: RecordBadResponse = try await api.post("actions/bad-habits/\(id)/record", body: Body(payWithCoins: payWithCoins))
+            return resp
+        } catch let e as APIError { apiError = e } catch let err { apiError = APIError(message: err.localizedDescription) }
+        return nil
     }
+}
+
+struct RecordBadResponse: Decodable {
+    struct User: Decodable { let life: Int }
+    let user: User
+    let avoidedPenalty: Bool
 }
