@@ -2,9 +2,14 @@ import Foundation
 
 @MainActor
 final class HabitsHeaderViewModel: ObservableObject {
-    @ObservedObject var profileVM: ProfileViewModel
-    init(profileVM: ProfileViewModel) { self.profileVM = profileVM }
-    var profile: Profile? { profileVM.profile }
-    func refresh() async { await profileVM.refresh() }
+    let profileVM: ProfileViewModel
+    @Published private(set) var profile: Profile?
+    init(profileVM: ProfileViewModel) {
+        self.profileVM = profileVM
+        self.profile = profileVM.profile
+    }
+    func refresh() async {
+        await profileVM.refresh()
+        profile = profileVM.profile
+    }
 }
-
