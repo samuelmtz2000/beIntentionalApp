@@ -99,7 +99,7 @@ struct MainNavigationBar: View {
 // MARK: - Header Container
 
 struct NavigationHeaderContainer: View {
-    let profile: Profile?
+    @ObservedObject var profileVM: ProfileViewModel
     @Binding var selected: NavigationSection
     var onConfig: (() -> Void)? = nil
     
@@ -108,7 +108,7 @@ struct NavigationHeaderContainer: View {
     var body: some View {
         VStack(spacing: 0) {
             PlayerHeader(
-                profile: profile,
+                profile: profileVM.profile,
                 onLogToday: { selected = .habits },
                 onOpenStore: { selected = .store }
             )

@@ -27,7 +27,7 @@ struct HabitsViewRefactored: View {
             VStack(spacing: 0) {
                 // Fixed header with navigation
                 NavigationHeaderContainer(
-                    profile: coordinator.profileVM.profile,
+                    profileVM: coordinator.profileVM,
                     selected: $selected,
                     onConfig: { showingConfig = true }
                 )
@@ -123,7 +123,8 @@ struct HabitsViewRefactored: View {
                         // Refresh game state to avoid stale gating decisions
                         await coordinator.profileVM.refresh()
                         await app.game.refreshFromServer()
-                        if app.game.state != .active {
+                        // Allow record unless game is actually in game_over
+                        if app.game.state == .game_over {
                             await MainActor.run {
                                 toast = ToastMessage(message: "Game is not active. Open Recovery to continue.", type: .error)
                             }
