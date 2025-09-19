@@ -9,6 +9,9 @@ struct GoodHabitRow: View {
     let habit: GoodHabit
     @ObservedObject var viewModel: HabitsViewModel
     @ObservedObject var streaks: StreaksViewModel
+    var onComplete: ((GoodHabit) async -> Void)? = nil
+    var onEdit: ((GoodHabit) -> Void)? = nil
+    var onDelete: ((GoodHabit) async -> Void)? = nil
     @State private var showingEdit = false
     @State private var history: [StreaksViewModel.HabitHistoryItem] = []
     @State private var showHistory = false
@@ -63,6 +66,25 @@ struct GoodHabitRow: View {
         .task {
             await streaks.loadHistoryIfNeeded(habitId: habit.id, type: "good", days: 7)
             history = streaks.goodHistory[habit.id] ?? []
+        }
+        .swipeActions(edge: .leading, allowsFullSwipe: true) {
+            Button {
+                Task {
+                    if let onComplete { await onComplete(habit) } else { _ = await viewModel.complete(id: habit.id) }
+                    await streaks.refreshPerHabit(days: 7)
+                }
+            } label: { Label("Record", systemImage: "checkmark.circle.fill") }.tint(.green)
+        }
+        .swipeActions(edge: .trailing, allowsFullSwipe: true) {
+            Button {
+                if let onEdit { onEdit(habit) } else { showingEdit = true }
+            } label: { Label("Edit", systemImage: "pencil") }.tint(.blue)
+            Button(role: .destructive) {
+                Task {
+                    if let onDelete { await onDelete(habit) } else { await viewModel.delete(id: habit.id) }
+                    await streaks.refreshPerHabit(days: 7)
+                }
+            } label: { Label("Delete", systemImage: "trash") }
         }
     }
 }

@@ -43,7 +43,14 @@ struct HabitsListView: View {
                     } else {
                         if let vm = streaksVMHolder.vm {
                             ForEach(goodVM.habits) { habit in
-                                GoodHabitRow(habit: habit, viewModel: goodVM, streaks: vm)
+                                GoodHabitRow(
+                                    habit: habit,
+                                    viewModel: goodVM,
+                                    streaks: vm,
+                                    onComplete: { h in _ = await goodVM.complete(id: h.id) },
+                                    onEdit: { _ in /* Present sheet upstream if desired */ },
+                                    onDelete: { h in await goodVM.delete(id: h.id) }
+                                )
                             }
                         } else {
                             // Fallback: render rows with a temporary VM to show 0-count badges
@@ -77,7 +84,14 @@ struct HabitsListView: View {
                 } else {
                     if let vm = streaksVMHolder.vm {
                         ForEach(badVM.items) { habit in
-                            BadHabitRow(habit: habit, viewModel: badVM, streaks: vm)
+                            BadHabitRow(
+                                habit: habit,
+                                viewModel: badVM,
+                                streaks: vm,
+                                onRecord: { b in await badVM.record(id: b.id, payWithCoins: false) },
+                                onEdit: { _ in },
+                                onDelete: { b in await badVM.delete(id: b.id) }
+                            )
                         }
                     } else {
                         let temp = StreaksViewModel(api: app.api)
