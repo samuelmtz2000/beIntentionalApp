@@ -145,6 +145,10 @@ struct HabitsViewRefactored: View {
                         }
                         await app.game.refreshFromServer()
                         await coordinator.profileVM.refresh()
+                        // Dismiss recovery flow and allow actions again
+                        await MainActor.run {
+                            showingRecovery = false
+                        }
                     }
                 })
             }
@@ -345,6 +349,8 @@ private extension HabitsViewRefactored {
                         showRecoveryCompletion = true
                     }
                 }
+            } else if app.game.state == .active {
+                await MainActor.run { showingRecovery = false }
             }
         }
     }
