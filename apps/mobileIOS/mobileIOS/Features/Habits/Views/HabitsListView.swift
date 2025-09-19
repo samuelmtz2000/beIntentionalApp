@@ -41,8 +41,10 @@ struct HabitsListView: View {
                             action: onAddGood
                         )
                     } else {
-                        ForEach(goodVM.habits) { habit in
-                            GoodHabitRow(habit: habit, viewModel: goodVM, streaks: streaksVMHolder.vm)
+                        if let vm = streaksVMHolder.vm {
+                            ForEach(goodVM.habits) { habit in
+                                GoodHabitRow(habit: habit, viewModel: goodVM, streaks: vm)
+                            }
                         }
                     }
                 }
@@ -67,10 +69,12 @@ struct HabitsListView: View {
                             action: onAddBad
                         )
                 } else {
-                    ForEach(badVM.items) { habit in
-                            BadHabitRow(habit: habit, viewModel: badVM, streaks: streaksVMHolder.vm)
+                    if let vm = streaksVMHolder.vm {
+                        ForEach(badVM.items) { habit in
+                            BadHabitRow(habit: habit, viewModel: badVM, streaks: vm)
                         }
                     }
+                }
                 }
             }
             .padding(.vertical)
@@ -90,7 +94,7 @@ struct GoodHabitRow: View {
     let habit: GoodHabit
     @ObservedObject var viewModel: HabitsViewModel
     @State private var showingEdit = false
-    var streaks: StreaksViewModel?
+    @ObservedObject var streaks: StreaksViewModel
     @State private var history: [StreaksViewModel.HabitHistoryItem] = []
     @State private var showHistory = false
     
@@ -152,12 +156,9 @@ struct GoodHabitRow: View {
             Text("Edit Habit: \(habit.name)")
         }
         .sheet(isPresented: $showHistory) {
-            if let streaks {
-                HabitHistorySheet(title: habit.name, habitId: habit.id, type: "good", streaks: streaks)
-            }
+            HabitHistorySheet(title: habit.name, habitId: habit.id, type: "good", streaks: streaks)
         }
         .task {
-            guard let streaks else { return }
             await streaks.loadHistoryIfNeeded(habitId: habit.id, type: "good", days: 7)
             if let h = streaks.goodHistory[habit.id] { history = h }
         }
@@ -170,7 +171,7 @@ struct BadHabitRow: View {
     let habit: BadHabit
     @ObservedObject var viewModel: BadHabitsViewModel
     @State private var showingEdit = false
-    var streaks: StreaksViewModel?
+    @ObservedObject var streaks: StreaksViewModel
     @State private var history: [StreaksViewModel.HabitHistoryItem] = []
     @State private var showHistory = false
     
@@ -235,12 +236,9 @@ struct BadHabitRow: View {
             Text("Edit Bad Habit: \(habit.name)")
         }
         .sheet(isPresented: $showHistory) {
-            if let streaks {
-                HabitHistorySheet(title: habit.name, habitId: habit.id, type: "bad", streaks: streaks)
-            }
+            HabitHistorySheet(title: habit.name, habitId: habit.id, type: "bad", streaks: streaks)
         }
         .task {
-            guard let streaks else { return }
             await streaks.loadHistoryIfNeeded(habitId: habit.id, type: "bad", days: 7)
             if let h = streaks.badHistory[habit.id] { history = h }
         }
