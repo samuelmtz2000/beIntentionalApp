@@ -7,6 +7,14 @@
 
 import SwiftUI
 
+private struct ConfirmDeleteWrapper: Identifiable, Equatable {
+    enum Kind { case good, bad }
+    var id: String { kind == .good ? (good?.id ?? UUID().uuidString) : (bad?.id ?? UUID().uuidString) }
+    let kind: Kind
+    let good: GoodHabit?
+    let bad: BadHabit?
+}
+
 struct HabitsViewRefactored: View {
     @EnvironmentObject private var app: AppModel
     @StateObject private var coordinator = HabitsCoordinator()
@@ -405,7 +413,7 @@ struct AreasListView: View {
                                 }
                                 VStack(alignment: .leading, spacing: 4) {
                                     Text(area.name).dsFont(.body)
-                                    Text("XP per level: \(#{area.xpPerLevel})").dsFont(.caption).foregroundStyle(.secondary)
+                                    Text("XP per level: \(area.xpPerLevel)").dsFont(.caption).foregroundStyle(.secondary)
                                 }
                                 Spacer()
                             }
@@ -452,10 +460,12 @@ struct StoreListView: View {
                                     Label("Cost: \(habit.coinCost)", systemImage: "creditcard").dsFont(.caption).foregroundStyle(.secondary)
                                 }
                                 Spacer()
-                                DSButton("Buy", style: .primary) { Task { await viewModel.buy(cosmeticId: habit.id) } }
                             }
                         }
                         .listRowBackground(Color.clear)
+                        .swipeActions(edge: .trailing, allowsFullSwipe: true) {
+                            Button { Task { await viewModel.buy(cosmeticId: habit.id) } } label: { Label("Buy", systemImage: "cart") }.tint(.green)
+                        }
                     }
                 }
             } header: {
@@ -465,6 +475,14 @@ struct StoreListView: View {
                     Spacer()
                     HStack(spacing: 6) { Label("Coins", systemImage: "creditcard"); Text("\(viewModel.coins)") }.dsFont(.caption).foregroundStyle(.secondary)
                 }
+            }
+            if !viewModel.ownedBadHabits.isEmpty {
+                Section {
+                    ForEach(viewModel.ownedBadHabits, id: \.id) { obh in
+                        HStack { Text(obh.name).dsFont(.body); Spacer(); Text("x\(obh.count)").dsFont(.caption).foregroundStyle(.secondary) }
+                        .listRowBackground(Color.clear)
+                    }
+                } header: { HStack{ Image(systemName: "checkmark.seal"); Text("Owned (Credits)").dsFont(.headerMD).bold() } }
             }
         }
         .listStyle(.plain)
