@@ -41,6 +41,7 @@ struct HabitsViewRefactored: View {
                 // Fixed header with navigation
                 NavigationHeaderContainer(
                     profileVM: coordinator.profileVM,
+                    game: app.game,
                     selected: $selected,
                     onConfig: { showingConfig = true },
                     onOpenRecovery: { showingRecovery = true }

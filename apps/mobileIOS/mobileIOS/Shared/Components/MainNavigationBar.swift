@@ -100,12 +100,12 @@ struct MainNavigationBar: View {
 
 struct NavigationHeaderContainer: View {
     @ObservedObject var profileVM: ProfileViewModel
+    @ObservedObject var game: GameStateManager
     @Binding var selected: NavigationSection
     var onConfig: (() -> Void)? = nil
     var onOpenRecovery: (() -> Void)? = nil
     
     @Environment(\.colorScheme) private var scheme
-    @EnvironmentObject private var app: AppModel
     
     var body: some View {
         VStack(spacing: 8) {
@@ -115,7 +115,7 @@ struct NavigationHeaderContainer: View {
                 onOpenStore: { selected = .store }
             )
             if let openRecovery = onOpenRecovery {
-                if app.game.state == .gameOver {
+                if game.state == .gameOver {
                     DSInfoBanner(
                         icon: "figure.run.circle.fill",
                         title: "Game Over",
@@ -124,7 +124,7 @@ struct NavigationHeaderContainer: View {
                         action: openRecovery
                     )
                     .padding(.horizontal, 12)
-                } else if app.game.state == .recovery && app.game.recoveryDistance >= app.game.recoveryTarget {
+                } else if game.state == .recovery && game.recoveryDistance >= game.recoveryTarget {
                     DSInfoBanner(
                         icon: "figure.run.circle.fill",
                         title: "Recovery Complete",
