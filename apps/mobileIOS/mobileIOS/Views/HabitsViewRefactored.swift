@@ -184,8 +184,6 @@ struct HabitsViewRefactored: View {
                     badVM: coordinator.badVM,
                     onAddGood: { coordinator.showingAddGood = true },
                     onAddBad: { coordinator.showingAddBad = true },
-                    onOpenRecovery: { showingRecovery = true },
-                    onFinalizeRecovery: { showRecoveryCompletion = true },
                     onGoodComplete: { h in
                         _ = await coordinator.goodVM.complete(id: h.id)
                         await coordinator.refreshAll()
