@@ -428,17 +428,15 @@ struct AreasListView: View {
                     }
                 }
             } header: {
-                HStack(spacing: 8) {
-                    Image(systemName: "square.grid.2x2")
-                    Text("Areas").dsFont(.headerMD).bold()
-                    Spacer()
-                    Button(action: onAdd) {
-                        Image(systemName: "plus.circle.fill")
-                    }
-                    .buttonStyle(.plain)
-                }
+                DSSectionHeader(
+                    title: "Areas",
+                    icon: "square.grid.2x2",
+                    trailingIcon: "plus.circle.fill",
+                    onTrailingTap: onAdd
+                )
             }
             .listStyle(.plain)
+            .scrollContentBackground(.hidden)
             .sheet(item: $editingArea) { area in
                 AreaEditSheet(area: area, onSave: { updated in Task { await viewModel.update(area: updated) } }, onDelete: { Task { await viewModel.delete(id: area.id) } })
             }

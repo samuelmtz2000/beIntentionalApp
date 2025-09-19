@@ -54,27 +54,60 @@ struct DSSectionHeader: View {
     let title: String
     let icon: String?
     let iconColor: Color?
+    let trailingIcon: String?
+    let onTrailingTap: (() -> Void)?
     
-    init(title: String, icon: String? = nil, iconColor: Color? = nil) {
+    @Environment(\.colorScheme) private var scheme
+    
+    init(
+        title: String,
+        icon: String? = nil,
+        iconColor: Color? = nil,
+        trailingIcon: String? = nil,
+        onTrailingTap: (() -> Void)? = nil
+    ) {
         self.title = title
         self.icon = icon
         self.iconColor = iconColor
+        self.trailingIcon = trailingIcon
+        self.onTrailingTap = onTrailingTap
     }
     
     var body: some View {
-        HStack(spacing: 8) {
+        let c = DSTheme.colors(for: scheme)
+        
+        HStack(spacing: 10) {
             if let icon = icon {
                 Image(systemName: icon)
-                    .foregroundStyle(iconColor ?? .primary)
+                    .foregroundStyle(iconColor ?? c.textPrimary)
                     .font(.system(size: 18, weight: .semibold))
             }
             Text(title)
                 .dsFont(.headerMD)
-                .foregroundStyle(.primary)
+                .foregroundStyle(c.textPrimary)
             Spacer()
+            if let trailingIcon = trailingIcon, let onTap = onTrailingTap {
+                Button(action: onTap) {
+                    Image(systemName: trailingIcon)
+                        .font(.system(size: 20, weight: .semibold))
+                        .foregroundStyle(c.accentSecondary)
+                        .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+            }
         }
         .padding(.horizontal, 16)
-        .padding(.vertical, 8)
+        .padding(.vertical, 10)
+        .background(
+            // Overlay background so header reads well when pinned while scrolling
+            c.backgroundSecondary
+                .overlay(
+                    Rectangle()
+                        .fill(c.divider)
+                        .frame(height: 0.5)
+                        .frame(maxHeight: .infinity, alignment: .bottom)
+                )
+        )
     }
 }
 
