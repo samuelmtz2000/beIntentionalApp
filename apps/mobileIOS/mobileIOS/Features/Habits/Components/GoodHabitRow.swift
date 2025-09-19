@@ -18,50 +18,39 @@ struct GoodHabitRow: View {
 
     var body: some View {
         DSCard {
-            VStack(alignment: .leading, spacing: 8) {
-                HStack {
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text(habit.name)
-                            .dsFont(.body)
-                            .foregroundStyle(.primary)
-
-                        HStack(spacing: 12) {
-                            Label("+\(habit.xpReward) XP", systemImage: "star.fill")
-                                .font(.caption)
-                                .foregroundStyle(.blue)
-                            Label("+\(habit.coinReward) Coins", systemImage: "creditcard")
-                                .font(.caption)
-                                .foregroundStyle(.yellow)
-                        }
-                    }
-
-                    Spacer()
+            HStack(alignment: .top, spacing: 12) {
+                VStack(alignment: .leading, spacing: 6) {
+                    Text(habit.name)
+                        .dsFont(.body)
+                        .foregroundStyle(.primary)
+                        .lineLimit(2)
+                        .multilineTextAlignment(.leading)
 
                     HStack(spacing: 8) {
-                        Button(action: { showingEdit = true }) {
-                            Image(systemName: "pencil.circle")
-                                .font(.title2)
-                                .foregroundStyle(.secondary)
-                        }
+                        let count = streaks.perHabit[habit.id]?.currentCount ?? 0
+                        StreakChip(kind: .good, count: count) { showHistory = true }
+                        GoodHistoryDotsView(history: history)
+                            .onTapGesture { showHistory = true }
+                    }
+
+                    if let cadence = habit.cadence, !cadence.isEmpty {
+                        Text(cadence)
+                            .dsFont(.caption)
+                            .foregroundStyle(.secondary)
                     }
                 }
-
-                HStack(spacing: 10) {
-                    let count = streaks.perHabit[habit.id]?.currentCount ?? 0
-                    StreakChip(kind: .good, count: count) { showHistory = true }
-                    GoodHistoryDotsView(history: history)
-                        .onTapGesture { showHistory = true }
-                    Spacer()
-                }
-
-                if let cadence = habit.cadence, !cadence.isEmpty {
-                    Text("Cadence: \(cadence)")
-                        .dsFont(.caption)
-                        .foregroundStyle(.secondary)
+                Spacer()
+                VStack(alignment: .trailing, spacing: 6) {
+                    Label("+\(habit.xpReward)", systemImage: "star.fill")
+                        .font(.caption)
+                        .foregroundStyle(.blue)
+                    Label("+\(habit.coinReward)", systemImage: "creditcard")
+                        .font(.caption)
+                        .foregroundStyle(.yellow)
                 }
             }
         }
-        .sheet(isPresented: $showingEdit) { Text("Edit Habit: \(habit.name)") }
+        // Inline edit removed; invoke via swipe (onEdit)
         .sheet(isPresented: $showHistory) { HabitHistorySheet(title: habit.name, habitId: habit.id, type: "good", streaks: streaks) }
         .task {
             await streaks.loadHistoryIfNeeded(habitId: habit.id, type: "good", days: 7)

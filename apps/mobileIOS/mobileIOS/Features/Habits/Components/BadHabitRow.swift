@@ -18,46 +18,30 @@ struct BadHabitRow: View {
 
     var body: some View {
         DSCard {
-            VStack(alignment: .leading, spacing: 8) {
-                HStack {
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text(habit.name)
-                            .dsFont(.body)
-                            .foregroundStyle(.primary)
-
-                        HStack(spacing: 12) {
-                            Label("-\(habit.lifePenalty) Life", systemImage: "heart.slash")
-                                .font(.caption)
-                                .foregroundStyle(.red)
-                            if habit.controllable {
-                                Label("\(habit.coinCost) Coins", systemImage: "creditcard")
-                                    .font(.caption)
-                                    .foregroundStyle(.orange)
-                            }
-                        }
-                    }
-
-                    Spacer()
+            HStack(alignment: .top, spacing: 12) {
+                VStack(alignment: .leading, spacing: 6) {
+                    Text(habit.name)
+                        .dsFont(.body)
+                        .foregroundStyle(.primary)
+                        .lineLimit(2)
+                        .multilineTextAlignment(.leading)
 
                     HStack(spacing: 8) {
-                        Button(action: { showingEdit = true }) {
-                            Image(systemName: "pencil.circle")
-                                .font(.title2)
-                                .foregroundStyle(.secondary)
-                        }
+                        let count = streaks.perHabit[habit.id]?.currentCount ?? 0
+                        StreakChip(kind: .bad, count: count) { showHistory = true }
+                        BadHistoryDotsView(history: history)
+                            .onTapGesture { showHistory = true }
                     }
                 }
-
-                HStack(spacing: 10) {
-                    let count = streaks.perHabit[habit.id]?.currentCount ?? 0
-                    StreakChip(kind: .bad, count: count) { showHistory = true }
-                    BadHistoryDotsView(history: history)
-                        .onTapGesture { showHistory = true }
-                    Spacer()
+                Spacer()
+                VStack(alignment: .trailing, spacing: 6) {
+                    Label("-\(habit.lifePenalty)", systemImage: "heart.slash")
+                        .font(.caption)
+                        .foregroundStyle(.red)
                 }
             }
         }
-        .sheet(isPresented: $showingEdit) { Text("Edit Bad Habit: \(habit.name)") }
+        // Inline edit removed; invoke via swipe (onEdit)
         .sheet(isPresented: $showHistory) { HabitHistorySheet(title: habit.name, habitId: habit.id, type: "bad", streaks: streaks) }
         .task {
             await streaks.loadHistoryIfNeeded(habitId: habit.id, type: "bad", days: 7)

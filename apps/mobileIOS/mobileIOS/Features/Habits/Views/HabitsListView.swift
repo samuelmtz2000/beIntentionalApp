@@ -29,65 +29,55 @@ struct HabitsListView: View {
     @StateObject private var streaksVMHolder = _LocalStreaksVMLoader()
     
     var body: some View {
-        ScrollView {
-            VStack(spacing: 16) {
-                // Good Habits Section
-                VStack(alignment: .leading, spacing: 12) {
-                    DSSectionHeader(
-                        title: "Good Habits",
-                        icon: "checkmark.seal.fill",
-                        iconColor: .green
+        List {
+            Section {
+                if goodVM.habits.isEmpty {
+                    DSEmptyState(
+                        icon: "plus.circle",
+                        title: "No Good Habits",
+                        message: "Start building positive habits to earn XP and coins",
+                        actionTitle: "Add Habit",
+                        action: onAddGood
                     )
-                    
-                    if goodVM.habits.isEmpty {
-                        DSEmptyState(
-                            icon: "plus.circle",
-                            title: "No Good Habits",
-                            message: "Start building positive habits to earn XP and coins",
-                            actionTitle: "Add Habit",
-                            action: onAddGood
-                        )
+                    .listRowBackground(Color.clear)
+                } else {
+                    if let vm = streaksVMHolder.vm {
+                        ForEach(goodVM.habits) { habit in
+                            GoodHabitRow(
+                                habit: habit,
+                                viewModel: goodVM,
+                                streaks: vm,
+                                onComplete: onGoodComplete ?? { h in _ = await goodVM.complete(id: h.id) },
+                                onEdit: onGoodEdit ?? { _ in },
+                                onDelete: onGoodDelete ?? { h in await goodVM.delete(id: h.id) }
+                            )
+                            .listRowBackground(Color.clear)
+                        }
                     } else {
-                        if let vm = streaksVMHolder.vm {
-                            ForEach(goodVM.habits) { habit in
-                                GoodHabitRow(
-                                    habit: habit,
-                                    viewModel: goodVM,
-                                    streaks: vm,
-                                    onComplete: onGoodComplete ?? { h in _ = await goodVM.complete(id: h.id) },
-                                    onEdit: onGoodEdit ?? { _ in },
-                                    onDelete: onGoodDelete ?? { h in await goodVM.delete(id: h.id) }
-                                )
-                            }
-                        } else {
-                            // Fallback: render rows with a temporary VM to show 0-count badges
-                            let temp = StreaksViewModel(api: app.api)
-                            ForEach(goodVM.habits) { habit in
-                                GoodHabitRow(habit: habit, viewModel: goodVM, streaks: temp)
-                            }
+                        let temp = StreaksViewModel(api: app.api)
+                        ForEach(goodVM.habits) { habit in
+                            GoodHabitRow(habit: habit, viewModel: goodVM, streaks: temp)
+                                .listRowBackground(Color.clear)
                         }
                     }
                 }
-                
-                Divider()
-                    .padding(.horizontal)
-                
-                // Bad Habits Section
-                VStack(alignment: .leading, spacing: 12) {
-                    DSSectionHeader(
-                        title: "Bad Habits",
-                        icon: "exclamationmark.triangle.fill",
-                        iconColor: .orange
-                    )
-                    
+            } header: {
+                HStack(spacing: 8) {
+                    Image(systemName: "checkmark.seal.fill").foregroundStyle(.green)
+                    Text("Good Habits").dsFont(.headerMD).bold()
+                }
+            }
+
+            Section {
                 if badVM.items.isEmpty {
-                        DSEmptyState(
-                            icon: "shield.slash",
-                            title: "No Bad Habits",
-                            message: "Track negative habits to maintain accountability",
-                            actionTitle: "Add Bad Habit",
-                            action: onAddBad
-                        )
+                    DSEmptyState(
+                        icon: "shield.slash",
+                        title: "No Bad Habits",
+                        message: "Track negative habits to maintain accountability",
+                        actionTitle: "Add Bad Habit",
+                        action: onAddBad
+                    )
+                    .listRowBackground(Color.clear)
                 } else {
                     if let vm = streaksVMHolder.vm {
                         ForEach(badVM.items) { habit in
@@ -99,18 +89,24 @@ struct HabitsListView: View {
                                 onEdit: onBadEdit ?? { _ in },
                                 onDelete: onBadDelete ?? { b in await badVM.delete(id: b.id) }
                             )
+                            .listRowBackground(Color.clear)
                         }
                     } else {
                         let temp = StreaksViewModel(api: app.api)
                         ForEach(badVM.items) { habit in
                             BadHabitRow(habit: habit, viewModel: badVM, streaks: temp)
+                                .listRowBackground(Color.clear)
                         }
                     }
                 }
+            } header: {
+                HStack(spacing: 8) {
+                    Image(systemName: "exclamationmark.triangle.fill").foregroundStyle(.orange)
+                    Text("Bad Habits").dsFont(.headerMD).bold()
                 }
             }
-            .padding(.vertical)
         }
+        .listStyle(.plain)
         .task {
             if streaksVMHolder.vm == nil { streaksVMHolder.vm = StreaksViewModel(api: app.api) }
             if let vm = streaksVMHolder.vm {
