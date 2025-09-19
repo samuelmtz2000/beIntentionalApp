@@ -43,20 +43,22 @@ struct HabitsListView: View {
                 } else {
                     if let vm = streaksVMHolder.vm {
                         ForEach(goodVM.habits) { habit in
-                            GoodHabitRow(
+                            let rowVM = GoodHabitRowViewModel(
                                 habit: habit,
-                                viewModel: goodVM,
+                                goodVM: goodVM,
                                 streaks: vm,
-                                onComplete: onGoodComplete ?? { h in _ = await goodVM.complete(id: h.id) },
-                                onEdit: onGoodEdit ?? { _ in },
-                                onDelete: onGoodDelete ?? { h in await goodVM.delete(id: h.id) }
+                                onComplete: onGoodComplete,
+                                onEdit: onGoodEdit,
+                                onDelete: onGoodDelete
                             )
-                            .listRowBackground(Color.clear)
+                            GoodHabitRow(vm: rowVM, streaks: vm)
+                                .listRowBackground(Color.clear)
                         }
                     } else {
                         let temp = StreaksViewModel(api: app.api)
                         ForEach(goodVM.habits) { habit in
-                            GoodHabitRow(habit: habit, viewModel: goodVM, streaks: temp)
+                            let rowVM = GoodHabitRowViewModel(habit: habit, goodVM: goodVM, streaks: temp)
+                            GoodHabitRow(vm: rowVM, streaks: temp)
                                 .listRowBackground(Color.clear)
                         }
                     }
@@ -86,20 +88,22 @@ struct HabitsListView: View {
                 } else {
                     if let vm = streaksVMHolder.vm {
                         ForEach(badVM.items) { habit in
-                            BadHabitRow(
+                            let rowVM = BadHabitRowViewModel(
                                 habit: habit,
-                                viewModel: badVM,
+                                badVM: badVM,
                                 streaks: vm,
-                                onRecord: onBadRecord ?? { b in await badVM.record(id: b.id, payWithCoins: false) },
-                                onEdit: onBadEdit ?? { _ in },
-                                onDelete: onBadDelete ?? { b in await badVM.delete(id: b.id) }
+                                onRecord: onBadRecord,
+                                onEdit: onBadEdit,
+                                onDelete: onBadDelete
                             )
-                            .listRowBackground(Color.clear)
+                            BadHabitRow(vm: rowVM, streaks: vm)
+                                .listRowBackground(Color.clear)
                         }
                     } else {
                         let temp = StreaksViewModel(api: app.api)
                         ForEach(badVM.items) { habit in
-                            BadHabitRow(habit: habit, viewModel: badVM, streaks: temp)
+                            let rowVM = BadHabitRowViewModel(habit: habit, badVM: badVM, streaks: temp)
+                            BadHabitRow(vm: rowVM, streaks: temp)
                                 .listRowBackground(Color.clear)
                         }
                     }
