@@ -37,8 +37,6 @@ struct BadHabitRow: View {
                     Spacer()
 
                     HStack(spacing: 8) {
-                        let count = streaks.perHabit[habit.id]?.currentCount ?? 0
-                        StreakBadge(type: .bad, count: count) { showHistory = true }
                         Button(action: { showingEdit = true }) {
                             Image(systemName: "pencil.circle")
                                 .font(.title2)
@@ -47,7 +45,9 @@ struct BadHabitRow: View {
                     }
                 }
 
-                HStack(spacing: 8) {
+                HStack(spacing: 10) {
+                    let count = streaks.perHabit[habit.id]?.currentCount ?? 0
+                    StreakChip(kind: .bad, count: count) { showHistory = true }
                     BadHistoryDotsView(history: history)
                         .onTapGesture { showHistory = true }
                     Spacer()
@@ -62,4 +62,3 @@ struct BadHabitRow: View {
         }
     }
 }
-
