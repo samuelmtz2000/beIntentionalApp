@@ -199,8 +199,9 @@ struct HabitsViewRefactored: View {
                     onAddBad: { coordinator.showingAddBad = true },
                     onGoodComplete: { h in
                         _ = await coordinator.goodVM.complete(id: h.id)
-                        await coordinator.refreshAll()
+                        // Trigger header refresh as soon as backend acknowledges
                         NotificationCenter.default.post(name: .streaksDidChange, object: nil)
+                        await coordinator.refreshAll()
                         await MainActor.run { toast = ToastMessage(message: "✅ \(h.name) completed! +\(h.xpReward) XP, +\(h.coinReward) coins", type: .success) }
                     },
                     onGoodEdit: { h in editingGood = h },
@@ -238,8 +239,9 @@ struct HabitsViewRefactored: View {
                                 }
                             }
                         }
-                        await coordinator.refreshAll()
+                        // Notify header to refresh right away, then update local models
                         NotificationCenter.default.post(name: .streaksDidChange, object: nil)
+                        await coordinator.refreshAll()
                         await checkAndPresentGameOver()
                         await MainActor.run {
                             if let avoided = resp?.avoidedPenalty, avoided {

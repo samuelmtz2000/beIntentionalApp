@@ -7,6 +7,7 @@ export type GeneralDay = {
   completedGood: number;
   totalActiveGood: number;
   hasUnforgivenBad: boolean;
+  unforgivenBadCount: number;
   daySuccess: boolean | null; // null = freeze day (no active good & no unforgiven bad)
 };
 
@@ -80,17 +81,20 @@ export async function computeGeneralStreak(params: {
     completedPerDay.get(key)!.add(log.habitId);
   }
 
-  // Map day -> has unforgiven bad
-  const unforgivenPerDay = new Map<string, boolean>();
+  // Map day -> unforgiven bad count
+  const unforgivenCountPerDay = new Map<string, number>();
   for (const b of badLogs) {
     const key = fmtDateKey(new Date(b.timestamp));
-    if (!unforgivenPerDay.has(key)) unforgivenPerDay.set(key, false);
-    if (!b.avoidedPenalty) unforgivenPerDay.set(key, true);
+    if (!unforgivenCountPerDay.has(key)) unforgivenCountPerDay.set(key, 0);
+    if (!b.avoidedPenalty) {
+      unforgivenCountPerDay.set(key, (unforgivenCountPerDay.get(key) ?? 0) + 1);
+    }
   }
 
   const results: GeneralDay[] = days.map((date) => {
     const completedGood = completedPerDay.get(date)?.size ?? 0;
-    const hasUnforgivenBad = unforgivenPerDay.get(date) ?? false;
+    const unforgivenBadCount = unforgivenCountPerDay.get(date) ?? 0;
+    const hasUnforgivenBad = unforgivenBadCount > 0;
     let daySuccess: boolean | null;
     if (totalActiveGood === 0) {
       daySuccess = hasUnforgivenBad ? false : null; // reset if unforgiven, else freeze
@@ -98,7 +102,7 @@ export async function computeGeneralStreak(params: {
       const pct = Math.floor((completedGood / totalActiveGood) * 100);
       daySuccess = pct >= 80 && !hasUnforgivenBad;
     }
-    return { date, completedGood, totalActiveGood, hasUnforgivenBad, daySuccess };
+    return { date, completedGood, totalActiveGood, hasUnforgivenBad, unforgivenBadCount, daySuccess };
   });
 
   // Compute streaks from ordered days
