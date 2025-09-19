@@ -118,15 +118,14 @@ struct HabitsViewRefactored: View {
     
     @ViewBuilder
     private var contentView: some View {
-        Group {
-            switch selected {
-            case .player:
-                PlayerDetailView(
-                    profile: coordinator.profileVM.profile,
-                    areas: coordinator.areasVM.areas
-                )
-            case .habits:
-                HabitsListView(
+        switch selected {
+        case .player:
+            PlayerDetailView(
+                profile: coordinator.profileVM.profile,
+                areas: coordinator.areasVM.areas
+            )
+        case .habits:
+            HabitsListView(
                     goodVM: coordinator.goodVM,
                     badVM: coordinator.badVM,
                     onAddGood: { coordinator.showingAddGood = true },
@@ -158,21 +157,20 @@ struct HabitsViewRefactored: View {
                     onBadEdit: { b in editingBad = b },
                     onBadDelete: { b in await MainActor.run { confirmDelete = ConfirmDeleteWrapper(kind: .bad, good: nil, bad: b) } }
                 )
-            case .areas:
-                AreasListView(
-                    viewModel: coordinator.areasVM,
-                    onAdd: { coordinator.showingAddArea = true }
-                )
-            case .store:
-                StoreListView(viewModel: coordinator.storeVM)
-            case .archive:
-                ArchiveListView(
-                    viewModel: coordinator.archiveVM,
-                    onRestored: { await coordinator.refreshAll() }
-                )
-            case .config:
-                EmptyView()
-            }
+        case .areas:
+            AreasListView(
+                viewModel: coordinator.areasVM,
+                onAdd: { coordinator.showingAddArea = true }
+            )
+        case .store:
+            StoreListView(viewModel: coordinator.storeVM)
+        case .archive:
+            ArchiveListView(
+                viewModel: coordinator.archiveVM,
+                onRestored: { await coordinator.refreshAll() }
+            )
+        case .config:
+            EmptyView()
         }
     }
 }
