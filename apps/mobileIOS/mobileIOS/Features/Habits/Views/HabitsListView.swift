@@ -7,6 +7,10 @@
 
 import SwiftUI
 
+private final class _LocalStreaksVMLoader: ObservableObject {
+    @Published var vm: StreaksViewModel? = nil
+}
+
 struct HabitsListView: View {
     @ObservedObject var goodVM: HabitsViewModel
     @ObservedObject var badVM: BadHabitsViewModel
@@ -15,7 +19,7 @@ struct HabitsListView: View {
     
     @Environment(\.colorScheme) private var scheme
     @EnvironmentObject private var app: AppModel
-    @StateObject private var streaksVMHolder = _StreaksVMLoader()
+    @StateObject private var streaksVMHolder = _LocalStreaksVMLoader()
     
     var body: some View {
         ScrollView {
