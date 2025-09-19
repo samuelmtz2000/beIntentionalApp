@@ -45,6 +45,12 @@ struct HabitsListView: View {
                             ForEach(goodVM.habits) { habit in
                                 GoodHabitRow(habit: habit, viewModel: goodVM, streaks: vm)
                             }
+                        } else {
+                            // Fallback: render rows with a temporary VM to show 0-count badges
+                            let temp = StreaksViewModel(api: app.api)
+                            ForEach(goodVM.habits) { habit in
+                                GoodHabitRow(habit: habit, viewModel: goodVM, streaks: temp)
+                            }
                         }
                     }
                 }
@@ -72,6 +78,11 @@ struct HabitsListView: View {
                     if let vm = streaksVMHolder.vm {
                         ForEach(badVM.items) { habit in
                             BadHabitRow(habit: habit, viewModel: badVM, streaks: vm)
+                        }
+                    } else {
+                        let temp = StreaksViewModel(api: app.api)
+                        ForEach(badVM.items) { habit in
+                            BadHabitRow(habit: habit, viewModel: badVM, streaks: temp)
                         }
                     }
                 }

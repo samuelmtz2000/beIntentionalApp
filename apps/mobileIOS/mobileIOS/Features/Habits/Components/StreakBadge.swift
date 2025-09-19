@@ -15,12 +15,13 @@ struct StreakBadge: View {
     var body: some View {
         let (icon, color): (String, Color) = {
             switch type {
-            case .good: return ("flame.fill", .orange)
-            case .bad: return ("shield.fill", .green)
+            case .good: return ("flame", .orange)    // match header icon
+            case .bad: return ("shield", .green)
             }
         }()
         Label("\(count)", systemImage: icon)
             .font(.caption)
+            .labelStyle(.titleAndIcon)
             .foregroundStyle(color)
             .imageScale(.medium)
             .contentShape(Rectangle())
@@ -28,4 +29,3 @@ struct StreakBadge: View {
             .accessibilityLabel(type == .good ? "Good habit streak \(count)" : "Clean streak \(count)")
     }
 }
-
