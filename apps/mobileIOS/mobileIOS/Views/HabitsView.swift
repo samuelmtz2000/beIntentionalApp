@@ -798,6 +798,7 @@ private struct CombinedHabitsBodyPanel: View {
         }
         .listStyle(.plain)
         .refreshable { await onRefresh() }
+        .task { await streaks.refreshPerHabit(days: 7) }
         .alert(item: Binding(get: {
             confirmDelete.map { ConfirmWrapper(id: $0.id, name: $0.name) }
         }, set: { newVal in
@@ -870,7 +871,6 @@ private struct AreasPanelBody: View {
         }
         .listStyle(.plain)
         .refreshable { await vm.refresh() }
-        .task { await streaks.refreshPerHabit(days: 7) }
         .alert(item: Binding(get: {
             confirmDelete.map { ConfirmWrapper(id: $0.id, name: $0.name) }
         }, set: { newVal in if newVal == nil { confirmDelete = nil } })) { wrap in
