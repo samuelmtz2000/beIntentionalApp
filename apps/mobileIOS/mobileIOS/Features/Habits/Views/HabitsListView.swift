@@ -136,9 +136,8 @@ struct GoodHabitRow: View {
                 }
                 
                 HStack(spacing: 8) {
-                    if let item = streaks.perHabit[habit.id] {
-                        StreakBadge(type: .good, count: item.currentCount) { showHistory = true }
-                    }
+                    let count = streaks.perHabit[habit.id]?.currentCount ?? 0
+                    StreakBadge(type: .good, count: count) { showHistory = true }
                     Spacer()
                     GoodHistoryDotsView(history: history)
                         .onTapGesture { showHistory = true }
@@ -222,9 +221,8 @@ struct BadHabitRow: View {
                     }
                 }
                 HStack(spacing: 8) {
-                    if let item = streaks.perHabit[habit.id] {
-                        StreakBadge(type: .bad, count: item.currentCount) { showHistory = true }
-                    }
+                    let count = streaks.perHabit[habit.id]?.currentCount ?? 0
+                    StreakBadge(type: .bad, count: count) { showHistory = true }
                     Spacer()
                     BadHistoryDotsView(history: history)
                         .onTapGesture { showHistory = true }
