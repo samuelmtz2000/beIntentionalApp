@@ -27,6 +27,7 @@ model User {
   recoveryDistance Int       @default(0) // meters
   recoveryCompletedAt DateTime?
   totalGameOvers Int         @default(0)
+  runningChallengeTarget Int  @default(42195) // meters, configurable per user
   areas        Area[]
   areaLevels   AreaLevel[]
   transactions Transaction[]

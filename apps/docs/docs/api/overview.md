@@ -18,4 +18,7 @@ Key features
 
 Useful links
 - Swagger UI: `http://localhost:4000/docs`
-- Dev Tester: `http://localhost:4000/tester`
+
+OpenAPI maintenance
+- When introducing new API routes or modifying existing ones, update `apps/api/src/openapi.ts` so Swagger UI remains accurate.
+- Swagger UI: `http://localhost:4000/docs`

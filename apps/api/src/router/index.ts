@@ -7,6 +7,7 @@ import store from "./store";
 import me from "./me";
 import users from "./users";
 import archive from "./archive";
+import streaks from "./streaks";
 
 const api = Router();
 api.get("/__ping", (_req, res) => res.json({ ok: true }));
@@ -18,5 +19,6 @@ api.use("/store", store);
 api.use("/me", me);
 api.use("/users", users);
 api.use("/archive", archive);
+api.use("/streaks", streaks);
 
 export default api;

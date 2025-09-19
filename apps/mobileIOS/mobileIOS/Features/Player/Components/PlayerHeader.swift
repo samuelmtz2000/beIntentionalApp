@@ -7,12 +7,19 @@
 
 import SwiftUI
 
+private final class _StreaksVMLoader: ObservableObject {
+    @Published var vm: StreaksViewModel? = nil
+}
+
 struct PlayerHeader: View {
     let profile: Profile?
     var onLogToday: () -> Void = {}
     var onOpenStore: () -> Void = {}
     
     @Environment(\.colorScheme) private var scheme
+    @EnvironmentObject private var app: AppModel
+    @StateObject private var streaksVMHolder = _StreaksVMLoader()
+    @State private var celebrate = false
     
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
@@ -32,14 +39,20 @@ struct PlayerHeader: View {
                         streakIndicator()
                     }
                 } else {
-                    ProgressView("Loading...")
-                        .frame(maxWidth: .infinity)
+                    // No loader: keep header slim until data arrives
+                    Rectangle().fill(Color.clear).frame(height: 8)
                 }
             }
         }
         .padding(.horizontal, 12)
         .padding(.vertical, 8)
         .accessibilityElement(children: .contain)
+        .task {
+            if let vm = ensureVM() {
+                await vm.refreshGeneralToday()
+            }
+        }
+        // No explicit loader timing; header stays minimal without spinners
     }
     
     // MARK: - Subviews
@@ -71,9 +84,14 @@ struct PlayerHeader: View {
     
     private func statsRow(profile: Profile) -> some View {
         HStack(spacing: 12) {
-            Label("\(profile.life)/100", systemImage: "heart.fill")
-                .foregroundStyle(.red)
-                .font(.callout)
+            if profile.life <= 0 {
+                Text("💀")
+                    .font(.callout)
+            } else {
+                Label("\(max(profile.life, 0))", systemImage: "heart.fill")
+                    .foregroundStyle(.red)
+                    .font(.callout)
+            }
             
             Label("\(profile.coins)", systemImage: "creditcard")
                 .font(.callout)
@@ -82,9 +100,36 @@ struct PlayerHeader: View {
     }
     
     private func streakIndicator() -> some View {
-        Label("Streak N/A", systemImage: "flame")
-            .foregroundStyle(.orange)
-            .font(.caption)
+        let vm = streaksVMHolder.vm
+        return Group {
+            if let vm = vm, let today = vm.generalToday {
+                Label("\(vm.generalCurrent)", systemImage: today.hasUnforgivenBad ? "flame.circle" : "flame")
+                    .foregroundStyle(today.hasUnforgivenBad ? .red : .orange)
+                    .font(.caption)
+                    .scaleEffect(celebrate ? 1.25 : 1.0)
+                    .animation(.spring(response: 0.4, dampingFraction: 0.6), value: celebrate)
+                    .onChange(of: today.daySuccess) { _, newVal in
+                        if newVal == true {
+                            celebrate = true
+                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.8) {
+                                celebrate = false
+                            }
+                        }
+                    }
+                    .accessibilityLabel("General streak \(vm.generalCurrent)")
+            } else {
+                Label("Streak —", systemImage: "flame")
+                    .foregroundStyle(.orange)
+                    .font(.caption)
+            }
+        }
+    }
+
+    private func ensureVM() -> StreaksViewModel? {
+        if let existing = streaksVMHolder.vm { return existing }
+        let created = StreaksViewModel(api: app.api)
+        streaksVMHolder.vm = created
+        return created
     }
 }
 

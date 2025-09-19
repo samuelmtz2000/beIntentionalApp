@@ -21,14 +21,14 @@ final class APIClient {
     }
 
     func get<T: Decodable>(_ path: String) async throws -> T {
-        let url = baseURL.appendingPathComponent(path)
+        let url = try buildURL(path)
         var req = URLRequest(url: url)
         req.httpMethod = "GET"
         return try await perform(req)
     }
 
     func post<T: Decodable, B: Encodable>(_ path: String, body: B) async throws -> T {
-        let url = baseURL.appendingPathComponent(path)
+        let url = try buildURL(path)
         var req = URLRequest(url: url)
         req.httpMethod = "POST"
         req.addValue("application/json", forHTTPHeaderField: "Content-Type")
@@ -37,7 +37,7 @@ final class APIClient {
     }
 
     func put<T: Decodable, B: Encodable>(_ path: String, body: B) async throws -> T {
-        let url = baseURL.appendingPathComponent(path)
+        let url = try buildURL(path)
         var req = URLRequest(url: url)
         req.httpMethod = "PUT"
         req.addValue("application/json", forHTTPHeaderField: "Content-Type")
@@ -46,10 +46,24 @@ final class APIClient {
     }
 
     func delete(_ path: String) async throws {
-        let url = baseURL.appendingPathComponent(path)
+        let url = try buildURL(path)
         var req = URLRequest(url: url)
         req.httpMethod = "DELETE"
         _ = try await performRaw(req) as Data
+    }
+
+    private func buildURL(_ path: String) throws -> URL {
+        // Support paths with query strings by building URLComponents
+        guard var comps = URLComponents(url: baseURL, resolvingAgainstBaseURL: false) else {
+            throw APIError(message: "Invalid base URL")
+        }
+        var basePath = comps.path
+        if !basePath.hasSuffix("/") { basePath += "/" }
+        let parts = path.split(separator: "?", maxSplits: 1, omittingEmptySubsequences: false).map(String.init)
+        comps.path = basePath + (parts.first ?? "")
+        if parts.count > 1 { comps.percentEncodedQuery = parts[1] }
+        guard let url = comps.url else { throw APIError(message: "Invalid URL for path: \(path)") }
+        return url
     }
 
     private func perform<T: Decodable>(_ req: URLRequest) async throws -> T {

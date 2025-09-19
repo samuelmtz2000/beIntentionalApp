@@ -54,27 +54,63 @@ struct DSSectionHeader: View {
     let title: String
     let icon: String?
     let iconColor: Color?
+    let trailingIcon: String?
+    let onTrailingTap: (() -> Void)?
+    let trailingColor: Color?
     
-    init(title: String, icon: String? = nil, iconColor: Color? = nil) {
+    @Environment(\.colorScheme) private var scheme
+    
+    init(
+        title: String,
+        icon: String? = nil,
+        iconColor: Color? = nil,
+        trailingIcon: String? = nil,
+        onTrailingTap: (() -> Void)? = nil,
+        trailingColor: Color? = nil
+    ) {
         self.title = title
         self.icon = icon
         self.iconColor = iconColor
+        self.trailingIcon = trailingIcon
+        self.onTrailingTap = onTrailingTap
+        self.trailingColor = trailingColor
     }
     
     var body: some View {
-        HStack(spacing: 8) {
+        let c = DSTheme.colors(for: scheme)
+        
+        HStack(spacing: 10) {
             if let icon = icon {
                 Image(systemName: icon)
-                    .foregroundStyle(iconColor ?? .primary)
+                    .foregroundStyle(iconColor ?? c.textPrimary)
                     .font(.system(size: 18, weight: .semibold))
             }
             Text(title)
                 .dsFont(.headerMD)
-                .foregroundStyle(.primary)
+                .foregroundStyle(c.textPrimary)
             Spacer()
+            if let trailingIcon = trailingIcon, let onTap = onTrailingTap {
+                Button(action: onTap) {
+                    Image(systemName: trailingIcon)
+                        .font(.system(size: 20, weight: .semibold))
+                        .foregroundStyle(trailingColor ?? c.accentSecondary)
+                        .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+            }
         }
         .padding(.horizontal, 16)
-        .padding(.vertical, 8)
+        .padding(.vertical, 10)
+        .background(
+            // Overlay background so header reads well when pinned while scrolling
+            c.backgroundSecondary
+                .overlay(
+                    Rectangle()
+                        .fill(c.divider)
+                        .frame(height: 0.5)
+                        .frame(maxHeight: .infinity, alignment: .bottom)
+                )
+        )
     }
 }
 
@@ -87,6 +123,42 @@ struct DSCard<Content: View>: View {
     var body: some View {
         content()
             .cardStyle()
+    }
+}
+
+// MARK: - Banner Components
+
+struct DSInfoBanner: View {
+    let icon: String
+    let title: String
+    let message: String
+    let actionTitle: String
+    let action: () -> Void
+    
+    @Environment(\.colorScheme) private var scheme
+    
+    var body: some View {
+        let c = DSTheme.colors(for: scheme)
+        HStack(alignment: .center, spacing: 12) {
+            Image(systemName: icon)
+                .font(.system(size: 22, weight: .semibold))
+                .foregroundStyle(c.accentPrimary)
+                .frame(width: 28)
+            
+            VStack(alignment: .leading, spacing: 2) {
+                Text(title)
+                    .dsFont(.headerMD)
+                    .foregroundStyle(c.textPrimary)
+                Text(message)
+                    .dsFont(.caption)
+                    .foregroundStyle(c.textSecondary)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+            Spacer()
+            DSButton(actionTitle, style: .secondary, action: action)
+        }
+        .padding(12)
+        .background(RoundedRectangle(cornerRadius: 16).fill(c.surfaceCard))
     }
 }
 

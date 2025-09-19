@@ -12,6 +12,15 @@
     - `DesignSystem/*`
 - Mobile (React Native) in `apps/mobile` is currently paused. Do not modify unless explicitly requested.
 
+## Active Feature (Must Read First)
+
+- Feature: #6 — Streak Configuration
+- Specs & plan live under `docs/feature-06-streak/`
+  - `plan-summary.md` — overview and goals
+  - `specs.md` — data-driven rules and API shapes
+  - `roadmap.md` — phased rollout
+- All streak-related work must align with these files. When implementing, follow the Execution Mechanics and Backend‑first flow below.
+
 ## Build, Test, and Development Commands
 
 - `pnpm dev:api` — start the API locally (defaults to `:4000`).
@@ -33,6 +42,18 @@
 - `pnpm -F @habit-hero/api prisma generate` — regenerate Prisma client after schema changes.
 - `pnpm test` — run API tests (Vitest).
 - `pnpm -F @habit-hero/api test:soft-delete` — run the soft delete + archive smoke tests (see below).
+
+## API Testing (Manual & Automated)
+
+- Manual: use Swagger UI at `http://localhost:4000/docs` (served by `swagger-ui-express`).
+- Do not add or rely on custom HTML tester routes; `/tester` has been removed.
+- Automated: write Vitest + Supertest tests under `apps/api/test/*.test.ts`.
+- CLI: `pnpm -F @habit-hero/api test` runs the API test suite.
+
+## OpenAPI Contract (Keep in Sync)
+
+- Whenever adding/changing API routes, update `apps/api/src/openapi.ts` in the same patch.
+- `/docs` (Swagger UI) is the canonical manual testing surface; keep it accurate.
 
 ## Design Review Workflows
 
@@ -56,6 +77,13 @@
 - Archive/Areas: DS card rows with `dsFont` type scale and clear row backgrounds.
 - Design System: `DSTheme` colors, `dsFont`, `cardStyle`, `DSButton`, `DSSectionHeader`, `DSProgressBar`, `DSEmptyState`, `DSSheet`.
 - Accessibility: key actions have descriptive accessibilityLabels; minimum touch sizes applied where possible.
+
+## iOS Code Organization Principles (Design Agent)
+
+- Keep files focused and small. Extract reusable pieces into `Features/*/Components`.
+- Prefer composable Views (e.g., `StreakBadge`, history dot views, sheets) over long monolithic files.
+- Model state in `ViewModel`s; pass them via `@StateObject`/`@ObservedObject`/`@EnvironmentObject` instead of optional ad‑hoc props.
+- Follow the refactoring guidance from the restructuring PRs; avoid duplicating helpers across files.
 
 ## Coding Style & Naming Conventions
 

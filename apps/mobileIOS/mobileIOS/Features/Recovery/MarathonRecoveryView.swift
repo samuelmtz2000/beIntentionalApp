@@ -2,7 +2,7 @@ import SwiftUI
 
 struct MarathonRecoveryView: View {
     @ObservedObject var game: GameStateManager
-    var isHealthAccessConfigured: Bool
+    @Binding var isHealthAccessConfigured: Bool
     var onRequestHealthAccess: () -> Void
     var onUpdateProgress: () -> Void
 
@@ -13,7 +13,7 @@ struct MarathonRecoveryView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
-            Text("🏃 Marathon Recovery").font(.title2).bold()
+            Text("🏃 Running Challenge").font(.title2).bold()
             if let started = game.recoveryStartedAt ?? game.gameOverAt {
                 HStack(spacing: 8) {
                     Image(systemName: "calendar")

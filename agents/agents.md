@@ -19,6 +19,19 @@ AGENT WORKFLOWS AND TEMPLATES (agents/)
 
 - Habit Hero (iOS-first) Agent Guide: `agents/habit-hero-agent.md`
 
+ACTIVE FEATURE
+- Feature: #6 — Streak Configuration
+- Source of truth: `docs/feature-06-streak/`
+  - Plan summary: `docs/feature-06-streak/plan-summary.md`
+  - Specs: `docs/feature-06-streak/specs.md`
+  - Roadmap: `docs/feature-06-streak/roadmap.md`
+— The agent MUST follow this folder as the active spec and execution guide until replaced.
+
+OPENAPI CONTRACT
+- When adding or changing API endpoints, update `apps/api/src/openapi.ts` in the same patch.
+- Keep the Swagger `/docs` experience accurate enough for manual testing.
+- Prefer small, incremental updates to the OpenAPI spec alongside route changes.
+
 WORKSPACE CONTEXT (auto-discover)
 1) Detect package manager, workspaces, and app layout:
    - Look for pnpm/yarn/npm lockfiles and workspace configs.

@@ -12,7 +12,7 @@ struct MainTabView: View {
     var body: some View {
         let c = DSTheme.colors(for: scheme)
         return TabView {
-            HabitsView()
+            HabitsViewRefactored()
                 .tabItem { Label("Habits", systemImage: "checklist") }
             SettingsView()
                 .tabItem { Label("Settings", systemImage: "gearshape") }

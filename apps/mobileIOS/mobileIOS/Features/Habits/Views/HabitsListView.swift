@@ -7,187 +7,127 @@
 
 import SwiftUI
 
+private final class _LocalStreaksVMLoader: ObservableObject {
+    @Published var vm: StreaksViewModel? = nil
+}
+
 struct HabitsListView: View {
     @ObservedObject var goodVM: HabitsViewModel
     @ObservedObject var badVM: BadHabitsViewModel
     var onAddGood: () -> Void
     var onAddBad: () -> Void
+    // Action overrides (optional); defaults call VMs directly
+    var onGoodComplete: ((GoodHabit) async -> Void)? = nil
+    var onGoodEdit: ((GoodHabit) -> Void)? = nil
+    var onGoodDelete: ((GoodHabit) async -> Void)? = nil
+    var onBadRecord: ((BadHabit) async -> Void)? = nil
+    var onBadEdit: ((BadHabit) -> Void)? = nil
+    var onBadDelete: ((BadHabit) async -> Void)? = nil
     
     @Environment(\.colorScheme) private var scheme
+    @EnvironmentObject private var app: AppModel
+    @StateObject private var streaksVMHolder = _LocalStreaksVMLoader()
     
     var body: some View {
-        ScrollView {
-            VStack(spacing: 16) {
-                // Good Habits Section
-                VStack(alignment: .leading, spacing: 12) {
-                    DSSectionHeader(
-                        title: "Good Habits",
-                        icon: "checkmark.seal.fill",
-                        iconColor: .green
+        List {
+            Section {
+                if goodVM.habits.isEmpty {
+                    DSEmptyState(
+                        icon: "plus.circle",
+                        title: "No Good Habits",
+                        message: "Start building positive habits to earn XP and coins",
+                        actionTitle: "Add Habit",
+                        action: onAddGood
                     )
-                    
-                    if goodVM.habits.isEmpty {
-                        DSEmptyState(
-                            icon: "plus.circle",
-                            title: "No Good Habits",
-                            message: "Start building positive habits to earn XP and coins",
-                            actionTitle: "Add Habit",
-                            action: onAddGood
-                        )
-                    } else {
-                        ForEach(goodVM.habits) { habit in
-                            GoodHabitRow(habit: habit, viewModel: goodVM)
-                        }
-                    }
-                }
-                
-                Divider()
-                    .padding(.horizontal)
-                
-                // Bad Habits Section
-                VStack(alignment: .leading, spacing: 12) {
-                    DSSectionHeader(
-                        title: "Bad Habits",
-                        icon: "exclamationmark.triangle.fill",
-                        iconColor: .orange
-                    )
-                    
-                if badVM.items.isEmpty {
-                        DSEmptyState(
-                            icon: "shield.slash",
-                            title: "No Bad Habits",
-                            message: "Track negative habits to maintain accountability",
-                            actionTitle: "Add Bad Habit",
-                            action: onAddBad
-                        )
+                    .listRowBackground(Color.clear)
                 } else {
-                    ForEach(badVM.items) { habit in
-                            BadHabitRow(habit: habit, viewModel: badVM)
+                    if let vm = streaksVMHolder.vm {
+                        ForEach(goodVM.habits) { habit in
+                            let rowVM = GoodHabitRowViewModel(
+                                habit: habit,
+                                goodVM: goodVM,
+                                streaks: vm,
+                                onComplete: onGoodComplete,
+                                onEdit: onGoodEdit,
+                                onDelete: onGoodDelete
+                            )
+                            GoodHabitRow(vm: rowVM, streaks: vm)
+                                .listRowBackground(Color.clear)
+                        }
+                    } else {
+                        let temp = StreaksViewModel(api: app.api)
+                        ForEach(goodVM.habits) { habit in
+                            let rowVM = GoodHabitRowViewModel(habit: habit, goodVM: goodVM, streaks: temp)
+                            GoodHabitRow(vm: rowVM, streaks: temp)
+                                .listRowBackground(Color.clear)
                         }
                     }
                 }
-            }
-            .padding(.vertical)
-        }
-    }
-}
-
-// MARK: - Good Habit Row
-
-struct GoodHabitRow: View {
-    let habit: GoodHabit
-    @ObservedObject var viewModel: HabitsViewModel
-    @State private var showingEdit = false
-    
-    var body: some View {
-        DSCard {
-            VStack(alignment: .leading, spacing: 8) {
-                HStack {
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text(habit.name)
-                            .dsFont(.body)
-                            .foregroundStyle(.primary)
-                        
-                        HStack(spacing: 12) {
-                            Label("+\(habit.xpReward) XP", systemImage: "star.fill")
-                                .font(.caption)
-                                .foregroundStyle(.blue)
-                            
-                            Label("+\(habit.coinReward) Coins", systemImage: "creditcard")
-                                .font(.caption)
-                                .foregroundStyle(.yellow)
-                        }
-                    }
-                    
+            } header: {
+                HStack(spacing: 8) {
+                    Image(systemName: "checkmark.seal.fill").foregroundStyle(.green)
+                    Text("Good Habits").dsFont(.headerMD).bold()
                     Spacer()
-                    
-                    HStack(spacing: 8) {
-                        Button(action: { showingEdit = true }) {
-                            Image(systemName: "pencil.circle")
-                                .font(.title2)
-                                .foregroundStyle(.secondary)
-                        }
-                        
-                        DSButton("Complete", icon: "checkmark", style: .primary) {
-                            Task {
-                                _ = await viewModel.complete(id: habit.id)
-                            }
-                        }
+                    Button(action: onAddGood) {
+                        Image(systemName: "plus.circle.fill").foregroundStyle(.blue)
                     }
-                }
-                
-                if let cadence = habit.cadence, !cadence.isEmpty {
-                    Text("Cadence: \(cadence)")
-                        .dsFont(.caption)
-                        .foregroundStyle(.secondary)
+                    .accessibilityLabel(Text("Add Good Habit"))
                 }
             }
-        }
-        .sheet(isPresented: $showingEdit) {
-            // Edit sheet would go here
-            Text("Edit Habit: \(habit.name)")
-        }
-    }
-}
 
-// MARK: - Bad Habit Row
-
-struct BadHabitRow: View {
-    let habit: BadHabit
-    @ObservedObject var viewModel: BadHabitsViewModel
-    @State private var showingEdit = false
-    
-    var body: some View {
-        DSCard {
-            VStack(alignment: .leading, spacing: 8) {
-                HStack {
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text(habit.name)
-                            .dsFont(.body)
-                            .foregroundStyle(.primary)
-                        
-                        HStack(spacing: 12) {
-                            Label("-\(habit.lifePenalty) Life", systemImage: "heart.slash")
-                                .font(.caption)
-                                .foregroundStyle(.red)
-                            
-                            if habit.controllable {
-                                Label("\(habit.coinCost) Coins", systemImage: "creditcard")
-                                    .font(.caption)
-                                    .foregroundStyle(.orange)
-                            }
+            Section {
+                if badVM.items.isEmpty {
+                    DSEmptyState(
+                        icon: "shield.slash",
+                        title: "No Bad Habits",
+                        message: "Track negative habits to maintain accountability",
+                        actionTitle: "Add Bad Habit",
+                        action: onAddBad
+                    )
+                    .listRowBackground(Color.clear)
+                } else {
+                    if let vm = streaksVMHolder.vm {
+                        ForEach(badVM.items) { habit in
+                            let rowVM = BadHabitRowViewModel(
+                                habit: habit,
+                                badVM: badVM,
+                                streaks: vm,
+                                onRecord: onBadRecord,
+                                onEdit: onBadEdit,
+                                onDelete: onBadDelete
+                            )
+                            BadHabitRow(vm: rowVM, streaks: vm)
+                                .listRowBackground(Color.clear)
+                        }
+                    } else {
+                        let temp = StreaksViewModel(api: app.api)
+                        ForEach(badVM.items) { habit in
+                            let rowVM = BadHabitRowViewModel(habit: habit, badVM: badVM, streaks: temp)
+                            BadHabitRow(vm: rowVM, streaks: temp)
+                                .listRowBackground(Color.clear)
                         }
                     }
-                    
+                }
+            } header: {
+                HStack(spacing: 8) {
+                    Image(systemName: "exclamationmark.triangle.fill").foregroundStyle(.orange)
+                    Text("Bad Habits").dsFont(.headerMD).bold()
                     Spacer()
-                    
-                    HStack(spacing: 8) {
-                        Button(action: { showingEdit = true }) {
-                            Image(systemName: "pencil.circle")
-                                .font(.title2)
-                                .foregroundStyle(.secondary)
-                        }
-                        
-                        if habit.controllable {
-                            DSButton("Pay \(habit.coinCost)", icon: "creditcard", style: .secondary) {
-                                Task {
-                                    await viewModel.record(id: habit.id, payWithCoins: true)
-                                }
-                            }
-                        }
-                        
-                        DSButton("I Slipped", style: .destructive) {
-                            Task {
-                                await viewModel.record(id: habit.id, payWithCoins: false)
-                            }
-                        }
+                    Button(action: onAddBad) {
+                        Image(systemName: "plus.circle.fill").foregroundStyle(.red)
                     }
+                    .accessibilityLabel(Text("Add Bad Habit"))
                 }
             }
         }
-        .sheet(isPresented: $showingEdit) {
-            // Edit sheet would go here
-            Text("Edit Bad Habit: \(habit.name)")
+        .listStyle(.plain)
+        .task {
+            if streaksVMHolder.vm == nil { streaksVMHolder.vm = StreaksViewModel(api: app.api) }
+            if let vm = streaksVMHolder.vm {
+                await vm.refreshPerHabit(days: 7)
+            }
         }
     }
 }
+
+// Components moved to Features/Habits/Components/*

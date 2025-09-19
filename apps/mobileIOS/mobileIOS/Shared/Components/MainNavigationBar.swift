@@ -99,19 +99,44 @@ struct MainNavigationBar: View {
 // MARK: - Header Container
 
 struct NavigationHeaderContainer: View {
-    let profile: Profile?
+    @ObservedObject var profileVM: ProfileViewModel
+    @ObservedObject var game: GameStateManager
     @Binding var selected: NavigationSection
     var onConfig: (() -> Void)? = nil
+    var onOpenRecovery: (() -> Void)? = nil
     
     @Environment(\.colorScheme) private var scheme
     
     var body: some View {
-        VStack(spacing: 0) {
+        VStack(spacing: 8) {
             PlayerHeader(
-                profile: profile,
+                profile: profileVM.profile,
                 onLogToday: { selected = .habits },
                 onOpenStore: { selected = .store }
             )
+            if let openRecovery = onOpenRecovery {
+                // Derive Game Over based on life (same approach as skull in PlayerHeader)
+                let isGameOverUI = (profileVM.profile?.life ?? 0) <= 0 || game.state == .gameOver
+                if isGameOverUI {
+                    DSInfoBanner(
+                        icon: "figure.run.circle.fill",
+                        title: "Game Over",
+                        message: "Bad habits are disabled until you complete recovery.",
+                        actionTitle: "Details",
+                        action: openRecovery
+                    )
+                    .padding(.horizontal, 12)
+                } else if game.state == .recovery && game.recoveryDistance >= game.recoveryTarget {
+                    DSInfoBanner(
+                        icon: "figure.run.circle.fill",
+                        title: "Recovery Complete",
+                        message: "You reached the running challenge distance. Finalize to restore the game.",
+                        actionTitle: "Details",
+                        action: openRecovery
+                    )
+                    .padding(.horizontal, 12)
+                }
+            }
             
             MainNavigationBar(
                 selected: $selected,

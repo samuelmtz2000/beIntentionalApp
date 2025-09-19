@@ -37,7 +37,7 @@ const config: Config = {
       items: [
         { to: '/', label: 'Docs', position: 'left' },
         { href: 'http://localhost:4000/docs', label: 'Swagger', position: 'right' },
-        { href: 'http://localhost:4000/tester', label: 'Tester', position: 'right' },
+        { href: 'http://localhost:4000/docs', label: 'API Docs', position: 'right' },
       ],
     },
     footer: {
@@ -47,7 +47,7 @@ const config: Config = {
           title: 'API',
           items: [
             { label: 'Swagger UI', to: 'http://localhost:4000/docs' },
-            { label: 'Dev Tester', to: 'http://localhost:4000/tester' },
+            { label: 'API Docs', to: 'http://localhost:4000/docs' },
           ],
         },
       ],

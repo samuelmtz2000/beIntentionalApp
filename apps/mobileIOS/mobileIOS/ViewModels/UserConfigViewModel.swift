@@ -7,6 +7,7 @@ final class UserConfigViewModel: ObservableObject {
     @Published var levelCurve: String = "linear"
     @Published var levelMultiplier: Double = 1.5
     @Published var xpComputationMode: String = "logs"
+    @Published var runningChallengeTarget: Int = 42195 // meters
     @Published var isSaving = false
     @Published var isLoading = false
     @Published var apiError: APIError?
@@ -24,6 +25,7 @@ final class UserConfigViewModel: ObservableObject {
         let levelCurve: String
         let levelMultiplier: Double
         let xpComputationMode: String
+        let runningChallengeTarget: Int?
     }
 
     func load() async {
@@ -35,6 +37,7 @@ final class UserConfigViewModel: ObservableObject {
             levelCurve = cfg.levelCurve
             levelMultiplier = cfg.levelMultiplier
             xpComputationMode = cfg.xpComputationMode
+            if let tgt = cfg.runningChallengeTarget { runningChallengeTarget = tgt }
         } catch let e as APIError { apiError = e }
         catch { apiError = APIError(message: error.localizedDescription) }
     }
@@ -43,7 +46,13 @@ final class UserConfigViewModel: ObservableObject {
         isSaving = true
         defer { isSaving = false }
         do {
-            let body = ConfigBody(xpPerLevel: max(10, xpPerLevel), levelCurve: levelCurve, levelMultiplier: max(1.0, levelMultiplier), xpComputationMode: xpComputationMode)
+            let body = ConfigBody(
+                xpPerLevel: max(10, xpPerLevel),
+                levelCurve: levelCurve,
+                levelMultiplier: max(1.0, levelMultiplier),
+                xpComputationMode: xpComputationMode,
+                runningChallengeTarget: max(1000, min(500000, runningChallengeTarget))
+            )
             struct Ok: Codable { let ok: Bool }
             _ = try await api.put("users/\(userId)/config", body: body) as Ok
             return true
@@ -51,4 +60,3 @@ final class UserConfigViewModel: ObservableObject {
         catch { apiError = APIError(message: error.localizedDescription); return false }
     }
 }
-

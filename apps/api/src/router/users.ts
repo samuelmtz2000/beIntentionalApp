@@ -9,6 +9,7 @@ const configSchema = z.object({
   levelCurve: z.enum(["linear", "exp"]),
   levelMultiplier: z.number().min(1),
   xpComputationMode: z.enum(["stored", "logs"]),
+  runningChallengeTarget: z.number().int().min(1000).max(500000).optional(), // meters
 });
 
 router.get("/:id/config", async (req, res) => {
@@ -19,6 +20,7 @@ router.get("/:id/config", async (req, res) => {
     levelCurve: u.levelCurve,
     levelMultiplier: u.levelMultiplier,
     xpComputationMode: u.xpComputationMode,
+    runningChallengeTarget: (u as any).runningChallengeTarget ?? 42195,
   });
 });
 
@@ -33,6 +35,9 @@ router.put("/:id/config", async (req, res) => {
         levelCurve: parsed.data.levelCurve,
         levelMultiplier: parsed.data.levelMultiplier,
         xpComputationMode: parsed.data.xpComputationMode,
+        ...(parsed.data.runningChallengeTarget
+          ? { runningChallengeTarget: parsed.data.runningChallengeTarget }
+          : {}),
       },
     });
     res.json({ ok: true, userId: u.id });
@@ -52,17 +57,22 @@ router.get("/:id/game-state", async (req, res) => {
   const user = await prisma.user.findUnique({ where: { id: req.params.id } });
   if (!user) return res.status(404).json({ message: "User not found" });
 
-  const target = 42195; // meters
+  // Per-user running challenge target with default fallback
+  const target = (user as any).runningChallengeTarget ?? 42195; // meters
   const percentage = Math.min(100, Math.floor(((user.recoveryDistance ?? 0) / target) * 100));
 
+  // Derive state from life first: if life <= 0, force game_over
+  const derivedState = user.life <= 0 ? "game_over" : user.gameState;
+
+  // Return camelCase keys expected by iOS client
   res.json({
-    state: user.gameState,
-    life: user.life,
-    game_over_date: user.gameOverAt,
-    recovery_started_at: user.recoveryStartedAt,
-    recovery_distance: user.recoveryDistance ?? 0,
-    recovery_target: target,
-    recovery_percentage: percentage,
+    state: derivedState,
+    health: user.life,
+    gameOverDate: user.gameOverAt,
+    recoveryStartedAt: user.recoveryStartedAt,
+    recoveryDistance: user.recoveryDistance ?? 0,
+    recoveryTarget: target,
+    recoveryPercentage: percentage,
   });
 });
 
@@ -88,7 +98,7 @@ router.put("/:id/recovery-progress", async (req, res) => {
   // Move to recovery state upon first progress
   const becomingRecovery = user.gameState === "game_over";
   const now = new Date();
-  const target = 42195;
+  const target = (user as any).runningChallengeTarget ?? 42195;
 
   const updated = await prisma.user.update({
     where: { id: req.params.id },
@@ -103,11 +113,12 @@ router.put("/:id/recovery-progress", async (req, res) => {
   const percentage = Math.min(100, Math.floor((updated.recoveryDistance / target) * 100));
   const isComplete = updated.recoveryDistance >= target;
 
+  // Return camelCase keys
   res.json({
-    recovery_distance: updated.recoveryDistance,
-    recovery_percentage: percentage,
-    remaining_distance: remaining,
-    is_complete: isComplete,
+    recoveryDistance: updated.recoveryDistance,
+    recoveryPercentage: percentage,
+    remainingDistance: remaining,
+    isComplete: isComplete,
   });
 });
 
@@ -116,7 +127,7 @@ router.post("/:id/complete-recovery", async (req, res) => {
   const user = await prisma.user.findUnique({ where: { id: req.params.id } });
   if (!user) return res.status(404).json({ message: "User not found" });
 
-  const target = 42195;
+  const target = (user as any).runningChallengeTarget ?? 42195;
   if (user.recoveryDistance < target) {
     return res.status(400).json({ message: "Recovery distance not yet complete" });
   }
@@ -131,10 +142,11 @@ router.post("/:id/complete-recovery", async (req, res) => {
     },
   });
 
+  // Return camelCase keys expected by iOS client
   res.json({
-    game_state: updated.gameState,
-    life: updated.life,
-    recovery_completed_at: updated.recoveryCompletedAt,
+    gameState: updated.gameState,
+    health: updated.life,
+    recoveryCompletedAt: updated.recoveryCompletedAt,
     message: "Congratulations! Your life has been restored!",
   });
 });

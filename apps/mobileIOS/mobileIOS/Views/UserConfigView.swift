@@ -27,6 +27,18 @@ struct UserConfigSheet: View {
                         Text("Each level requires multiplier× previous XP.").dsFont(.caption).foregroundStyle(.secondary)
                     }
                 }
+                Section("Running Challenge") {
+                    HStack {
+                        Text("Target Distance")
+                        Spacer()
+                        TextField("Meters", value: $vm.runningChallengeTarget, format: .number)
+                            .keyboardType(.numberPad)
+                            .multilineTextAlignment(.trailing)
+                    }
+                    Text("Default is 42,195 meters (marathon). This is configurable per user.")
+                        .dsFont(.caption)
+                        .foregroundStyle(.secondary)
+                }
                 Section("XP Source Mode") {
                     Picker("Computation", selection: $vm.xpComputationMode) {
                         Text("From Logs").tag("logs")
@@ -50,7 +62,19 @@ struct UserConfigSheet: View {
             .navigationTitle("User Config")
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) { Button("Close") { dismiss() } }
-                ToolbarItem(placement: .confirmationAction) { Button(vm.isSaving ? "Saving…" : "Save") { Task { if await vm.save() { onSaved(); dismiss() } } }.disabled(vm.isSaving) }
+                ToolbarItem(placement: .confirmationAction) {
+                    Button(vm.isSaving ? "Saving…" : "Save") {
+                        Task {
+                            if await vm.save() {
+                                // Refresh game state to pick up new running challenge target immediately
+                                await app.game.refreshFromServer()
+                                onSaved();
+                                dismiss()
+                            }
+                        }
+                    }
+                    .disabled(vm.isSaving)
+                }
             }
             .task { await vm.load() }
             .alert(item: $vm.apiError) { err in Alert(title: Text("Error"), message: Text(err.message), dismissButton: .default(Text("OK"))) }
