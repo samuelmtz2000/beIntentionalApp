@@ -115,7 +115,9 @@ struct NavigationHeaderContainer: View {
                 onOpenStore: { selected = .store }
             )
             if let openRecovery = onOpenRecovery {
-                if game.state == .gameOver {
+                // Derive Game Over based on life (same approach as skull in PlayerHeader)
+                let isGameOverUI = (profileVM.profile?.life ?? 0) <= 0 || game.state == .gameOver
+                if isGameOverUI {
                     DSInfoBanner(
                         icon: "figure.run.circle.fill",
                         title: "Game Over",
