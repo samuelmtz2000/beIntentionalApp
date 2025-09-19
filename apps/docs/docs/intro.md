@@ -8,7 +8,7 @@ What’s inside
 - API (apps/api): Express + TypeScript + Prisma (SQLite)
   - Dev server: `pnpm dev:api` (on `http://localhost:4000`)
   - Swagger UI: `http://localhost:4000/docs`
-  - Dev tester: `http://localhost:4000/tester`
+- Swagger UI: `http://localhost:4000/docs`
 - iOS App (apps/mobileIOS): SwiftUI + MVVM
   - Open `apps/mobileIOS/mobileIOS.xcodeproj` in Xcode 15+
   - Set API base URL in app Settings (default `http://localhost:4000`)

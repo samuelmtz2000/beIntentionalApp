@@ -218,6 +218,124 @@ const spec = {
       },
     },
 
+    // Streaks
+    "/streaks/general": {
+      get: {
+        summary: "General streak over a date range",
+        description: "Returns current and longest streak plus per-day status for the range [from,to] inclusive.",
+        parameters: [
+          { name: "from", in: "query", required: false, schema: { type: "string", pattern: "^\\d{4}-\\d{2}-\\d{2}$" }, description: "Start date (YYYY-MM-DD). Defaults to 14 days ago." },
+          { name: "to", in: "query", required: false, schema: { type: "string", pattern: "^\\d{4}-\\d{2}-\\d{2}$" }, description: "End date (YYYY-MM-DD). Defaults to today." }
+        ],
+        responses: {
+          "200": {
+            description: "Streak summary",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    currentCount: { type: "integer", minimum: 0 },
+                    longestCount: { type: "integer", minimum: 0 },
+                    days: {
+                      type: "array",
+                      items: {
+                        type: "object",
+                        properties: {
+                          date: { type: "string", example: "2025-09-17" },
+                          completedGood: { type: "integer", minimum: 0 },
+                          totalActiveGood: { type: "integer", minimum: 0 },
+                          hasUnforgivenBad: { type: "boolean" },
+                          daySuccess: { oneOf: [ { type: "boolean" }, { type: "null" } ], description: "null means freeze day" }
+                        },
+                        required: ["date", "completedGood", "totalActiveGood", "hasUnforgivenBad", "daySuccess"]
+                      }
+                    }
+                  },
+                  required: ["currentCount", "longestCount", "days"]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/streaks/habits": {
+      get: {
+        summary: "Per-habit streaks over a date range",
+        parameters: [
+          { name: "from", in: "query", required: false, schema: { type: "string", pattern: "^\\d{4}-\\d{2}-\\d{2}$" } },
+          { name: "to", in: "query", required: false, schema: { type: "string", pattern: "^\\d{4}-\\d{2}-\\d{2}$" } }
+        ],
+        responses: {
+          "200": {
+            description: "List of per-habit streaks",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    items: {
+                      type: "array",
+                      items: {
+                        type: "object",
+                        properties: {
+                          habitId: { type: "string" },
+                          type: { type: "string", enum: ["good", "bad"] },
+                          currentCount: { type: "integer", minimum: 0 },
+                          longestCount: { type: "integer", minimum: 0 }
+                        },
+                        required: ["habitId", "type", "currentCount", "longestCount"]
+                      }
+                    }
+                  },
+                  required: ["items"]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/streaks/habits/{id}/history": {
+      get: {
+        summary: "History markers for a single habit",
+        parameters: [
+          { name: "id", in: "path", required: true, schema: { type: "string" } },
+          { name: "type", in: "query", required: true, schema: { type: "string", enum: ["good", "bad"] } },
+          { name: "from", in: "query", required: false, schema: { type: "string", pattern: "^\\d{4}-\\d{2}-\\d{2}$" } },
+          { name: "to", in: "query", required: false, schema: { type: "string", pattern: "^\\d{4}-\\d{2}-\\d{2}$" } }
+        ],
+        responses: {
+          "200": {
+            description: "History list",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    history: {
+                      type: "array",
+                      items: {
+                        type: "object",
+                        properties: {
+                          date: { type: "string" },
+                          status: { type: "string", description: "good: done|miss|inactive; bad: clean|forgiven|occurred" }
+                        },
+                        required: ["date", "status"]
+                      }
+                    }
+                  },
+                  required: ["history"]
+                }
+              }
+            }
+          },
+          "400": { description: "Missing or invalid type" }
+        }
+      }
+    },
+
     // User Config
     "/users/{id}/config": {
       get: {

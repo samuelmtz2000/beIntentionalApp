@@ -1,6 +1,6 @@
 # Habit Hero API
 
-Express + TypeScript + Prisma (SQLite). Strict ESM, Zod‑validated routes. Ships a built‑in Swagger UI tester at `/docs` and a lightweight HTML tester at `/tester` (dev helper).
+Express + TypeScript + Prisma (SQLite). Strict ESM, Zod‑validated routes. Ships Swagger UI at `/docs` for interactive testing.
 
 ## Quick Start
 
@@ -31,7 +31,7 @@ Express + TypeScript + Prisma (SQLite). Strict ESM, Zod‑validated routes. Ship
 - Prisma ORM (`@prisma/client`) with SQLite
 - Zod for input validation
 - Security: `helmet`, `cors`, `express-rate-limit`
-- Docs/Tester: `swagger-ui-express` at `/docs`
+- Docs: `swagger-ui-express` at `/docs`
 
 ## Data Model (Prisma)
 
@@ -130,8 +130,9 @@ All bodies are JSON. Validation errors: HTTP 400 with Zod error details. Missing
 - Docs `/docs`
   - Swagger UI interactive tester
 
-- Dev Tester `/tester`
-  - Lightweight HTML page with quick forms (dev convenience)
+OpenAPI contract
+- New or modified endpoints must be reflected in `apps/api/src/openapi.ts` within the same change.
+- This keeps `/docs` accurate for manual testing and reduces drift.
 
 ## Store Workflow (Frontend Notes)
 
