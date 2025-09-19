@@ -200,6 +200,7 @@ struct HabitsViewRefactored: View {
                     onGoodComplete: { h in
                         _ = await coordinator.goodVM.complete(id: h.id)
                         await coordinator.refreshAll()
+                        NotificationCenter.default.post(name: .streaksDidChange, object: nil)
                         await MainActor.run { toast = ToastMessage(message: "✅ \(h.name) completed! +\(h.xpReward) XP, +\(h.coinReward) coins", type: .success) }
                     },
                     onGoodEdit: { h in editingGood = h },
@@ -238,6 +239,7 @@ struct HabitsViewRefactored: View {
                             }
                         }
                         await coordinator.refreshAll()
+                        NotificationCenter.default.post(name: .streaksDidChange, object: nil)
                         await checkAndPresentGameOver()
                         await MainActor.run {
                             if let avoided = resp?.avoidedPenalty, avoided {
