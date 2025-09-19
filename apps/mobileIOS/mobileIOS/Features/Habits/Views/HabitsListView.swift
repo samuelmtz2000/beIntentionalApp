@@ -133,7 +133,7 @@ struct GoodHabitRow: View {
                 
                 HStack(spacing: 8) {
                     if let item = streaks?.perHabit[habit.id] {
-                        Label("\(item.currentCount)", systemImage: "flame")
+                        Label("\(item.currentCount)", systemImage: "flame.fill")
                             .font(.caption)
                             .foregroundStyle(.orange)
                             .onTapGesture { showHistory = true }
@@ -225,7 +225,7 @@ struct BadHabitRow: View {
                 }
                 HStack(spacing: 8) {
                     if let item = streaks?.perHabit[habit.id] {
-                        Label("\(item.currentCount)", systemImage: "shield")
+                        Label("\(item.currentCount)", systemImage: "shield.fill")
                             .font(.caption)
                             .foregroundStyle(.green)
                             .onTapGesture { showHistory = true }

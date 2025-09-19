@@ -78,6 +78,13 @@
 - Design System: `DSTheme` colors, `dsFont`, `cardStyle`, `DSButton`, `DSSectionHeader`, `DSProgressBar`, `DSEmptyState`, `DSSheet`.
 - Accessibility: key actions have descriptive accessibilityLabels; minimum touch sizes applied where possible.
 
+## iOS Code Organization Principles (Design Agent)
+
+- Keep files focused and small. Extract reusable pieces into `Features/*/Components`.
+- Prefer composable Views (e.g., `StreakBadge`, history dot views, sheets) over long monolithic files.
+- Model state in `ViewModel`s; pass them via `@StateObject`/`@ObservedObject`/`@EnvironmentObject` instead of optional ad‑hoc props.
+- Follow the refactoring guidance from the restructuring PRs; avoid duplicating helpers across files.
+
 ## Coding Style & Naming Conventions
 
 - Language: TypeScript (strict). Indentation: 2 spaces. Use ES modules.
