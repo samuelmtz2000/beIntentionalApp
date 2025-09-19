@@ -25,11 +25,15 @@ struct HabitsViewRefactored: View {
     @State private var toast: ToastMessage? = nil
     @State private var showingRecovery = false
     @State private var hasHealthAccessConfigured = false
+    @State private var showGameOverModal = false
+    @State private var showRecoveryCompletion = false
+    @State private var pendingLocalCompletion = false
     @State private var editingGood: GoodHabit? = nil
     @State private var editingBad: BadHabit? = nil
     @State private var confirmDelete: ConfirmDeleteWrapper? = nil
     
     @Environment(\.colorScheme) private var scheme
+    @Environment(\.scenePhase) private var scenePhase
     
     var body: some View {
         NavigationStack {
@@ -53,8 +57,22 @@ struct HabitsViewRefactored: View {
                 if coordinator.profileVM.profile == nil {
                     Task { await coordinator.profileVM.refresh() }
                 }
+                Task { await checkAndPresentGameOver() }
+            }
+            .onChange(of: scenePhase) { _, phase in
+                if phase == .active { handleForeground() }
             }
             .toast($toast)
+            .sheet(isPresented: $showGameOverModal) {
+                GameOverModal(
+                    targetMeters: app.game.recoveryTarget,
+                    onStartRecovery: {
+                        withAnimation { showGameOverModal = false }
+                        app.game.startRecoveryNow()
+                        showingRecovery = true
+                    }
+                )
+            }
             .sheet(isPresented: $coordinator.showingAddGood) {
                 AddGoodHabitSheet(
                     areas: coordinator.areasVM.areas,
@@ -98,10 +116,32 @@ struct HabitsViewRefactored: View {
                     onUpdateProgress: {
                         Task {
                             await app.game.refreshDistance(using: app.healthKit)
-                            await app.game.pushRecoveryProgress()
+                            if app.game.recoveryDistance >= app.game.recoveryTarget {
+                                await MainActor.run {
+                                    pendingLocalCompletion = true
+                                    showRecoveryCompletion = true
+                                }
+                            } else {
+                                await app.game.pushRecoveryProgress()
+                            }
                         }
                     }
                 )
+                .task { hasHealthAccessConfigured = await app.healthKit.hasConfiguredAccess() }
+            }
+            .sheet(isPresented: $showRecoveryCompletion) {
+                RecoveryCompletionModal(onDone: {
+                    Task {
+                        showRecoveryCompletion = false
+                        if pendingLocalCompletion {
+                            await app.game.pushRecoveryProgress()
+                            await app.game.completeRecoveryIfEligible()
+                            pendingLocalCompletion = false
+                        }
+                        await app.game.refreshFromServer()
+                        await coordinator.profileVM.refresh()
+                    }
+                })
             }
             .alert(item: $confirmDelete) { wrap in
                 let name = wrap.kind == .good ? (wrap.good?.name ?? "") : (wrap.bad?.name ?? "")
@@ -182,6 +222,7 @@ struct HabitsViewRefactored: View {
                             }
                         }
                         await coordinator.refreshAll()
+                        await checkAndPresentGameOver()
                         await MainActor.run {
                             if let avoided = resp?.avoidedPenalty, avoided {
                                 toast = ToastMessage(message: "🙂 \(b.name) forgiven (used credit)", type: .success)
@@ -284,6 +325,38 @@ final class HabitsCoordinator: ObservableObject {
         )
         showingAddArea = false
         await refreshAll()
+    }
+}
+
+// MARK: - Game Over / Recovery Helpers
+
+private extension HabitsViewRefactored {
+    func handleForeground() {
+        Task {
+            await app.game.refreshFromServer()
+            if app.game.state == .recovery, await app.healthKit.hasConfiguredAccess() {
+                await app.game.refreshDistance(using: app.healthKit)
+                if app.game.recoveryDistance >= app.game.recoveryTarget {
+                    await MainActor.run {
+                        pendingLocalCompletion = true
+                        showRecoveryCompletion = true
+                    }
+                }
+            }
+        }
+    }
+
+    func checkAndPresentGameOver() async {
+        if let life = coordinator.profileVM.profile?.life {
+            if life <= 0 {
+                await app.game.refreshFromServer()
+                await app.game.refreshTargetFromConfig()
+                app.game.markLocalGameOverNow()
+                await MainActor.run { showGameOverModal = true }
+            } else {
+                await MainActor.run { showGameOverModal = false }
+            }
+        }
     }
 }
 
