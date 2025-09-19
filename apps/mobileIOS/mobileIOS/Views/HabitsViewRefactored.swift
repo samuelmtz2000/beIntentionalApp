@@ -141,14 +141,17 @@ struct HabitsViewRefactored: View {
                         // Refresh game state to avoid stale gating decisions
                         await coordinator.profileVM.refresh()
                         await app.game.refreshFromServer()
-                        // Allow record unless game is actually in game_over
-                        if app.game.state == .game_over {
-                            await MainActor.run {
-                                toast = ToastMessage(message: "Game is not active. Open Recovery to continue.", type: .error)
+                        // Allow record unless truly game over (life <= 0). If state says gameOver but life > 0, proceed.
+                        if app.game.state == .gameOver {
+                            let life = coordinator.profileVM.profile?.life ?? 0
+                            if life <= 0 {
+                                await MainActor.run {
+                                    toast = ToastMessage(message: "Game is not active. Open Recovery to continue.", type: .error)
+                                }
+                                hasHealthAccessConfigured = await app.healthKit.hasConfiguredAccess()
+                                showingRecovery = true
+                                return
                             }
-                            hasHealthAccessConfigured = await app.healthKit.hasConfiguredAccess()
-                            showingRecovery = true
-                            return
                         }
                         await coordinator.badVM.record(id: b.id, payWithCoins: false)
                         await coordinator.refreshAll()

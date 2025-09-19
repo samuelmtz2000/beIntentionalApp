@@ -84,7 +84,7 @@ struct PlayerHeader: View {
     
     private func statsRow(profile: Profile) -> some View {
         HStack(spacing: 12) {
-            Label("\(profile.life)/100", systemImage: "heart.fill")
+            Label("\(profile.life)", systemImage: "heart.fill")
                 .foregroundStyle(.red)
                 .font(.callout)
             
