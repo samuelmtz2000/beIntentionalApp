@@ -28,7 +28,8 @@ struct HabitsViewRefactored: View {
                 NavigationHeaderContainer(
                     profile: coordinator.profileVM.profile,
                     selected: $selected,
-                    onConfig: { showingConfig = true }
+                    onConfig: { showingConfig = true },
+                    onRetry: { Task { await coordinator.profileVM.refresh() } }
                 )
                 
                 // Dynamic content based on selection

@@ -15,11 +15,14 @@ struct PlayerHeader: View {
     let profile: Profile?
     var onLogToday: () -> Void = {}
     var onOpenStore: () -> Void = {}
+    var onRetry: (() -> Void)? = nil
     
     @Environment(\.colorScheme) private var scheme
     @EnvironmentObject private var app: AppModel
     @StateObject private var streaksVMHolder = _StreaksVMLoader()
     @State private var celebrate = false
+    @State private var showLoader = false
+    @State private var showFailed = false
     
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
@@ -38,9 +41,19 @@ struct PlayerHeader: View {
                         statsRow(profile: p)
                         streakIndicator()
                     }
-                } else {
+                } else if showFailed {
+                    HStack(spacing: 8) {
+                        Image(systemName: "exclamationmark.triangle.fill").foregroundStyle(.orange)
+                        Text("Not loaded").dsFont(.body)
+                        Spacer()
+                        if let onRetry { Button("Retry", action: onRetry).buttonStyle(SecondaryButtonStyle()) }
+                    }
+                    .frame(maxWidth: .infinity)
+                } else if showLoader {
                     ProgressView("Loading...")
                         .frame(maxWidth: .infinity)
+                } else {
+                    Rectangle().fill(Color.clear).frame(height: 8)
                 }
             }
         }
@@ -51,6 +64,17 @@ struct PlayerHeader: View {
             if let vm = ensureVM() {
                 await vm.refreshGeneralToday()
             }
+        }
+        .onAppear {
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.35) {
+                if profile == nil { showLoader = true }
+            }
+            DispatchQueue.main.asyncAfter(deadline: .now() + 4.0) {
+                if profile == nil { showFailed = true; showLoader = false }
+            }
+        }
+        .onChange(of: profile == nil) { _, isNil in
+            if !isNil { showLoader = false; showFailed = false }
         }
     }
     

@@ -102,6 +102,7 @@ struct NavigationHeaderContainer: View {
     let profile: Profile?
     @Binding var selected: NavigationSection
     var onConfig: (() -> Void)? = nil
+    var onRetry: (() -> Void)? = nil
     
     @Environment(\.colorScheme) private var scheme
     
@@ -110,7 +111,8 @@ struct NavigationHeaderContainer: View {
             PlayerHeader(
                 profile: profile,
                 onLogToday: { selected = .habits },
-                onOpenStore: { selected = .store }
+                onOpenStore: { selected = .store },
+                onRetry: onRetry
             )
             
             MainNavigationBar(
