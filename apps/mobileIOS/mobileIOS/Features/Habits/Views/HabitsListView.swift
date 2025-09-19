@@ -16,6 +16,13 @@ struct HabitsListView: View {
     @ObservedObject var badVM: BadHabitsViewModel
     var onAddGood: () -> Void
     var onAddBad: () -> Void
+    // Action overrides (optional); defaults call VMs directly
+    var onGoodComplete: ((GoodHabit) async -> Void)? = nil
+    var onGoodEdit: ((GoodHabit) -> Void)? = nil
+    var onGoodDelete: ((GoodHabit) async -> Void)? = nil
+    var onBadRecord: ((BadHabit) async -> Void)? = nil
+    var onBadEdit: ((BadHabit) -> Void)? = nil
+    var onBadDelete: ((BadHabit) async -> Void)? = nil
     
     @Environment(\.colorScheme) private var scheme
     @EnvironmentObject private var app: AppModel
@@ -47,9 +54,9 @@ struct HabitsListView: View {
                                     habit: habit,
                                     viewModel: goodVM,
                                     streaks: vm,
-                                    onComplete: { h in _ = await goodVM.complete(id: h.id) },
-                                    onEdit: { _ in /* Present sheet upstream if desired */ },
-                                    onDelete: { h in await goodVM.delete(id: h.id) }
+                                    onComplete: onGoodComplete ?? { h in _ = await goodVM.complete(id: h.id) },
+                                    onEdit: onGoodEdit ?? { _ in },
+                                    onDelete: onGoodDelete ?? { h in await goodVM.delete(id: h.id) }
                                 )
                             }
                         } else {
@@ -88,9 +95,9 @@ struct HabitsListView: View {
                                 habit: habit,
                                 viewModel: badVM,
                                 streaks: vm,
-                                onRecord: { b in await badVM.record(id: b.id, payWithCoins: false) },
-                                onEdit: { _ in },
-                                onDelete: { b in await badVM.delete(id: b.id) }
+                                onRecord: onBadRecord ?? { b in await badVM.record(id: b.id, payWithCoins: false) },
+                                onEdit: onBadEdit ?? { _ in },
+                                onDelete: onBadDelete ?? { b in await badVM.delete(id: b.id) }
                             )
                         }
                     } else {

@@ -13,6 +13,7 @@ struct HabitsViewRefactored: View {
     
     @State private var selected: NavigationSection = .habits
     @State private var showingConfig = false
+    @State private var toast: ToastMessage? = nil
     
     @Environment(\.colorScheme) private var scheme
     
@@ -35,6 +36,7 @@ struct HabitsViewRefactored: View {
             .task {
                 await coordinator.refreshAll()
             }
+            .toast($toast)
             .sheet(isPresented: $coordinator.showingAddGood) {
                 AddGoodHabitSheet(
                     areas: coordinator.areasVM.areas,
@@ -72,7 +74,23 @@ struct HabitsViewRefactored: View {
                     goodVM: coordinator.goodVM,
                     badVM: coordinator.badVM,
                     onAddGood: { coordinator.showingAddGood = true },
-                    onAddBad: { coordinator.showingAddBad = true }
+                    onAddBad: { coordinator.showingAddBad = true },
+                    onGoodComplete: { h in
+                        _ = await coordinator.goodVM.complete(id: h.id)
+                        await coordinator.refreshAll()
+                        await MainActor.run { toast = ToastMessage(message: "✅ \(h.name) completed! +\(h.xpReward) XP, +\(h.coinReward) coins", type: .success) }
+                    },
+                    onBadRecord: { b in
+                        if app.game.state != .active {
+                            await MainActor.run { toast = ToastMessage(message: "Game is not active. Open Recovery to continue.", type: .error) }
+                            return
+                        }
+                        await coordinator.badVM.record(id: b.id, payWithCoins: false)
+                        await coordinator.refreshAll()
+                        await MainActor.run { toast = ToastMessage(message: "⚠️ \(b.name) recorded. -\(b.lifePenalty) life", type: .error) }
+                    },
+                    onGoodDelete: { h in await coordinator.goodVM.delete(id: h.id); await coordinator.refreshAll() },
+                    onBadDelete: { b in await coordinator.badVM.delete(id: b.id); await coordinator.refreshAll() }
                 )
             case .areas:
                 AreasListView(
