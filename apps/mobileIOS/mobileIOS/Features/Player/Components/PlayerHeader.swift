@@ -7,12 +7,18 @@
 
 import SwiftUI
 
+private final class _StreaksVMLoader: ObservableObject {
+    @Published var vm: StreaksViewModel? = nil
+}
+
 struct PlayerHeader: View {
     let profile: Profile?
     var onLogToday: () -> Void = {}
     var onOpenStore: () -> Void = {}
     
     @Environment(\.colorScheme) private var scheme
+    @EnvironmentObject private var app: AppModel
+    @StateObject private var streaksVMHolder = _StreaksVMLoader()
     
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
@@ -40,6 +46,11 @@ struct PlayerHeader: View {
         .padding(.horizontal, 12)
         .padding(.vertical, 8)
         .accessibilityElement(children: .contain)
+        .task {
+            if let vm = ensureVM() {
+                await vm.refreshGeneralToday()
+            }
+        }
     }
     
     // MARK: - Subviews
@@ -82,9 +93,26 @@ struct PlayerHeader: View {
     }
     
     private func streakIndicator() -> some View {
-        Label("Streak N/A", systemImage: "flame")
-            .foregroundStyle(.orange)
-            .font(.caption)
+        let vm = streaksVMHolder.vm
+        return Group {
+            if let vm = vm, let today = vm.generalToday {
+                Label("\(vm.generalCurrent)", systemImage: today.hasUnforgivenBad ? "flame.circle" : "flame")
+                    .foregroundStyle(today.hasUnforgivenBad ? .red : .orange)
+                    .font(.caption)
+                    .accessibilityLabel("General streak \(vm.generalCurrent)")
+            } else {
+                Label("Streak —", systemImage: "flame")
+                    .foregroundStyle(.orange)
+                    .font(.caption)
+            }
+        }
+    }
+
+    private func ensureVM() -> StreaksViewModel? {
+        if let existing = streaksVMHolder.vm { return existing }
+        let created = StreaksViewModel(api: app.api)
+        streaksVMHolder.vm = created
+        return created
     }
 }
 
