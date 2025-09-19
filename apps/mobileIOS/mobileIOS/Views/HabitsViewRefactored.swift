@@ -94,6 +94,25 @@ struct HabitsViewRefactored: View {
                     }
                 )
             }
+            .alert(item: $confirmDelete) { wrap in
+                let name = wrap.kind == .good ? (wrap.good?.name ?? "") : (wrap.bad?.name ?? "")
+                return Alert(
+                    title: Text("Delete \(name)?"),
+                    message: Text("Are you sure you want to delete this habit?"),
+                    primaryButton: .destructive(Text("Delete")) {
+                        Task {
+                            if wrap.kind == .good, let h = wrap.good {
+                                await coordinator.goodVM.delete(id: h.id)
+                            } else if let b = wrap.bad {
+                                await coordinator.badVM.delete(id: b.id)
+                            }
+                            await coordinator.refreshAll()
+                            confirmDelete = nil
+                        }
+                    },
+                    secondaryButton: .cancel { confirmDelete = nil }
+                )
+            }
         }
     }
     
@@ -154,25 +173,6 @@ struct HabitsViewRefactored: View {
             case .config:
                 EmptyView()
             }
-        }
-        .alert(item: $confirmDelete) { wrap in
-            let name = wrap.kind == .good ? (wrap.good?.name ?? "") : (wrap.bad?.name ?? "")
-            return Alert(
-                title: Text("Delete \(name)?"),
-                message: Text("Are you sure you want to delete this habit?"),
-                primaryButton: .destructive(Text("Delete")) {
-                    Task {
-                        if wrap.kind == .good, let h = wrap.good {
-                            await coordinator.goodVM.delete(id: h.id)
-                        } else if let b = wrap.bad {
-                            await coordinator.badVM.delete(id: b.id)
-                        }
-                        await coordinator.refreshAll()
-                        confirmDelete = nil
-                    }
-                },
-                secondaryButton: .cancel { confirmDelete = nil }
-            )
         }
     }
 }
