@@ -20,11 +20,19 @@ struct GoodHabitRow: View {
         DSCard {
             HStack(alignment: .top, spacing: 12) {
                 VStack(alignment: .leading, spacing: 6) {
-                    Text(habit.name)
-                        .dsFont(.body)
-                        .foregroundStyle(.primary)
-                        .lineLimit(2)
-                        .multilineTextAlignment(.leading)
+                    HStack(alignment: .firstTextBaseline, spacing: 8) {
+                        Text(habit.name)
+                            .dsFont(.body)
+                            .foregroundStyle(.primary)
+                            .lineLimit(2)
+                            .multilineTextAlignment(.leading)
+                        if let cadence = habit.cadence, !cadence.isEmpty {
+                            Text(cadence)
+                                .dsFont(.body) // same font and size, subtle color
+                                .foregroundStyle(.secondary)
+                                .lineLimit(1)
+                        }
+                    }
 
                     HStack(spacing: 8) {
                         let count = streaks.perHabit[habit.id]?.currentCount ?? 0
@@ -33,11 +41,7 @@ struct GoodHabitRow: View {
                             .onTapGesture { showHistory = true }
                     }
 
-                    if let cadence = habit.cadence, !cadence.isEmpty {
-                        Text(cadence)
-                            .dsFont(.caption)
-                            .foregroundStyle(.secondary)
-                    }
+                    // cadence moved next to name
                 }
                 Spacer()
                 VStack(alignment: .trailing, spacing: 6) {

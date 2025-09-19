@@ -37,8 +37,12 @@ struct HabitsViewRefactored: View {
             .navigationTitle("Habits")
             .navigationBarTitleDisplayMode(.inline)
             .background(DSTheme.colors(for: scheme).backgroundPrimary)
-            .task {
-                await coordinator.refreshAll()
+            .task { await coordinator.refreshAll() }
+            .onAppear {
+                // Ensure header profile loads promptly even if other tasks lag
+                if coordinator.profileVM.profile == nil {
+                    Task { await coordinator.profileVM.refresh() }
+                }
             }
             .toast($toast)
             .sheet(isPresented: $coordinator.showingAddGood) {
@@ -79,6 +83,12 @@ struct HabitsViewRefactored: View {
                         Task {
                             try? await app.healthKit.requestAuthorization()
                             hasHealthAccessConfigured = await app.healthKit.hasConfiguredAccess()
+                        }
+                    },
+                    onUpdateProgress: {
+                        Task {
+                            await app.game.refreshDistance(using: app.healthKit)
+                            await app.game.pushRecoveryProgress()
                         }
                     }
                 )
