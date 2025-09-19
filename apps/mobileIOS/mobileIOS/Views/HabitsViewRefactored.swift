@@ -376,9 +376,12 @@ struct AreasListView: View {
     @ObservedObject var viewModel: AreasViewModel
     var onAdd: () -> Void
     
+    @State private var editingArea: Area? = nil
+    @State private var confirmDelete: Area? = nil
+    
     var body: some View {
-        ScrollView {
-            VStack(spacing: 16) {
+        List {
+            Section {
                 if viewModel.areas.isEmpty {
                     DSEmptyState(
                         icon: "square.grid.2x2",
@@ -387,6 +390,7 @@ struct AreasListView: View {
                         actionTitle: "Add Area",
                         action: onAdd
                     )
+                    .listRowBackground(Color.clear)
                 } else {
                     ForEach(viewModel.areas) { area in
                         DSCardRow(
@@ -394,10 +398,31 @@ struct AreasListView: View {
                             subtitle: "XP per level: \(area.xpPerLevel)",
                             leadingIcon: area.icon
                         )
+                        .listRowBackground(Color.clear)
+                        .swipeActions(edge: .trailing, allowsFullSwipe: true) {
+                            Button { editingArea = area } label: { Label("Edit", systemImage: "pencil") }.tint(.blue)
+                            Button(role: .destructive) { confirmDelete = area } label: { Label("Delete", systemImage: "trash") }
+                        }
                     }
                 }
+            } header: {
+                HStack(spacing: 8) {
+                    Image(systemName: "square.grid.2x2")
+                    Text("Areas").dsFont(.headerMD).bold()
+                    Spacer()
+                    Button(action: onAdd) { Image(systemName: "plus.circle.fill").foregroundStyle(.blue) }
+                        .accessibilityLabel(Text("Add Area"))
+                }
             }
-            .padding()
+        }
+        .listStyle(.plain)
+        .sheet(item: $editingArea) { area in
+            AreaEditSheet(area: area, onSave: { updated in Task { await viewModel.update(area: updated) } }, onDelete: { Task { await viewModel.delete(id: area.id) } })
+        }
+        .alert(item: $confirmDelete) { area in
+            Alert(title: Text("Delete \(area.name)?"), message: Text("Are you sure you want to delete this area?"), primaryButton: .destructive(Text("Delete")) {
+                Task { await viewModel.delete(id: area.id) }
+            }, secondaryButton: .cancel())
         }
     }
 }
@@ -406,24 +431,40 @@ struct StoreListView: View {
     @ObservedObject var viewModel: StoreViewModel
     
     var body: some View {
-        ScrollView {
-            VStack(spacing: 16) {
+        List {
+            Section {
                 if viewModel.controlledBadHabits.isEmpty {
                     DSEmptyState(
                         icon: "cart",
                         title: "Store Empty",
                         message: "No controllable bad habits available for purchase"
                     )
+                    .listRowBackground(Color.clear)
                 } else {
-                    LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 16) {
-                        ForEach(viewModel.controlledBadHabits) { habit in
-                            StoreItemCard(habit: habit, viewModel: viewModel)
+                    ForEach(viewModel.controlledBadHabits) { habit in
+                        DSCard {
+                            HStack(alignment: .top, spacing: 12) {
+                                VStack(alignment: .leading, spacing: 6) {
+                                    Text(habit.name).dsFont(.body)
+                                    Label("Cost: \(habit.coinCost)", systemImage: "creditcard").dsFont(.caption).foregroundStyle(.secondary)
+                                }
+                                Spacer()
+                                DSButton("Buy", style: .primary) { Task { await viewModel.buy(cosmeticId: habit.id) } }
+                            }
                         }
+                        .listRowBackground(Color.clear)
                     }
                 }
+            } header: {
+                HStack(spacing: 8) {
+                    Image(systemName: "cart")
+                    Text("Store").dsFont(.headerMD).bold()
+                    Spacer()
+                    HStack(spacing: 6) { Label("Coins", systemImage: "creditcard"); Text("\(viewModel.coins)") }.dsFont(.caption).foregroundStyle(.secondary)
+                }
             }
-            .padding()
         }
+        .listStyle(.plain)
     }
 }
 
@@ -458,70 +499,45 @@ struct ArchiveListView: View {
     var onRestored: () async -> Void
     
     var body: some View {
-        ScrollView {
-            VStack(spacing: 16) {
-                if viewModel.areas.isEmpty && viewModel.habits.isEmpty && viewModel.badHabits.isEmpty {
-                    DSEmptyState(
-                        icon: "archivebox",
-                        title: "Archive Empty",
-                        message: "No archived items"
-                    )
-                } else {
-                    if !viewModel.areas.isEmpty {
-                        DSSectionHeader(title: "Areas", icon: "square.stack.3d.down.forward.fill")
-                        ForEach(viewModel.areas) { area in
-                            DSCardRow(
-                                title: area.name,
-                                subtitle: "XP per level: \(area.xpPerLevel)",
-                                trailingContent: AnyView(
-                                    DSButton("Restore", icon: "arrow.uturn.backward", style: .secondary) {
-                                        Task {
-                                            await viewModel.restoreArea(id: area.id)
-                                            await onRestored()
-                                        }
-                                    }
-                                )
-                            )
-                        }
-                    }
-                    if !viewModel.habits.isEmpty {
-                        DSSectionHeader(title: "Good Habits", icon: "checkmark.circle.fill")
-                        ForEach(viewModel.habits) { habit in
-                            DSCardRow(
-                                title: habit.name,
-                                subtitle: "+\(habit.xpReward) XP, +\(habit.coinReward) Coins",
-                                trailingContent: AnyView(
-                                    DSButton("Restore", icon: "arrow.uturn.backward", style: .secondary) {
-                                        Task {
-                                            await viewModel.restoreHabit(id: habit.id)
-                                            await onRestored()
-                                        }
-                                    }
-                                )
-                            )
-                        }
-                    }
-                    if !viewModel.badHabits.isEmpty {
-                        DSSectionHeader(title: "Bad Habits", icon: "exclamationmark.triangle.fill")
-                        ForEach(viewModel.badHabits) { bad in
-                            DSCardRow(
-                                title: bad.name,
-                                subtitle: bad.controllable ? "Controllable (cost: \(bad.coinCost))" : "Life penalty: \(bad.lifePenalty)",
-                                trailingContent: AnyView(
-                                    DSButton("Restore", icon: "arrow.uturn.backward", style: .secondary) {
-                                        Task {
-                                            await viewModel.restoreBadHabit(id: bad.id)
-                                            await onRestored()
-                                        }
-                                    }
-                                )
-                            )
-                        }
-                    }
-                }
+        List {
+            if viewModel.areas.isEmpty && viewModel.habits.isEmpty && viewModel.badHabits.isEmpty {
+                Section { DSEmptyState(icon: "archivebox", title: "Archive Empty", message: "No archived items").listRowBackground(Color.clear) }
             }
-            .padding()
+            if !viewModel.areas.isEmpty {
+                Section {
+                    ForEach(viewModel.areas) { area in
+                        DSCardRow(title: area.name, subtitle: "XP per level: \(area.xpPerLevel)")
+                            .listRowBackground(Color.clear)
+                            .swipeActions(edge: .trailing) {
+                                Button { Task { await viewModel.restoreArea(id: area.id); await onRestored() } } label: { Label("Restore", systemImage: "arrow.uturn.backward") }.tint(.green)
+                            }
+                    }
+                } header: { HStack{ Image(systemName:"square.stack.3d.down.forward.fill"); Text("Areas").dsFont(.headerMD).bold() } }
+            }
+            if !viewModel.habits.isEmpty {
+                Section {
+                    ForEach(viewModel.habits) { h in
+                        DSCardRow(title: h.name, subtitle: "+\(h.xpReward) XP, +\(h.coinReward) Coins")
+                            .listRowBackground(Color.clear)
+                            .swipeActions(edge: .trailing) {
+                                Button { Task { await viewModel.restoreHabit(id: h.id); await onRestored() } } label: { Label("Restore", systemImage: "arrow.uturn.backward") }.tint(.green)
+                            }
+                    }
+                } header: { HStack{ Image(systemName:"checkmark.circle.fill"); Text("Good Habits").dsFont(.headerMD).bold() } }
+            }
+            if !viewModel.badHabits.isEmpty {
+                Section {
+                    ForEach(viewModel.badHabits) { b in
+                        DSCardRow(title: b.name, subtitle: b.controllable ? "Controllable (cost: \(b.coinCost))" : "Life penalty: \(b.lifePenalty)")
+                            .listRowBackground(Color.clear)
+                            .swipeActions(edge: .trailing) {
+                                Button { Task { await viewModel.restoreBadHabit(id: b.id); await onRestored() } } label: { Label("Restore", systemImage: "arrow.uturn.backward") }.tint(.green)
+                            }
+                    }
+                } header: { HStack{ Image(systemName:"exclamationmark.triangle.fill"); Text("Bad Habits").dsFont(.headerMD).bold() } }
+            }
         }
+        .listStyle(.plain)
     }
 }
 private struct ConfirmDeleteWrapper: Identifiable, Equatable {
