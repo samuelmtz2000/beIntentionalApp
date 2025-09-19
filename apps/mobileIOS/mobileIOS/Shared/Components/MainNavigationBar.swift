@@ -102,16 +102,39 @@ struct NavigationHeaderContainer: View {
     @ObservedObject var profileVM: ProfileViewModel
     @Binding var selected: NavigationSection
     var onConfig: (() -> Void)? = nil
+    var onOpenRecovery: (() -> Void)? = nil
     
     @Environment(\.colorScheme) private var scheme
+    @EnvironmentObject private var app: AppModel
     
     var body: some View {
-        VStack(spacing: 0) {
+        VStack(spacing: 8) {
             PlayerHeader(
                 profile: profileVM.profile,
                 onLogToday: { selected = .habits },
                 onOpenStore: { selected = .store }
             )
+            if let openRecovery = onOpenRecovery {
+                if app.game.state == .gameOver {
+                    DSInfoBanner(
+                        icon: "figure.run.circle.fill",
+                        title: "Game Over",
+                        message: "Habit actions are disabled until you complete recovery.",
+                        actionTitle: "Details",
+                        action: openRecovery
+                    )
+                    .padding(.horizontal, 12)
+                } else if app.game.state == .recovery && app.game.recoveryDistance >= app.game.recoveryTarget {
+                    DSInfoBanner(
+                        icon: "figure.run.circle.fill",
+                        title: "Recovery Complete",
+                        message: "You reached the running challenge distance. Finalize to restore the game.",
+                        actionTitle: "Details",
+                        action: openRecovery
+                    )
+                    .padding(.horizontal, 12)
+                }
+            }
             
             MainNavigationBar(
                 selected: $selected,

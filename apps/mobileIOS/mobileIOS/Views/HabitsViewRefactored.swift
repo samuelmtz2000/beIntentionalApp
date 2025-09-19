@@ -42,7 +42,8 @@ struct HabitsViewRefactored: View {
                 NavigationHeaderContainer(
                     profileVM: coordinator.profileVM,
                     selected: $selected,
-                    onConfig: { showingConfig = true }
+                    onConfig: { showingConfig = true },
+                    onOpenRecovery: { showingRecovery = true }
                 )
                 
                 // Dynamic content based on selection

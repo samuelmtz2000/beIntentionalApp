@@ -126,6 +126,42 @@ struct DSCard<Content: View>: View {
     }
 }
 
+// MARK: - Banner Components
+
+struct DSInfoBanner: View {
+    let icon: String
+    let title: String
+    let message: String
+    let actionTitle: String
+    let action: () -> Void
+    
+    @Environment(\.colorScheme) private var scheme
+    
+    var body: some View {
+        let c = DSTheme.colors(for: scheme)
+        HStack(alignment: .center, spacing: 12) {
+            Image(systemName: icon)
+                .font(.system(size: 22, weight: .semibold))
+                .foregroundStyle(c.accentPrimary)
+                .frame(width: 28)
+            
+            VStack(alignment: .leading, spacing: 2) {
+                Text(title)
+                    .dsFont(.headerMD)
+                    .foregroundStyle(c.textPrimary)
+                Text(message)
+                    .dsFont(.caption)
+                    .foregroundStyle(c.textSecondary)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+            Spacer()
+            DSButton(actionTitle, style: .secondary, action: action)
+        }
+        .padding(12)
+        .background(RoundedRectangle(cornerRadius: 16).fill(c.surfaceCard))
+    }
+}
+
 struct DSCardRow: View {
     let title: String
     let subtitle: String?
