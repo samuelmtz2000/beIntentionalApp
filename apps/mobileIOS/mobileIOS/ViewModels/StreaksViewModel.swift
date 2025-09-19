@@ -61,9 +61,11 @@ final class StreaksViewModel: ObservableObject {
         }
     }
 
-    func loadHistoryIfNeeded(habitId: String, type: String, days: Int = 7) async {
-        if type == "good", goodHistory[habitId] != nil { return }
-        if type == "bad", badHistory[habitId] != nil { return }
+    func loadHistoryIfNeeded(habitId: String, type: String, days: Int = 7, force: Bool = false) async {
+        if !force {
+            if type == "good", goodHistory[habitId] != nil { return }
+            if type == "bad", badHistory[habitId] != nil { return }
+        }
         do {
             let to = Self.todayKey()
             let from = Self.key(daysBefore: days - 1)

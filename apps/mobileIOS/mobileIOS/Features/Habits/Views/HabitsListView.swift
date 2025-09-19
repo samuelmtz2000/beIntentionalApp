@@ -92,6 +92,7 @@ struct GoodHabitRow: View {
     @State private var showingEdit = false
     var streaks: StreaksViewModel?
     @State private var history: [StreaksViewModel.HabitHistoryItem] = []
+    @State private var showHistory = false
     
     var body: some View {
         DSCard {
@@ -135,9 +136,11 @@ struct GoodHabitRow: View {
                         Label("\(item.currentCount)", systemImage: "flame")
                             .font(.caption)
                             .foregroundStyle(.orange)
+                            .onTapGesture { showHistory = true }
                     }
                     Spacer()
                     historyDotsGood(history)
+                        .onTapGesture { showHistory = true }
                 }
 
                 if let cadence = habit.cadence, !cadence.isEmpty {
@@ -150,6 +153,11 @@ struct GoodHabitRow: View {
         .sheet(isPresented: $showingEdit) {
             // Edit sheet would go here
             Text("Edit Habit: \(habit.name)")
+        }
+        .sheet(isPresented: $showHistory) {
+            if let streaks {
+                HabitHistorySheet(title: habit.name, habitId: habit.id, type: "good", streaks: streaks)
+            }
         }
         .task {
             guard let streaks else { return }
@@ -167,6 +175,7 @@ struct BadHabitRow: View {
     @State private var showingEdit = false
     var streaks: StreaksViewModel?
     @State private var history: [StreaksViewModel.HabitHistoryItem] = []
+    @State private var showHistory = false
     
     var body: some View {
         DSCard {
@@ -219,15 +228,22 @@ struct BadHabitRow: View {
                         Label("\(item.currentCount)", systemImage: "shield")
                             .font(.caption)
                             .foregroundStyle(.green)
+                            .onTapGesture { showHistory = true }
                     }
                     Spacer()
                     historyDotsBad(history)
+                        .onTapGesture { showHistory = true }
                 }
             }
         }
         .sheet(isPresented: $showingEdit) {
             // Edit sheet would go here
             Text("Edit Bad Habit: \(habit.name)")
+        }
+        .sheet(isPresented: $showHistory) {
+            if let streaks {
+                HabitHistorySheet(title: habit.name, habitId: habit.id, type: "bad", streaks: streaks)
+            }
         }
         .task {
             guard let streaks else { return }
@@ -277,6 +293,72 @@ private func dotBad(status: String) -> some View {
             Circle().fill(Color.yellow).frame(width: 8, height: 8)
         } else {
             Circle().fill(Color.green).frame(width: 8, height: 8)
+        }
+    }
+}
+
+// MARK: - Habit History Sheet
+
+private struct HabitHistorySheet: View {
+    let title: String
+    let habitId: String
+    let type: String // "good" | "bad"
+    @ObservedObject var streaks: StreaksViewModel
+    @Environment(\.dismiss) private var dismiss
+    @State private var items: [StreaksViewModel.HabitHistoryItem] = []
+
+    private var current: Int { streaks.perHabit[habitId]?.currentCount ?? 0 }
+    private var longest: Int { streaks.perHabit[habitId]?.longestCount ?? 0 }
+
+    var body: some View {
+        NavigationStack {
+            VStack(alignment: .leading, spacing: 12) {
+                HStack(spacing: 12) {
+                    if type == "good" {
+                        Label("\(current)", systemImage: "flame").foregroundStyle(.orange)
+                    } else {
+                        Label("\(current)", systemImage: "shield").foregroundStyle(.green)
+                    }
+                    Text("Longest: \(longest)").dsFont(.caption).foregroundStyle(.secondary)
+                }
+
+                legend
+
+                ScrollView {
+                    LazyVGrid(columns: Array(repeating: GridItem(.fixed(12), spacing: 6), count: 10), spacing: 6) {
+                        ForEach(items.indices, id: \.self) { i in
+                            let s = items[i].status
+                            if type == "good" {
+                                dotGood(status: s)
+                            } else {
+                                dotBad(status: s)
+                            }
+                        }
+                    }
+                    .padding(.top, 4)
+                }
+            }
+            .padding()
+            .navigationTitle(title)
+            .toolbar { ToolbarItem(placement: .cancellationAction) { Button("Close") { dismiss() } } }
+            .task {
+                await streaks.loadHistoryIfNeeded(habitId: habitId, type: type, days: 30, force: true)
+                if type == "good" { items = streaks.goodHistory[habitId] ?? [] } else { items = streaks.badHistory[habitId] ?? [] }
+            }
+        }
+    }
+
+    private var legend: some View {
+        HStack(spacing: 12) {
+            if type == "good" {
+                HStack(spacing: 6) { Circle().fill(Color.green).frame(width: 8,height: 8); Text("Done").dsFont(.caption) }
+                HStack(spacing: 6) { Circle().stroke(Color.gray, lineWidth: 1).frame(width: 8,height: 8); Text("Miss").dsFont(.caption) }
+                HStack(spacing: 6) { Circle().fill(Color.gray.opacity(0.3)).frame(width: 8,height: 8); Text("Inactive").dsFont(.caption) }
+            } else {
+                HStack(spacing: 6) { Circle().fill(Color.green).frame(width: 8,height: 8); Text("Clean").dsFont(.caption) }
+                HStack(spacing: 6) { Circle().fill(Color.yellow).frame(width: 8,height: 8); Text("Forgiven").dsFont(.caption) }
+                HStack(spacing: 6) { Circle().fill(Color.red).frame(width: 8,height: 8); Text("Occurred").dsFont(.caption) }
+            }
         }
     }
 }
