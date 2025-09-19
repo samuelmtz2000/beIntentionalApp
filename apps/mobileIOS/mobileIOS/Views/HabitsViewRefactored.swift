@@ -10,10 +10,14 @@ import SwiftUI
 struct HabitsViewRefactored: View {
     @EnvironmentObject private var app: AppModel
     @StateObject private var coordinator = HabitsCoordinator()
-    
+
     @State private var selected: NavigationSection = .habits
     @State private var showingConfig = false
     @State private var toast: ToastMessage? = nil
+    @State private var showingRecovery = false
+    @State private var hasHealthAccessConfigured = false
+    @State private var editingGood: GoodHabit? = nil
+    @State private var editingBad: BadHabit? = nil
     
     @Environment(\.colorScheme) private var scheme
     
@@ -57,6 +61,28 @@ struct HabitsViewRefactored: View {
                     Task { await coordinator.profileVM.refresh() }
                 })
             }
+            .sheet(item: $editingGood) { h in
+                EditGoodHabitSheet(habit: h, areas: coordinator.areasVM.areas) { updated in
+                    Task { await coordinator.goodVM.update(habit: updated); await coordinator.refreshAll() }
+                }
+            }
+            .sheet(item: $editingBad) { b in
+                EditBadHabitSheet(habit: b, areas: coordinator.areasVM.areas) { updated in
+                    Task { await coordinator.badVM.update(item: updated); await coordinator.refreshAll() }
+                }
+            }
+            .sheet(isPresented: $showingRecovery) {
+                MarathonRecoveryView(
+                    game: app.game,
+                    isHealthAccessConfigured: hasHealthAccessConfigured,
+                    onRequestHealthAccess: {
+                        Task {
+                            try? await app.healthKit.requestAuthorization()
+                            hasHealthAccessConfigured = await app.healthKit.hasConfiguredAccess()
+                        }
+                    }
+                )
+            }
         }
     }
     
@@ -80,16 +106,22 @@ struct HabitsViewRefactored: View {
                         await coordinator.refreshAll()
                         await MainActor.run { toast = ToastMessage(message: "✅ \(h.name) completed! +\(h.xpReward) XP, +\(h.coinReward) coins", type: .success) }
                     },
+                    onGoodEdit: { h in editingGood = h },
+                    onGoodDelete: { h in await coordinator.goodVM.delete(id: h.id); await coordinator.refreshAll() },
                     onBadRecord: { b in
                         if app.game.state != .active {
-                            await MainActor.run { toast = ToastMessage(message: "Game is not active. Open Recovery to continue.", type: .error) }
+                            await MainActor.run {
+                                toast = ToastMessage(message: "Game is not active. Open Recovery to continue.", type: .error)
+                            }
+                            hasHealthAccessConfigured = await app.healthKit.hasConfiguredAccess()
+                            showingRecovery = true
                             return
                         }
                         await coordinator.badVM.record(id: b.id, payWithCoins: false)
                         await coordinator.refreshAll()
                         await MainActor.run { toast = ToastMessage(message: "⚠️ \(b.name) recorded. -\(b.lifePenalty) life", type: .error) }
                     },
-                    onGoodDelete: { h in await coordinator.goodVM.delete(id: h.id); await coordinator.refreshAll() },
+                    onBadEdit: { b in editingBad = b },
                     onBadDelete: { b in await coordinator.badVM.delete(id: b.id); await coordinator.refreshAll() }
                 )
             case .areas:
