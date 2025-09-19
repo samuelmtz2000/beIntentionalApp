@@ -512,7 +512,7 @@ private struct PlayerPanelList: View {
                     VStack(alignment: .leading, spacing: 8) {
                         Text(app.game.state == .recovery ? "Recovery in progress" : "Game Over")
                             .dsFont(.headerMD)
-                        Text("Habit actions are disabled until you complete recovery.")
+                        Text("Bad habits are disabled until you complete recovery.")
                             .dsFont(.caption)
                             .foregroundStyle(.secondary)
                     }

@@ -121,7 +121,7 @@ struct NavigationHeaderContainer: View {
                     DSInfoBanner(
                         icon: "figure.run.circle.fill",
                         title: "Game Over",
-                        message: "Habit actions are disabled until you complete recovery.",
+                        message: "Bad habits are disabled until you complete recovery.",
                         actionTitle: "Details",
                         action: openRecovery
                     )
