@@ -673,6 +673,7 @@ private struct CombinedHabitsBodyPanel: View {
     @State private var editingBad: BadHabit? = nil
     @State private var confirmDelete: (id: String, name: String)? = nil
     @State private var inFlightIds: Set<String> = []
+    @StateObject private var streaks = StreaksViewModel(api: APIClient(baseURL: URL(string: UserDefaults.standard.string(forKey: "API_BASE_URL") ?? "http://localhost:4000")!))
     
     var body: some View {
         List {
@@ -682,7 +683,18 @@ private struct CombinedHabitsBodyPanel: View {
                 }
                 ForEach(goodVM.habits) { habit in
                     VStack(alignment: .leading, spacing: 6) {
-                        HStack { Text(habit.name).dsFont(.headerMD); Spacer(); Text("XP +\(habit.xpReward) • Coins +\(habit.coinReward)").dsFont(.caption).foregroundStyle(.secondary) }
+                        HStack(alignment: .center, spacing: 8) {
+                            let count = streaks.perHabit[habit.id]?.currentCount ?? 0
+                            StreakChip(kind: .good, count: count) {
+                                // open 30-day history sheet via inline sheet
+                                editingGood = habit
+                            }
+                            Text(habit.name).dsFont(.headerMD)
+                            Spacer()
+                            Text("XP +\(habit.xpReward) • Coins +\(habit.coinReward)")
+                                .dsFont(.caption)
+                                .foregroundStyle(.secondary)
+                        }
                     }
                     .cardStyle()
                     .listRowBackground(Color.clear)
@@ -723,7 +735,17 @@ private struct CombinedHabitsBodyPanel: View {
                 }
                 ForEach(badVM.items) { item in
                     VStack(alignment: .leading, spacing: 6) {
-                        HStack { Text(item.name).dsFont(.headerMD); Spacer(); Text("Penalty \(item.lifePenalty)").dsFont(.caption).foregroundStyle(.secondary) }
+                        HStack(alignment: .center, spacing: 8) {
+                            let count = streaks.perHabit[item.id]?.currentCount ?? 0
+                            StreakChip(kind: .bad, count: count) {
+                                editingBad = item
+                            }
+                            Text(item.name).dsFont(.headerMD)
+                            Spacer()
+                            Text("Penalty \(item.lifePenalty)")
+                                .dsFont(.caption)
+                                .foregroundStyle(.secondary)
+                        }
                     }
                     .cardStyle()
                     .listRowBackground(Color.clear)
@@ -848,6 +870,7 @@ private struct AreasPanelBody: View {
         }
         .listStyle(.plain)
         .refreshable { await vm.refresh() }
+        .task { await streaks.refreshPerHabit(days: 7) }
         .alert(item: Binding(get: {
             confirmDelete.map { ConfirmWrapper(id: $0.id, name: $0.name) }
         }, set: { newVal in if newVal == nil { confirmDelete = nil } })) { wrap in
