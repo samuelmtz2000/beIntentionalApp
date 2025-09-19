@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import Combine
 
 private final class _StreaksVMLoader: ObservableObject {
     @Published var vm: StreaksViewModel? = nil
@@ -29,6 +30,7 @@ struct PlayerHeader: View {
                     VStack(alignment: .leading, spacing: 4) {
                         levelBadge(level: p.level)
                         xpProgress(profile: p)
+                        todaysProgress()
                     }
                     
                     Spacer()
@@ -51,6 +53,9 @@ struct PlayerHeader: View {
             if let vm = ensureVM() {
                 await vm.refreshGeneralToday()
             }
+        }
+        .onReceive(NotificationCenter.default.publisher(for: .streaksDidChange)) { _ in
+            Task { if let vm = ensureVM() { await vm.refreshGeneralToday() } }
         }
         // No explicit loader timing; header stays minimal without spinners
     }
@@ -121,6 +126,27 @@ struct PlayerHeader: View {
                 Label("Streak —", systemImage: "flame")
                     .foregroundStyle(.orange)
                     .font(.caption)
+            }
+        }
+    }
+
+    private func todaysProgress() -> some View {
+        let vm = streaksVMHolder.vm
+        return Group {
+            if let today = vm?.generalToday {
+                let total = max(1, today.totalActiveGood)
+                let value = min(total, max(0, today.completedGood))
+                VStack(alignment: .leading, spacing: 4) {
+                    HStack {
+                        Text("Today").dsFont(.caption).foregroundStyle(.secondary)
+                        Spacer()
+                        Text("\(today.completedGood)/\(today.totalActiveGood)").dsFont(.caption).foregroundStyle(.secondary)
+                    }
+                    DSProgressBar(value: Double(value), total: Double(total), label: nil, showPercentage: true)
+                    if today.hasUnforgivenBad {
+                        Text("At risk: unforgiven bad recorded today").dsFont(.caption).foregroundStyle(.red)
+                    }
+                }
             }
         }
     }

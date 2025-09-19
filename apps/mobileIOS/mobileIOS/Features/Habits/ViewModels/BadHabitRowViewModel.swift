@@ -27,6 +27,7 @@ final class BadHabitRowViewModel: ObservableObject, Identifiable {
     func record() async {
         if let onRecord { await onRecord(habit) } else { _ = await badVM.record(id: habit.id, payWithCoins: false) }
         await streaks.refreshPerHabit(days: 7)
+        NotificationCenter.default.post(name: .streaksDidChange, object: nil)
     }
 
     func edit() { if let onEdit { onEdit(habit) } }
@@ -39,4 +40,3 @@ final class BadHabitRowViewModel: ObservableObject, Identifiable {
     var penaltyText: String { "-\(habit.lifePenalty)" }
     func currentStreakCount() -> Int { streaks.perHabit[habit.id]?.currentCount ?? 0 }
 }
-

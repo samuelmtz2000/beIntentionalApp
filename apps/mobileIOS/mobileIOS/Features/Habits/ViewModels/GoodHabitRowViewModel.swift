@@ -28,6 +28,7 @@ final class GoodHabitRowViewModel: ObservableObject, Identifiable {
     func complete() async {
         if let onComplete { await onComplete(habit) } else { _ = await goodVM.complete(id: habit.id) }
         await streaks.refreshPerHabit(days: 7)
+        NotificationCenter.default.post(name: .streaksDidChange, object: nil)
     }
 
     func edit() { if let onEdit { onEdit(habit) } }
@@ -42,4 +43,3 @@ final class GoodHabitRowViewModel: ObservableObject, Identifiable {
     var coinText: String { "+\(habit.coinReward)" }
     func currentStreakCount() -> Int { streaks.perHabit[habit.id]?.currentCount ?? 0 }
 }
-
