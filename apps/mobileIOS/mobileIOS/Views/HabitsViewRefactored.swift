@@ -18,6 +18,7 @@ struct HabitsViewRefactored: View {
     @State private var hasHealthAccessConfigured = false
     @State private var editingGood: GoodHabit? = nil
     @State private var editingBad: BadHabit? = nil
+    @State private var confirmDelete: ConfirmDeleteWrapper? = nil
     
     @Environment(\.colorScheme) private var scheme
     
@@ -28,8 +29,7 @@ struct HabitsViewRefactored: View {
                 NavigationHeaderContainer(
                     profile: coordinator.profileVM.profile,
                     selected: $selected,
-                    onConfig: { showingConfig = true },
-                    onRetry: { Task { await coordinator.profileVM.refresh() } }
+                    onConfig: { showingConfig = true }
                 )
                 
                 // Dynamic content based on selection
@@ -118,8 +118,11 @@ struct HabitsViewRefactored: View {
                         await MainActor.run { toast = ToastMessage(message: "✅ \(h.name) completed! +\(h.xpReward) XP, +\(h.coinReward) coins", type: .success) }
                     },
                     onGoodEdit: { h in editingGood = h },
-                    onGoodDelete: { h in await coordinator.goodVM.delete(id: h.id); await coordinator.refreshAll() },
+                    onGoodDelete: { h in await MainActor.run { confirmDelete = ConfirmDeleteWrapper(kind: .good, good: h, bad: nil) } },
                     onBadRecord: { b in
+                        // Refresh game state to avoid stale gating decisions
+                        await coordinator.profileVM.refresh()
+                        await app.game.refreshFromServer()
                         if app.game.state != .active {
                             await MainActor.run {
                                 toast = ToastMessage(message: "Game is not active. Open Recovery to continue.", type: .error)
@@ -133,7 +136,7 @@ struct HabitsViewRefactored: View {
                         await MainActor.run { toast = ToastMessage(message: "⚠️ \(b.name) recorded. -\(b.lifePenalty) life", type: .error) }
                     },
                     onBadEdit: { b in editingBad = b },
-                    onBadDelete: { b in await coordinator.badVM.delete(id: b.id); await coordinator.refreshAll() }
+                    onBadDelete: { b in await MainActor.run { confirmDelete = ConfirmDeleteWrapper(kind: .bad, good: nil, bad: b) } }
                 )
             case .areas:
                 AreasListView(
@@ -150,6 +153,25 @@ struct HabitsViewRefactored: View {
             case .config:
                 EmptyView()
             }
+        }
+        .alert(item: $confirmDelete) { wrap in
+            let name = wrap.kind == .good ? (wrap.good?.name ?? "") : (wrap.bad?.name ?? "")
+            return Alert(
+                title: Text("Delete \(name)?"),
+                message: Text("Are you sure you want to delete this habit?"),
+                primaryButton: .destructive(Text("Delete")) {
+                    Task {
+                        if wrap.kind == .good, let h = wrap.good {
+                            await coordinator.goodVM.delete(id: h.id)
+                        } else if let b = wrap.bad {
+                            await coordinator.badVM.delete(id: b.id)
+                        }
+                        await coordinator.refreshAll()
+                        confirmDelete = nil
+                    }
+                },
+                secondaryButton: .cancel { confirmDelete = nil }
+            )
         }
     }
 }
@@ -475,4 +497,11 @@ struct ArchiveListView: View {
             .padding()
         }
     }
+}
+private struct ConfirmDeleteWrapper: Identifiable, Equatable {
+    enum Kind { case good, bad }
+    var id: String { kind == .good ? (good?.id ?? UUID().uuidString) : (bad?.id ?? UUID().uuidString) }
+    let kind: Kind
+    let good: GoodHabit?
+    let bad: BadHabit?
 }
