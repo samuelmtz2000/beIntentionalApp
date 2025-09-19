@@ -137,15 +137,24 @@ struct PlayerHeader: View {
                 let total = max(1, today.totalActiveGood)
                 let value = min(total, max(0, today.completedGood))
                 VStack(alignment: .leading, spacing: 4) {
-                    HStack {
-                        Text("Today").dsFont(.caption).foregroundStyle(.secondary)
+                    HStack(spacing: 8) {
+                        Image(systemName: "checkmark.seal.fill").foregroundStyle(.green)
+                        Text("\(today.completedGood)/\(today.totalActiveGood)")
+                            .dsFont(.caption)
+                            .foregroundStyle(.green)
                         Spacer()
-                        Text("\(today.completedGood)/\(today.totalActiveGood)").dsFont(.caption).foregroundStyle(.secondary)
+                        Image(systemName: "exclamationmark.triangle.fill").foregroundStyle(.red)
+                        Text(today.hasUnforgivenBad ? "1" : "0")
+                            .dsFont(.caption)
+                            .foregroundStyle(.red)
                     }
-                    DSProgressBar(value: Double(value), total: Double(total), label: nil, showPercentage: true)
-                    if today.hasUnforgivenBad {
-                        Text("At risk: unforgiven bad recorded today").dsFont(.caption).foregroundStyle(.red)
-                    }
+                    DSProgressBar(
+                        value: Double(value),
+                        total: Double(total),
+                        label: nil,
+                        showPercentage: true,
+                        tintColor: today.hasUnforgivenBad ? Color.red : nil
+                    )
                 }
             }
         }

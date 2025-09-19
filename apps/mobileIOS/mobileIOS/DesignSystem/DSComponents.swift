@@ -387,6 +387,7 @@ struct DSProgressBar: View {
     let total: Double
     let label: String?
     let showPercentage: Bool
+    let tintColor: Color?
     
     @Environment(\.colorScheme) private var scheme
     
@@ -394,12 +395,14 @@ struct DSProgressBar: View {
         value: Double,
         total: Double,
         label: String? = nil,
-        showPercentage: Bool = false
+        showPercentage: Bool = false,
+        tintColor: Color? = nil
     ) {
         self.value = value
         self.total = total
         self.label = label
         self.showPercentage = showPercentage
+        self.tintColor = tintColor
     }
     
     var body: some View {
@@ -421,7 +424,7 @@ struct DSProgressBar: View {
             }
             
             ProgressView(value: value, total: max(total, 1))
-                .tint(DSTheme.colors(for: scheme).accentPrimary)
+                .tint(tintColor ?? DSTheme.colors(for: scheme).accentPrimary)
         }
     }
 }
