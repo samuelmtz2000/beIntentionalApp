@@ -106,11 +106,15 @@ struct HabitsViewRefactored: View {
             .sheet(isPresented: $showingRecovery) {
                 MarathonRecoveryView(
                     game: app.game,
-                    isHealthAccessConfigured: hasHealthAccessConfigured,
+                    isHealthAccessConfigured: $hasHealthAccessConfigured,
                     onRequestHealthAccess: {
                         Task {
-                            try? await app.healthKit.requestAuthorization()
-                            hasHealthAccessConfigured = await app.healthKit.hasConfiguredAccess()
+                            if await app.healthKit.hasConfiguredAccess() {
+                                hasHealthAccessConfigured = true
+                            } else {
+                                try? await app.healthKit.requestAuthorization()
+                                hasHealthAccessConfigured = await app.healthKit.hasConfiguredAccess()
+                            }
                         }
                     },
                     onUpdateProgress: {

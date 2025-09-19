@@ -153,13 +153,17 @@ struct HabitsView: View {
             .sheet(isPresented: $showingRecovery) {
                 MarathonRecoveryView(
                     game: app.game,
-                    isHealthAccessConfigured: hasHealthAccessConfigured,
+                    isHealthAccessConfigured: $hasHealthAccessConfigured,
                     onRequestHealthAccess: {
                         Task {
-                            try? await app.healthKit.requestAuthorization()
-                            hasHealthAccessConfigured = await app.healthKit.hasConfiguredAccess()
-                            if !hasHealthAccessConfigured {
-                                await MainActor.run { showErrorToast(message: "Health access not granted. Please enable to track recovery.") }
+                            if await app.healthKit.hasConfiguredAccess() {
+                                hasHealthAccessConfigured = true
+                            } else {
+                                try? await app.healthKit.requestAuthorization()
+                                hasHealthAccessConfigured = await app.healthKit.hasConfiguredAccess()
+                                if !hasHealthAccessConfigured {
+                                    await MainActor.run { showErrorToast(message: "Health access not granted. Please enable to track recovery.") }
+                                }
                             }
                         }
                     },
