@@ -5,7 +5,7 @@ Purpose
 - Ensure readability over scrolling content with an overlay background and bottom divider.
 
 Component
-- Use `DSSectionHeader(title:icon:trailingIcon:onTrailingTap:)` from `DesignSystem/DSComponents.swift`.
+- Use `DSSectionHeader(title:icon:trailingIcon:onTrailingTap:trailingColor:)` from `DesignSystem/DSComponents.swift`.
 - Defaults: `dsFont(.headerMD)` for title, 18–20pt icon sizes, trailing button tinted with `accentSecondary`.
 - Background: `backgroundSecondary` with a subtle bottom divider; behaves well when the header is pinned during scroll.
 
@@ -24,7 +24,8 @@ List {
       title: "Areas",
       icon: "square.grid.2x2",
       trailingIcon: "plus.circle.fill",
-      onTrailingTap: onAdd
+      onTrailingTap: onAdd,
+      trailingColor: .blue // match Habits
     )
   }
 }
@@ -48,4 +49,3 @@ Color and Sizing
 
 Adoption
 - Apply this pattern to all new list sections (Store, Archive, Areas, etc.) for consistent UX.
-

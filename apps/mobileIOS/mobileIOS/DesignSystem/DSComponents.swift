@@ -56,6 +56,7 @@ struct DSSectionHeader: View {
     let iconColor: Color?
     let trailingIcon: String?
     let onTrailingTap: (() -> Void)?
+    let trailingColor: Color?
     
     @Environment(\.colorScheme) private var scheme
     
@@ -64,13 +65,15 @@ struct DSSectionHeader: View {
         icon: String? = nil,
         iconColor: Color? = nil,
         trailingIcon: String? = nil,
-        onTrailingTap: (() -> Void)? = nil
+        onTrailingTap: (() -> Void)? = nil,
+        trailingColor: Color? = nil
     ) {
         self.title = title
         self.icon = icon
         self.iconColor = iconColor
         self.trailingIcon = trailingIcon
         self.onTrailingTap = onTrailingTap
+        self.trailingColor = trailingColor
     }
     
     var body: some View {
@@ -90,7 +93,7 @@ struct DSSectionHeader: View {
                 Button(action: onTap) {
                     Image(systemName: trailingIcon)
                         .font(.system(size: 20, weight: .semibold))
-                        .foregroundStyle(c.accentSecondary)
+                        .foregroundStyle(trailingColor ?? c.accentSecondary)
                         .contentShape(Rectangle())
                 }
                 .buttonStyle(.plain)

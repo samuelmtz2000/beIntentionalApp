@@ -421,6 +421,7 @@ struct AreasListView: View {
                             }
                         }
                         .listRowBackground(Color.clear)
+                        .listRowInsets(EdgeInsets(top: 0, leading: 16, bottom: 12, trailing: 16))
                         .swipeActions(edge: .trailing, allowsFullSwipe: true) {
                             Button { editingArea = area } label: { Label("Edit", systemImage: "pencil") }.tint(.blue)
                             Button(role: .destructive) { confirmDelete = area } label: { Label("Delete", systemImage: "trash") }
@@ -428,25 +429,25 @@ struct AreasListView: View {
                     }
                 }
             } header: {
-                HStack(spacing: 8) {
-                    Image(systemName: "square.grid.2x2")
-                    Text("Areas").dsFont(.headerMD).bold()
-                    Spacer()
-                    Button(action: onAdd) {
-                        Image(systemName: "plus.circle.fill").foregroundStyle(.blue)
-                    }
-                }
+                DSSectionHeader(
+                    title: "Areas",
+                    icon: "square.grid.2x2",
+                    trailingIcon: "plus.circle.fill",
+                    onTrailingTap: onAdd,
+                    trailingColor: .blue
+                )
             }
-            .listStyle(.plain)
-            .sheet(item: $editingArea) { area in
+        }
+        .listStyle(.plain)
+        .scrollContentBackground(.hidden)
+        .sheet(item: $editingArea) { area in
                 AreaEditSheet(area: area, onSave: { updated in Task { await viewModel.update(area: updated) } }, onDelete: { Task { await viewModel.delete(id: area.id) } })
             }
-            .alert(item: $confirmDelete) { area in
+        .alert(item: $confirmDelete) { area in
                 Alert(title: Text("Delete \(area.name)?"), message: Text("Are you sure you want to delete this area?"), primaryButton: .destructive(Text("Delete")) {
                     Task { await viewModel.delete(id: area.id) }
                 }, secondaryButton: .cancel())
             }
-        }
     }
     }
     
