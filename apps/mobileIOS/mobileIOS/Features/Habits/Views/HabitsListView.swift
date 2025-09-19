@@ -136,7 +136,7 @@ struct GoodHabitRow: View {
                 }
                 
                 HStack(spacing: 8) {
-                    if let item = streaks?.perHabit[habit.id] {
+                    if let item = streaks.perHabit[habit.id] {
                         StreakBadge(type: .good, count: item.currentCount) { showHistory = true }
                     }
                     Spacer()
@@ -222,7 +222,7 @@ struct BadHabitRow: View {
                     }
                 }
                 HStack(spacing: 8) {
-                    if let item = streaks?.perHabit[habit.id] {
+                    if let item = streaks.perHabit[habit.id] {
                         StreakBadge(type: .bad, count: item.currentCount) { showHistory = true }
                     }
                     Spacer()
