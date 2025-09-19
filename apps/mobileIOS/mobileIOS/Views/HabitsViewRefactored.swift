@@ -393,26 +393,29 @@ struct AreasListView: View {
                     .listRowBackground(Color.clear)
                 } else {
                     ForEach(viewModel.areas) { area in
-                        DSCardRow(
-                            title: area.name,
-                            subtitle: "XP per level: \(area.xpPerLevel)",
-                            leadingIcon: area.icon
-                        )
+                        DSCard {
+                            HStack(alignment: .center, spacing: 12) {
+                                if let sym = area.icon, !sym.isEmpty {
+                                    Image(systemName: sym)
+                                } else {
+                                    HStack(spacing: 6) {
+                                        Text("No symbol name").dsFont(.caption).foregroundStyle(.secondary)
+                                        Image(systemName: "square.grid.2x2")
+                                    }
+                                }
+                                VStack(alignment: .leading, spacing: 4) {
+                                    Text(area.name).dsFont(.body)
+                                    Text("XP per level: \(#{area.xpPerLevel})").dsFont(.caption).foregroundStyle(.secondary)
+                                }
+                                Spacer()
+                            }
+                        }
                         .listRowBackground(Color.clear)
                         .swipeActions(edge: .trailing, allowsFullSwipe: true) {
                             Button { editingArea = area } label: { Label("Edit", systemImage: "pencil") }.tint(.blue)
                             Button(role: .destructive) { confirmDelete = area } label: { Label("Delete", systemImage: "trash") }
                         }
                     }
-                }
-            } header: {
-                HStack(spacing: 8) {
-                    Image(systemName: "square.grid.2x2")
-                    Text("Areas").dsFont(.headerMD).bold()
-                    Spacer()
-                    Button(action: onAdd) { Image(systemName: "plus.circle.fill").foregroundStyle(.blue) }
-                        .accessibilityLabel(Text("Add Area"))
-                }
             }
         }
         .listStyle(.plain)
