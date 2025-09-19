@@ -85,8 +85,7 @@ struct PlayerHeader: View {
     private func statsRow(profile: Profile) -> some View {
         HStack(spacing: 12) {
             if profile.life <= 0 {
-                Image(systemName: "skull")
-                    .foregroundStyle(.red)
+                Text("💀")
                     .font(.callout)
             } else {
                 Label("\(max(profile.life, 0))", systemImage: "heart.fill")

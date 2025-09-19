@@ -183,6 +183,8 @@ struct HabitsViewRefactored: View {
                     badVM: coordinator.badVM,
                     onAddGood: { coordinator.showingAddGood = true },
                     onAddBad: { coordinator.showingAddBad = true },
+                    onOpenRecovery: { showingRecovery = true },
+                    onFinalizeRecovery: { showRecoveryCompletion = true },
                     onGoodComplete: { h in
                         _ = await coordinator.goodVM.complete(id: h.id)
                         await coordinator.refreshAll()
@@ -194,17 +196,15 @@ struct HabitsViewRefactored: View {
                         // Refresh game state to avoid stale gating decisions
                         await coordinator.profileVM.refresh()
                         await app.game.refreshFromServer()
-                        // Allow record unless truly game over (life <= 0). If state says gameOver but life > 0, proceed.
-                        if app.game.state == .gameOver {
-                            let life = coordinator.profileVM.profile?.life ?? 0
-                            if life <= 0 {
-                                await MainActor.run {
-                                    toast = ToastMessage(message: "Game is not active. Open Recovery to continue.", type: .error)
-                                }
-                                hasHealthAccessConfigured = await app.healthKit.hasConfiguredAccess()
-                                showingRecovery = true
-                                return
+                        // Block action when game is over or life is <= 0
+                        let life = coordinator.profileVM.profile?.life ?? 0
+                        if app.game.state == .gameOver || life <= 0 {
+                            await MainActor.run {
+                                toast = ToastMessage(message: "Game is not active. Open Recovery to continue.", type: .error)
                             }
+                            hasHealthAccessConfigured = await app.healthKit.hasConfiguredAccess()
+                            showingRecovery = true
+                            return
                         }
                         let resp = await coordinator.badVM.record(id: b.id, payWithCoins: false)
                         if let r = resp {

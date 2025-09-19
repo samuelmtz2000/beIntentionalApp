@@ -16,6 +16,8 @@ struct HabitsListView: View {
     @ObservedObject var badVM: BadHabitsViewModel
     var onAddGood: () -> Void
     var onAddBad: () -> Void
+    var onOpenRecovery: (() -> Void)? = nil
+    var onFinalizeRecovery: (() -> Void)? = nil
     // Action overrides (optional); defaults call VMs directly
     var onGoodComplete: ((GoodHabit) async -> Void)? = nil
     var onGoodEdit: ((GoodHabit) -> Void)? = nil
@@ -30,6 +32,37 @@ struct HabitsListView: View {
     
     var body: some View {
         List {
+            if app.game.state == .gameOver {
+                Section {
+                    DSCard {
+                        VStack(alignment: .leading, spacing: 8) {
+                            Text("Game Over").dsFont(.headerMD)
+                            Text("Habit actions are disabled until you complete recovery.")
+                                .dsFont(.caption)
+                                .foregroundStyle(.secondary)
+                            if let open = onOpenRecovery {
+                                DSButton("Open Recovery", style: .primary, action: open)
+                                    .frame(maxWidth: .infinity, alignment: .leading)
+                            }
+                        }
+                    }
+                }
+            } else if app.game.state == .recovery && app.game.recoveryDistance >= app.game.recoveryTarget {
+                Section {
+                    DSCard {
+                        VStack(alignment: .leading, spacing: 8) {
+                            Text("Recovery Complete").dsFont(.headerMD)
+                            Text("You have reached the running challenge distance. Finalize to restore the game.")
+                                .dsFont(.caption)
+                                .foregroundStyle(.secondary)
+                            if let finalize = onFinalizeRecovery {
+                                DSButton("Finalize Recovery", style: .primary, action: finalize)
+                                    .frame(maxWidth: .infinity, alignment: .leading)
+                            }
+                        }
+                    }
+                }
+            }
             Section {
                 if goodVM.habits.isEmpty {
                     DSEmptyState(
