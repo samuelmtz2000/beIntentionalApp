@@ -561,10 +561,3 @@ struct ArchiveListView: View {
         .listStyle(.plain)
     }
 }
-private struct ConfirmDeleteWrapper: Identifiable, Equatable {
-    enum Kind { case good, bad }
-    var id: String { kind == .good ? (good?.id ?? UUID().uuidString) : (bad?.id ?? UUID().uuidString) }
-    let kind: Kind
-    let good: GoodHabit?
-    let bad: BadHabit?
-}
