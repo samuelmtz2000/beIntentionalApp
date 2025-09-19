@@ -151,7 +151,7 @@ struct PlayerHeader: View {
                         Image(systemName: "exclamationmark.triangle.fill")
                             .foregroundStyle(.red)
                             .font(.system(size: 12, weight: .semibold))
-                        Text("\(today.unforgivenBadCount ?? (today.hasUnforgivenBad ? 1 : 0))")
+                        Text("\(today.totalBadCount ?? (today.hasUnforgivenBad ? 1 : 0))")
                             .dsFont(.caption)
                             .foregroundStyle(.red)
                     }
@@ -160,7 +160,7 @@ struct PlayerHeader: View {
                         total: Double(total),
                         label: nil,
                         showPercentage: true,
-                        tintColor: (today.unforgivenBadCount ?? 0) > 0 ? Color.red : nil
+                        tintColor: (today.unforgivenBadCount ?? 0) > 0 ? Color.red : .green
                     )
                 }
             }

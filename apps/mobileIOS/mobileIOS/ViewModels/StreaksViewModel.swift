@@ -7,7 +7,7 @@ import Foundation
 
 @MainActor
 final class StreaksViewModel: ObservableObject {
-    struct GeneralDay: Decodable { let date: String; let completedGood: Int; let totalActiveGood: Int; let hasUnforgivenBad: Bool; let unforgivenBadCount: Int?; let daySuccess: Bool? }
+    struct GeneralDay: Decodable { let date: String; let completedGood: Int; let totalActiveGood: Int; let hasUnforgivenBad: Bool; let unforgivenBadCount: Int?; let totalBadCount: Int?; let daySuccess: Bool? }
     struct GeneralResponse: Decodable { let currentCount: Int; let longestCount: Int; let days: [GeneralDay] }
     struct HabitStreakItem: Decodable { let habitId: String; let type: String; let currentCount: Int; let longestCount: Int }
     struct HabitStreaksResponse: Decodable { let items: [HabitStreakItem] }
