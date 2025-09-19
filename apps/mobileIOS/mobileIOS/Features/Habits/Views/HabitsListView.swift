@@ -65,6 +65,11 @@ struct HabitsListView: View {
                 HStack(spacing: 8) {
                     Image(systemName: "checkmark.seal.fill").foregroundStyle(.green)
                     Text("Good Habits").dsFont(.headerMD).bold()
+                    Spacer()
+                    Button(action: onAddGood) {
+                        Image(systemName: "plus.circle.fill").foregroundStyle(.blue)
+                    }
+                    .accessibilityLabel(Text("Add Good Habit"))
                 }
             }
 
@@ -103,6 +108,11 @@ struct HabitsListView: View {
                 HStack(spacing: 8) {
                     Image(systemName: "exclamationmark.triangle.fill").foregroundStyle(.orange)
                     Text("Bad Habits").dsFont(.headerMD).bold()
+                    Spacer()
+                    Button(action: onAddBad) {
+                        Image(systemName: "plus.circle.fill").foregroundStyle(.red)
+                    }
+                    .accessibilityLabel(Text("Add Bad Habit"))
                 }
             }
         }
