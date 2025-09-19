@@ -138,12 +138,15 @@ struct PlayerHeader: View {
                 let value = min(total, max(0, today.completedGood))
                 VStack(alignment: .leading, spacing: 4) {
                     HStack(spacing: 8) {
-                        Image(systemName: "checkmark.seal.fill").foregroundStyle(.green)
+                        Image(systemName: "checkmark.seal.fill")
+                            .foregroundStyle(.green)
+                            .font(.system(size: 12, weight: .semibold))
                         Text("\(today.completedGood)/\(today.totalActiveGood)")
                             .dsFont(.caption)
                             .foregroundStyle(.green)
-                        Spacer()
-                        Image(systemName: "exclamationmark.triangle.fill").foregroundStyle(.red)
+                        Image(systemName: "exclamationmark.triangle.fill")
+                            .foregroundStyle(.red)
+                            .font(.system(size: 12, weight: .semibold))
                         Text(today.hasUnforgivenBad ? "1" : "0")
                             .dsFont(.caption)
                             .foregroundStyle(.red)
