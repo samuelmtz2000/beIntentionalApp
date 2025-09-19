@@ -35,6 +35,7 @@ final class BadHabitRowViewModel: ObservableObject, Identifiable {
     func delete() async {
         if let onDelete { await onDelete(habit) } else { await badVM.delete(id: habit.id) }
         await streaks.refreshPerHabit(days: 7)
+        NotificationCenter.default.post(name: .streaksDidChange, object: nil)
     }
 
     var penaltyText: String { "-\(habit.lifePenalty)" }

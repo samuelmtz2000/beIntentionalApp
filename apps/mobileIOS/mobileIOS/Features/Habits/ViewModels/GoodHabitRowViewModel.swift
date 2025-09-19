@@ -36,6 +36,7 @@ final class GoodHabitRowViewModel: ObservableObject, Identifiable {
     func delete() async {
         if let onDelete { await onDelete(habit) } else { await goodVM.delete(id: habit.id) }
         await streaks.refreshPerHabit(days: 7)
+        NotificationCenter.default.post(name: .streaksDidChange, object: nil)
     }
 
     var cadenceText: String? { habit.cadence }

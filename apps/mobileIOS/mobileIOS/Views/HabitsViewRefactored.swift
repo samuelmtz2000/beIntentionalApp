@@ -97,12 +97,20 @@ struct HabitsViewRefactored: View {
             }
             .sheet(item: $editingGood) { h in
                 EditGoodHabitSheet(habit: h, areas: coordinator.areasVM.areas) { updated in
-                    Task { await coordinator.goodVM.update(habit: updated); await coordinator.refreshAll() }
+                    Task {
+                        await coordinator.goodVM.update(habit: updated)
+                        await coordinator.refreshAll()
+                        NotificationCenter.default.post(name: .streaksDidChange, object: nil)
+                    }
                 }
             }
             .sheet(item: $editingBad) { b in
                 EditBadHabitSheet(habit: b, areas: coordinator.areasVM.areas) { updated in
-                    Task { await coordinator.badVM.update(item: updated); await coordinator.refreshAll() }
+                    Task {
+                        await coordinator.badVM.update(item: updated)
+                        await coordinator.refreshAll()
+                        NotificationCenter.default.post(name: .streaksDidChange, object: nil)
+                    }
                 }
             }
             .sheet(isPresented: $showingRecovery) {
@@ -308,6 +316,7 @@ final class HabitsCoordinator: ObservableObject {
         )
         showingAddGood = false
         await refreshAll()
+        NotificationCenter.default.post(name: .streaksDidChange, object: nil)
     }
     
     func createBadHabit(areaId: String?, name: String, penalty: Int, controllable: Bool, cost: Int, active: Bool) async {
@@ -321,6 +330,7 @@ final class HabitsCoordinator: ObservableObject {
         )
         showingAddBad = false
         await refreshAll()
+        NotificationCenter.default.post(name: .streaksDidChange, object: nil)
     }
     
     func createArea(name: String, icon: String?, xp: Int, curve: String, multiplier: Double) async {

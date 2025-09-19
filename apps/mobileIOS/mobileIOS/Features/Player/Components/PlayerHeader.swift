@@ -46,8 +46,7 @@ struct PlayerHeader: View {
                 }
             }
 
-            // General streak card (full-width). Tap to recompute now.
-            generalStreakCard()
+            // Removed full-width streak card per latest guidance
         }
         .padding(.horizontal, 12)
         .padding(.vertical, 8)
@@ -113,7 +112,7 @@ struct PlayerHeader: View {
             if let vm = vm, let today = vm.generalToday {
                 Label("\(vm.generalCurrent)", systemImage: today.hasUnforgivenBad ? "flame.circle" : "flame")
                     .foregroundStyle(today.hasUnforgivenBad ? .red : .orange)
-                    .font(.caption)
+                    .font(.callout)
                     .scaleEffect(celebrate ? 1.25 : 1.0)
                     .animation(.spring(response: 0.4, dampingFraction: 0.6), value: celebrate)
                     .onChange(of: today.daySuccess) { _, newVal in
@@ -133,30 +132,7 @@ struct PlayerHeader: View {
         }
     }
 
-    private func generalStreakCard() -> some View {
-        let vm = streaksVMHolder.vm
-        return Group {
-            if let vm = vm {
-                DSCard {
-                    HStack(spacing: 10) {
-                        Image(systemName: "flame.fill")
-                            .foregroundStyle(.orange)
-                            .font(.system(size: 18, weight: .semibold))
-                        Text("Streak: \(vm.generalCurrent)")
-                            .dsFont(.body)
-                            .foregroundStyle(.primary)
-                        Spacer()
-                        Image(systemName: "arrow.clockwise")
-                            .foregroundStyle(.secondary)
-                            .font(.system(size: 14, weight: .semibold))
-                    }
-                }
-                .onTapGesture {
-                    Task { await vm.refreshGeneralToday() }
-                }
-            }
-        }
-    }
+    // Removed full-width general streak card
 
     private func todaysProgress() -> some View {
         let vm = streaksVMHolder.vm
