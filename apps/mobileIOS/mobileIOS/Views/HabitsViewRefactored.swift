@@ -156,7 +156,7 @@ struct HabitsViewRefactored: View {
                         let resp = await coordinator.badVM.record(id: b.id, payWithCoins: false)
                         if let r = resp {
                             await MainActor.run {
-                                if var p = coordinator.profileVM.profile {
+                                if let p = coordinator.profileVM.profile {
                                     // Rebuild Profile with updated life; keep other fields
                                     let updated = Profile(
                                         life: r.user.life,

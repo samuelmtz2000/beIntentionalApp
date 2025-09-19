@@ -674,6 +674,7 @@ private struct CombinedHabitsBodyPanel: View {
     @State private var confirmDelete: (id: String, name: String)? = nil
     @State private var inFlightIds: Set<String> = []
     @StateObject private var streaks = StreaksViewModel(api: APIClient(baseURL: URL(string: UserDefaults.standard.string(forKey: "API_BASE_URL") ?? "http://localhost:4000")!))
+    @State private var historySheet: HistoryWrapper? = nil
     
     var body: some View {
         List {
@@ -686,8 +687,7 @@ private struct CombinedHabitsBodyPanel: View {
                         HStack(alignment: .center, spacing: 8) {
                             let count = streaks.perHabit[habit.id]?.currentCount ?? 0
                             StreakChip(kind: .good, count: count) {
-                                // open 30-day history sheet via inline sheet
-                                editingGood = habit
+                                historySheet = HistoryWrapper(id: habit.id, name: habit.name, type: "good")
                             }
                             Text(habit.name).dsFont(.headerMD)
                             Spacer()
@@ -738,7 +738,7 @@ private struct CombinedHabitsBodyPanel: View {
                         HStack(alignment: .center, spacing: 8) {
                             let count = streaks.perHabit[item.id]?.currentCount ?? 0
                             StreakChip(kind: .bad, count: count) {
-                                editingBad = item
+                                historySheet = HistoryWrapper(id: item.id, name: item.name, type: "bad")
                             }
                             Text(item.name).dsFont(.headerMD)
                             Spacer()
@@ -765,7 +765,7 @@ private struct CombinedHabitsBodyPanel: View {
                                     }
                                     return
                                 }
-                                await badVM.record(id: item.id)
+                                _ = await badVM.record(id: item.id)
                                 await onBadHabitRecorded()
                                 
                                 // Show warning toast
@@ -818,6 +818,9 @@ private struct CombinedHabitsBodyPanel: View {
         .sheet(item: $editingBad) { b in
             BadHabitEditSheet(item: b, onSave: { updated in Task { await badVM.update(item: updated); await onRefresh() } }, onDelete: { Task { await badVM.delete(id: b.id); await onRefresh() } })
         }
+        .sheet(item: $historySheet) { h in
+            HabitHistorySheet(title: h.name, habitId: h.id, type: h.type, streaks: streaks)
+        }
     }
 }
 
@@ -825,6 +828,12 @@ private struct CombinedHabitsBodyPanel: View {
 private struct ConfirmWrapper: Identifiable, Equatable {
     var id: String
     var name: String
+}
+
+private struct HistoryWrapper: Identifiable, Equatable {
+    var id: String
+    var name: String
+    var type: String // "good" | "bad"
 }
 
 // Toast types removed per request
