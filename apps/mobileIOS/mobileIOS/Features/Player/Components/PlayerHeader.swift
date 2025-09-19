@@ -45,6 +45,9 @@ struct PlayerHeader: View {
                     Rectangle().fill(Color.clear).frame(height: 8)
                 }
             }
+
+            // General streak card (full-width). Tap to recompute now.
+            generalStreakCard()
         }
         .padding(.horizontal, 12)
         .padding(.vertical, 8)
@@ -103,7 +106,7 @@ struct PlayerHeader: View {
         }
         .labelStyle(.titleAndIcon)
     }
-    
+
     private func streakIndicator() -> some View {
         let vm = streaksVMHolder.vm
         return Group {
@@ -126,6 +129,31 @@ struct PlayerHeader: View {
                 Label("Streak —", systemImage: "flame")
                     .foregroundStyle(.orange)
                     .font(.caption)
+            }
+        }
+    }
+
+    private func generalStreakCard() -> some View {
+        let vm = streaksVMHolder.vm
+        return Group {
+            if let vm = vm {
+                DSCard {
+                    HStack(spacing: 10) {
+                        Image(systemName: "flame.fill")
+                            .foregroundStyle(.orange)
+                            .font(.system(size: 18, weight: .semibold))
+                        Text("Streak: \(vm.generalCurrent)")
+                            .dsFont(.body)
+                            .foregroundStyle(.primary)
+                        Spacer()
+                        Image(systemName: "arrow.clockwise")
+                            .foregroundStyle(.secondary)
+                            .font(.system(size: 14, weight: .semibold))
+                    }
+                }
+                .onTapGesture {
+                    Task { await vm.refreshGeneralToday() }
+                }
             }
         }
     }
