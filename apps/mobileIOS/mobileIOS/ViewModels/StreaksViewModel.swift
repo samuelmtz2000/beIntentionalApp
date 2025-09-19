@@ -20,6 +20,9 @@ final class StreaksViewModel: ObservableObject {
     @Published var generalLongest: Int = 0
     @Published var isLoading: Bool = false
     @Published var errorMessage: String? = nil
+    @Published var perHabit: [String: HabitStreakItem] = [:]
+    @Published var goodHistory: [String: [HabitHistoryItem]] = [:] // habitId -> history (ordered)
+    @Published var badHistory: [String: [HabitHistoryItem]] = [:]
 
     init(api: APIClient) { self.api = api }
 
@@ -44,5 +47,39 @@ final class StreaksViewModel: ObservableObject {
         f.timeZone = .current
         return f.string(from: d)
     }
-}
 
+    func refreshPerHabit(days: Int = 14) async {
+        do {
+            let to = Self.todayKey()
+            let from = Self.key(daysBefore: days - 1)
+            let resp: HabitStreaksResponse = try await api.get("streaks/habits?from=\(from)&to=\(to)")
+            var map: [String: HabitStreakItem] = [:]
+            for it in resp.items { map[it.habitId] = it }
+            self.perHabit = map
+        } catch {
+            self.errorMessage = error.localizedDescription
+        }
+    }
+
+    func loadHistoryIfNeeded(habitId: String, type: String, days: Int = 7) async {
+        if type == "good", goodHistory[habitId] != nil { return }
+        if type == "bad", badHistory[habitId] != nil { return }
+        do {
+            let to = Self.todayKey()
+            let from = Self.key(daysBefore: days - 1)
+            let resp: HabitHistoryResponse = try await api.get("streaks/habits/\(habitId)/history?type=\(type)&from=\(from)&to=\(to)")
+            if type == "good" { goodHistory[habitId] = resp.history } else { badHistory[habitId] = resp.history }
+        } catch {
+            self.errorMessage = error.localizedDescription
+        }
+    }
+
+    static func key(daysBefore: Int) -> String {
+        let cal = Calendar.current
+        let d = cal.date(byAdding: .day, value: -max(0, daysBefore), to: Date()) ?? Date()
+        let f = DateFormatter()
+        f.dateFormat = "yyyy-MM-dd"
+        f.timeZone = .current
+        return f.string(from: d)
+    }
+}

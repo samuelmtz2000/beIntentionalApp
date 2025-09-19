@@ -19,6 +19,7 @@ struct PlayerHeader: View {
     @Environment(\.colorScheme) private var scheme
     @EnvironmentObject private var app: AppModel
     @StateObject private var streaksVMHolder = _StreaksVMLoader()
+    @State private var celebrate = false
     
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
@@ -99,6 +100,16 @@ struct PlayerHeader: View {
                 Label("\(vm.generalCurrent)", systemImage: today.hasUnforgivenBad ? "flame.circle" : "flame")
                     .foregroundStyle(today.hasUnforgivenBad ? .red : .orange)
                     .font(.caption)
+                    .scaleEffect(celebrate ? 1.25 : 1.0)
+                    .animation(.spring(response: 0.4, dampingFraction: 0.6), value: celebrate)
+                    .onChange(of: today.daySuccess) { _, newVal in
+                        if newVal == true {
+                            celebrate = true
+                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.8) {
+                                celebrate = false
+                            }
+                        }
+                    }
                     .accessibilityLabel("General streak \(vm.generalCurrent)")
             } else {
                 Label("Streak —", systemImage: "flame")

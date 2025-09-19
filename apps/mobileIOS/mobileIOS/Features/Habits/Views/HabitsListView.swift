@@ -14,6 +14,8 @@ struct HabitsListView: View {
     var onAddBad: () -> Void
     
     @Environment(\.colorScheme) private var scheme
+    @EnvironmentObject private var app: AppModel
+    @StateObject private var streaksVMHolder = _StreaksVMLoader()
     
     var body: some View {
         ScrollView {
@@ -36,7 +38,7 @@ struct HabitsListView: View {
                         )
                     } else {
                         ForEach(goodVM.habits) { habit in
-                            GoodHabitRow(habit: habit, viewModel: goodVM)
+                            GoodHabitRow(habit: habit, viewModel: goodVM, streaks: streaksVMHolder.vm)
                         }
                     }
                 }
@@ -62,12 +64,18 @@ struct HabitsListView: View {
                         )
                 } else {
                     ForEach(badVM.items) { habit in
-                            BadHabitRow(habit: habit, viewModel: badVM)
+                            BadHabitRow(habit: habit, viewModel: badVM, streaks: streaksVMHolder.vm)
                         }
                     }
                 }
             }
             .padding(.vertical)
+        }
+        .task {
+            if streaksVMHolder.vm == nil { streaksVMHolder.vm = StreaksViewModel(api: app.api) }
+            if let vm = streaksVMHolder.vm {
+                await vm.refreshPerHabit(days: 7)
+            }
         }
     }
 }
@@ -78,6 +86,8 @@ struct GoodHabitRow: View {
     let habit: GoodHabit
     @ObservedObject var viewModel: HabitsViewModel
     @State private var showingEdit = false
+    var streaks: StreaksViewModel?
+    @State private var history: [StreaksViewModel.HabitHistoryItem] = []
     
     var body: some View {
         DSCard {
@@ -116,6 +126,16 @@ struct GoodHabitRow: View {
                     }
                 }
                 
+                HStack(spacing: 8) {
+                    if let item = streaks?.perHabit[habit.id] {
+                        Label("\(item.currentCount)", systemImage: "flame")
+                            .font(.caption)
+                            .foregroundStyle(.orange)
+                    }
+                    Spacer()
+                    historyDotsGood(history)
+                }
+
                 if let cadence = habit.cadence, !cadence.isEmpty {
                     Text("Cadence: \(cadence)")
                         .dsFont(.caption)
@@ -127,6 +147,11 @@ struct GoodHabitRow: View {
             // Edit sheet would go here
             Text("Edit Habit: \(habit.name)")
         }
+        .task {
+            guard let streaks else { return }
+            await streaks.loadHistoryIfNeeded(habitId: habit.id, type: "good", days: 7)
+            if let h = streaks.goodHistory[habit.id] { history = h }
+        }
     }
 }
 
@@ -136,6 +161,8 @@ struct BadHabitRow: View {
     let habit: BadHabit
     @ObservedObject var viewModel: BadHabitsViewModel
     @State private var showingEdit = false
+    var streaks: StreaksViewModel?
+    @State private var history: [StreaksViewModel.HabitHistoryItem] = []
     
     var body: some View {
         DSCard {
@@ -183,11 +210,69 @@ struct BadHabitRow: View {
                         }
                     }
                 }
+                HStack(spacing: 8) {
+                    if let item = streaks?.perHabit[habit.id] {
+                        Label("\(item.currentCount)", systemImage: "shield")
+                            .font(.caption)
+                            .foregroundStyle(.green)
+                    }
+                    Spacer()
+                    historyDotsBad(history)
+                }
             }
         }
         .sheet(isPresented: $showingEdit) {
             // Edit sheet would go here
             Text("Edit Bad Habit: \(habit.name)")
+        }
+        .task {
+            guard let streaks else { return }
+            await streaks.loadHistoryIfNeeded(habitId: habit.id, type: "bad", days: 7)
+            if let h = streaks.badHistory[habit.id] { history = h }
+        }
+    }
+}
+
+// MARK: - Mini Calendar Dots
+
+private func historyDotsGood(_ hist: [StreaksViewModel.HabitHistoryItem]) -> some View {
+    HStack(spacing: 4) {
+        ForEach(Array(hist.suffix(7)).indices, id: \.self) { i in
+            let item = Array(hist.suffix(7))[i]
+            dotGood(status: item.status)
+        }
+    }
+}
+
+private func dotGood(status: String) -> some View {
+    Group {
+        if status == "done" {
+            Circle().fill(Color.green).frame(width: 8, height: 8)
+        } else if status == "inactive" {
+            Circle().fill(Color.gray.opacity(0.3)).frame(width: 8, height: 8)
+        } else {
+            Circle().stroke(Color.gray, lineWidth: 1).frame(width: 8, height: 8)
+        }
+    }
+}
+
+private func historyDotsBad(_ hist: [StreaksViewModel.HabitHistoryItem]) -> some View {
+    HStack(spacing: 4) {
+        ForEach(Array(hist.suffix(7)).indices, id: \.self) { i in
+            let item = Array(hist.suffix(7))[i]
+            dotBad(status: item.status)
+        }
+    }
+}
+
+private func dotBad(status: String) -> some View {
+    Group {
+        if status == "occurred" {
+            Circle().fill(Color.red).frame(width: 8, height: 8)
+        } else if status == "forgiven" {
+            Circle().fill(Color.yellow).frame(width: 8, height: 8)
+        } else {
+            Circle().fill(Color.green).frame(width: 8, height: 8)
         }
     }
 }
