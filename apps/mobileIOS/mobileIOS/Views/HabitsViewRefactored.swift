@@ -199,7 +199,8 @@ struct HabitsViewRefactored: View {
                     onAddBad: { coordinator.showingAddBad = true },
                     onGoodComplete: { h in
                         _ = await coordinator.goodVM.complete(id: h.id)
-                        // Trigger header refresh as soon as backend acknowledges
+                        // Refresh header streaks immediately
+                        await app.streaks.refreshGeneralToday()
                         NotificationCenter.default.post(name: .streaksDidChange, object: nil)
                         await coordinator.refreshAll()
                         await MainActor.run { toast = ToastMessage(message: "✅ \(h.name) completed! +\(h.xpReward) XP, +\(h.coinReward) coins", type: .success) }
@@ -239,7 +240,8 @@ struct HabitsViewRefactored: View {
                                 }
                             }
                         }
-                        // Notify header to refresh right away, then update local models
+                        // Refresh header streaks immediately
+                        await app.streaks.refreshGeneralToday()
                         NotificationCenter.default.post(name: .streaksDidChange, object: nil)
                         await coordinator.refreshAll()
                         await checkAndPresentGameOver()

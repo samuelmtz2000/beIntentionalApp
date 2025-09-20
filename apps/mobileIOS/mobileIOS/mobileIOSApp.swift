@@ -32,6 +32,7 @@ final class AppModel: ObservableObject {
     @Published var appearance: AppearancePreference
     let game: GameStateManager
     let healthKit: HealthKitService
+    let streaks: StreaksViewModel
 
     init() {
         let base = URL(string: UserDefaults.standard.string(forKey: "API_BASE_URL") ?? "http://localhost:4000")!
@@ -40,6 +41,7 @@ final class AppModel: ObservableObject {
         self.api = APIClient(baseURL: base)
         self.game = GameStateManager(api: api)
         self.healthKit = HealthKitService()
+        self.streaks = StreaksViewModel(api: api)
         if let raw = UserDefaults.standard.string(forKey: "APPEARANCE"), let pref = AppearancePreference(rawValue: raw) {
             self.appearance = pref
         } else {

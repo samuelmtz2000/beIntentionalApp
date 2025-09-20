@@ -15,7 +15,6 @@ struct PlayerHeader: View {
     
     @Environment(\.colorScheme) private var scheme
     @EnvironmentObject private var app: AppModel
-    @StateObject private var streaks = StreaksViewModel(api: APIClient(baseURL: URL(string: UserDefaults.standard.string(forKey: "API_BASE_URL") ?? "http://localhost:4000")!))
     @State private var celebrate = false
     
     var body: some View {
@@ -47,9 +46,9 @@ struct PlayerHeader: View {
         .padding(.horizontal, 12)
         .padding(.vertical, 8)
         .accessibilityElement(children: .contain)
-        .task { await streaks.refreshGeneralToday() }
+        .task { await app.streaks.refreshGeneralToday() }
         .onReceive(NotificationCenter.default.publisher(for: .streaksDidChange)) { _ in
-            Task { await streaks.refreshGeneralToday() }
+            Task { await app.streaks.refreshGeneralToday() }
         }
         // No explicit loader timing; header stays minimal without spinners
     }
@@ -100,8 +99,8 @@ struct PlayerHeader: View {
 
     private func streakIndicator() -> some View {
         return Group {
-            if let today = streaks.generalToday {
-                Label("\(streaks.generalCurrent)", systemImage: today.hasUnforgivenBad ? "flame.circle" : "flame")
+            if let today = app.streaks.generalToday {
+                Label("\(app.streaks.generalCurrent)", systemImage: today.hasUnforgivenBad ? "flame.circle" : "flame")
                     .foregroundStyle(today.hasUnforgivenBad ? .red : .orange)
                     .font(.callout)
                     .scaleEffect(celebrate ? 1.25 : 1.0)
@@ -114,7 +113,7 @@ struct PlayerHeader: View {
                             }
                         }
                     }
-                    .accessibilityLabel("General streak \(streaks.generalCurrent)")
+                    .accessibilityLabel("General streak \(app.streaks.generalCurrent)")
             } else {
                 Label("Streak —", systemImage: "flame")
                     .foregroundStyle(.orange)
@@ -127,7 +126,7 @@ struct PlayerHeader: View {
 
     private func todaysProgress() -> some View {
         return Group {
-            if let today = streaks.generalToday {
+            if let today = app.streaks.generalToday {
                 let total = max(1, today.totalActiveGood)
                 let value = min(total, max(0, today.completedGood))
                 VStack(alignment: .leading, spacing: 4) {
