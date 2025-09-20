@@ -198,14 +198,9 @@ struct HabitsViewRefactored: View {
                     onAddGood: { coordinator.showingAddGood = true },
                     onAddBad: { coordinator.showingAddBad = true },
                     onGoodComplete: { h in
-                        if let resp = await coordinator.goodVM.complete(id: h.id) {
-                            if let today = resp.today {
-                                let day = StreaksViewModel.GeneralDay(date: today.date, completedGood: today.completedGood, totalActiveGood: today.totalActiveGood, hasUnforgivenBad: today.hasUnforgivenBad, unforgivenBadCount: today.unforgivenBadCount, totalBadCount: today.totalBadCount, daySuccess: today.daySuccess)
-                                await MainActor.run { app.streaks.applyToday(day: day, current: today.currentGeneralStreak) }
-                            } else {
-                                await app.streaks.refreshGeneralToday()
-                            }
-                        }
+                        _ = await coordinator.goodVM.complete(id: h.id)
+                        // Refresh header streaks immediately
+                        await app.streaks.refreshGeneralToday()
                         NotificationCenter.default.post(name: .streaksDidChange, object: nil)
                         await coordinator.refreshAll()
                         await MainActor.run { toast = ToastMessage(message: "✅ \(h.name) completed! +\(h.xpReward) XP, +\(h.coinReward) coins", type: .success) }
@@ -244,13 +239,9 @@ struct HabitsViewRefactored: View {
                                     coordinator.profileVM.profile = updated
                                 }
                             }
-                            if let today = r.today {
-                                let day = StreaksViewModel.GeneralDay(date: today.date, completedGood: today.completedGood, totalActiveGood: today.totalActiveGood, hasUnforgivenBad: today.hasUnforgivenBad, unforgivenBadCount: today.unforgivenBadCount, totalBadCount: today.totalBadCount, daySuccess: today.daySuccess)
-                                await MainActor.run { app.streaks.applyToday(day: day, current: today.currentGeneralStreak) }
-                            }
                         }
-                        // Ensure header reflects server truth immediately
-                        if resp?.today == nil { await app.streaks.refreshGeneralToday() }
+                        // Refresh header streaks immediately
+                        await app.streaks.refreshGeneralToday()
                         NotificationCenter.default.post(name: .streaksDidChange, object: nil)
                         await coordinator.refreshAll()
                         await checkAndPresentGameOver()

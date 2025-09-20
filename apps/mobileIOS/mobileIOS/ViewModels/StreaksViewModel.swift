@@ -26,11 +26,6 @@ final class StreaksViewModel: ObservableObject {
 
     init(api: APIClient) { self.api = api }
 
-    func applyToday(day: GeneralDay, current: Int) {
-        self.generalToday = day
-        self.generalCurrent = current
-    }
-
     func refreshGeneralToday() async {
         isLoading = true
         defer { isLoading = false }

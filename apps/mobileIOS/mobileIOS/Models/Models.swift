@@ -43,8 +43,7 @@ struct Profile: Codable {
     let ownedBadHabits: [OwnedBadHabit]?
 }
 
-struct StreakToday: Codable { let date: String; let completedGood: Int; let totalActiveGood: Int; let hasUnforgivenBad: Bool; let unforgivenBadCount: Int?; let totalBadCount: Int?; let daySuccess: Bool?; let currentGeneralStreak: Int }
-struct CompleteHabitResponse: Codable { let areaLevel: AreaLevel; let user: UserCoins; let today: StreakToday? }
+struct CompleteHabitResponse: Codable { let areaLevel: AreaLevel; let user: UserCoins }
 struct UserCoins: Codable { let coins: Int }
 
 struct BadHabit: Codable, Identifiable, Hashable {

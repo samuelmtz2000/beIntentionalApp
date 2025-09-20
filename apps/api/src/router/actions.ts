@@ -1,6 +1,5 @@
 import { Router } from "express";
 import prisma from "../lib/prisma";
-import { computeGeneralStreak } from "../lib/streaks";
 import { applyHabitCompletion } from "../lib/leveling";
 
 const DEFAULT_USER_ID = "seed-user-1";
@@ -50,16 +49,7 @@ router.post("/habits/:id/complete", async (req, res) => {
     prisma.transaction.create({ data: { userId: DEFAULT_USER_ID, amount: habit.coinReward, type: "earn", meta: { source: "habit", habitId: habit.id } } }),
   ]);
 
-  // Also compute today's streak snapshot for instant client UI updates
-  const today = new Date();
-  const fmt = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
-  const key = fmt(today);
-  const streak = await computeGeneralStreak({ userId: DEFAULT_USER_ID, from: key, to: key });
-  res.json({
-    areaLevel: updatedLevel,
-    user: { coins: updatedUser.coins, level: updatedUser.level, xp: updatedUser.xp, xpPerLevel: updatedUser.xpPerLevel },
-    today: { ...streak.days[0], currentGeneralStreak: streak.currentCount },
-  });
+  res.json({ areaLevel: updatedLevel, user: { coins: updatedUser.coins, level: updatedUser.level, xp: updatedUser.xp, xpPerLevel: updatedUser.xpPerLevel } });
 });
 
 router.post("/bad-habits/:id/record", async (req, res) => {
@@ -109,12 +99,7 @@ router.post("/bad-habits/:id/record", async (req, res) => {
     }
   }
 
-  // Also compute today's streak snapshot for instant client UI updates
-  const today = new Date();
-  const fmt = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
-  const key = fmt(today);
-  const streak = await computeGeneralStreak({ userId: DEFAULT_USER_ID, from: key, to: key });
-  res.json({ user: { life: userAfter!.life }, avoidedPenalty, today: { ...streak.days[0], currentGeneralStreak: streak.currentCount } });
+  res.json({ user: { life: userAfter!.life }, avoidedPenalty });
 });
 
 export default router;
