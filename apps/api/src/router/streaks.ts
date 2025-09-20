@@ -13,7 +13,7 @@ router.get("/general", async (req, res) => {
       ? req.query.from
       : fmt(new Date(today.getFullYear(), today.getMonth(), today.getDate() - 13)); // default: last 14 days
 
-    const data = await computeGeneralStreak({ from, to });
+    const data = await computeGeneralStreak({ userId: (req as any).userId ?? undefined, from, to });
     res.json(data);
   } catch (err: any) {
     res.status(500).json({ message: err?.message ?? "Failed to compute streak" });
