@@ -8,10 +8,6 @@
 import SwiftUI
 import Combine
 
-private final class _StreaksVMLoader: ObservableObject {
-    @Published var vm: StreaksViewModel? = nil
-}
-
 struct PlayerHeader: View {
     let profile: Profile?
     var onLogToday: () -> Void = {}
@@ -19,7 +15,7 @@ struct PlayerHeader: View {
     
     @Environment(\.colorScheme) private var scheme
     @EnvironmentObject private var app: AppModel
-    @StateObject private var streaksVMHolder = _StreaksVMLoader()
+    @StateObject private var streaks = StreaksViewModel(api: APIClient(baseURL: URL(string: UserDefaults.standard.string(forKey: "API_BASE_URL") ?? "http://localhost:4000")!))
     @State private var celebrate = false
     
     var body: some View {
@@ -51,13 +47,9 @@ struct PlayerHeader: View {
         .padding(.horizontal, 12)
         .padding(.vertical, 8)
         .accessibilityElement(children: .contain)
-        .task {
-            if let vm = ensureVM() {
-                await vm.refreshGeneralToday()
-            }
-        }
+        .task { await streaks.refreshGeneralToday() }
         .onReceive(NotificationCenter.default.publisher(for: .streaksDidChange)) { _ in
-            Task { if let vm = ensureVM() { await vm.refreshGeneralToday() } }
+            Task { await streaks.refreshGeneralToday() }
         }
         // No explicit loader timing; header stays minimal without spinners
     }
@@ -107,10 +99,9 @@ struct PlayerHeader: View {
     }
 
     private func streakIndicator() -> some View {
-        let vm = streaksVMHolder.vm
         return Group {
-            if let vm = vm, let today = vm.generalToday {
-                Label("\(vm.generalCurrent)", systemImage: today.hasUnforgivenBad ? "flame.circle" : "flame")
+            if let today = streaks.generalToday {
+                Label("\(streaks.generalCurrent)", systemImage: today.hasUnforgivenBad ? "flame.circle" : "flame")
                     .foregroundStyle(today.hasUnforgivenBad ? .red : .orange)
                     .font(.callout)
                     .scaleEffect(celebrate ? 1.25 : 1.0)
@@ -123,7 +114,7 @@ struct PlayerHeader: View {
                             }
                         }
                     }
-                    .accessibilityLabel("General streak \(vm.generalCurrent)")
+                    .accessibilityLabel("General streak \(streaks.generalCurrent)")
             } else {
                 Label("Streak —", systemImage: "flame")
                     .foregroundStyle(.orange)
@@ -135,9 +126,8 @@ struct PlayerHeader: View {
     // Removed full-width general streak card
 
     private func todaysProgress() -> some View {
-        let vm = streaksVMHolder.vm
         return Group {
-            if let today = vm?.generalToday {
+            if let today = streaks.generalToday {
                 let total = max(1, today.totalActiveGood)
                 let value = min(total, max(0, today.completedGood))
                 VStack(alignment: .leading, spacing: 4) {
@@ -167,12 +157,7 @@ struct PlayerHeader: View {
         }
     }
 
-    private func ensureVM() -> StreaksViewModel? {
-        if let existing = streaksVMHolder.vm { return existing }
-        let created = StreaksViewModel(api: app.api)
-        streaksVMHolder.vm = created
-        return created
-    }
+    // using @StateObject streaks; no ensureVM
 }
 
 // MARK: - Player Helper
