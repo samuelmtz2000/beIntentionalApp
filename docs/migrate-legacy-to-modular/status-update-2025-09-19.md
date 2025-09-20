@@ -22,10 +22,11 @@
 - Fine‑grained toast copy for credit forgiveness vs. penalty on bad‑habit record.
 - Store: “Owned (Credits)” section with counts; swipe‑to‑buy on controllable bad habits.
 - Archive: Restore flows for Areas/Good/Bad with swipe actions and immediate refresh callback.
- - Header‑level banners via `DSInfoBanner` for Game Over and Recovery Complete with a “Details” CTA that opens the Running Challenge modal.
- - Gating logic: blocks bad‑habit record when in Game Over (life ≤ 0), opens Recovery instead.
- - Health access UX: pre-checks existing permissions before prompting; shows “Update Progress” when authorized.
- - Backend alignment: `/users/:id/game-state` derives `state` from `life <= 0`, returns camelCase; recovery endpoints aligned for client state sync.
+- Header‑level banners via `DSInfoBanner` for Game Over and Recovery Complete with a “Details” CTA that opens the Running Challenge modal.
+- Gating logic: blocks bad‑habit record when in Game Over (life ≤ 0), opens Recovery instead.
+- Health access UX: pre-checks existing permissions before prompting; shows “Update Progress” when authorized.
+- Backend alignment: `/users/:id/game-state` derives `state` from `life <= 0`, returns camelCase; recovery endpoints aligned for client state sync.
+- Streak header: counts row (good X/Y, bad total) above the progress bar; bar colors (green→red on unforgiven); right column order standardized to Heart, Coins, Streak flame.
 
 **What’s Missing From the Plan**
 - Parity verification pass for all legacy swipe/toast flows (checklist items exist, final verification pending).
@@ -40,7 +41,8 @@
 - Remove/rename legacy `HabitsView` after parity sign‑off; update references.
 - Add lightweight tests for ViewModels (create/update/delete, record flows, recovery gating).
 - Extract Store/Archive views to their feature folders to align with structure and avoid scope issues.
- - Move on to Feature #6 (Streaks): general streak configuration in the header (type scale, thresholds, color semantics, celebratory animations), with docs and toggles.
+- Move on to Feature #6 (Streaks): general streak configuration in the header (type scale, thresholds, color semantics, celebratory animations), with docs and toggles.
+ - Implement Store Credits UX: after a bad habit, “Forgive Today” if inventory exists; otherwise one‑tap “Buy + Forgive”.
 
 **Affected Files (key)**
 - `apps/mobileIOS/mobileIOS/ContentView.swift` → switched to `HabitsViewRefactored()`.
