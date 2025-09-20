@@ -30,11 +30,9 @@ struct PlayerHeader: View {
                     
                     Spacer()
                     
-                    // Stats (ordered top→bottom): counts, heart, coins, streak
-                    VStack(alignment: .trailing, spacing: 6) {
-                        countsRow()
-                        lifeRow(profile: p)
-                        coinsRow(profile: p)
+                    // Stats (Life, Coins, Streak)
+                    VStack(alignment: .trailing, spacing: 4) {
+                        statsRow(profile: p)
                         streakIndicator()
                     }
                 } else {
@@ -131,52 +129,28 @@ struct PlayerHeader: View {
             if let today = app.streaks.generalToday {
                 let total = max(1, today.totalActiveGood)
                 let value = min(total, max(0, today.completedGood))
-                DSProgressBar(
-                    value: Double(value),
-                    total: Double(total),
-                    label: nil,
-                    showPercentage: true,
-                    tintColor: (today.unforgivenBadCount ?? 0) > 0 ? Color.red : .green
-                )
-            }
-        }
-    }
-
-    private func lifeRow(profile: Profile) -> some View {
-        Group {
-            if profile.life <= 0 {
-                Text("💀").font(.callout)
-            } else {
-                Label("\(max(profile.life, 0))", systemImage: "heart.fill")
-                    .foregroundStyle(.red)
-                    .font(.callout)
-            }
-        }
-        .labelStyle(.titleAndIcon)
-    }
-
-    private func coinsRow(profile: Profile) -> some View {
-        Label("\(profile.coins)", systemImage: "creditcard")
-            .font(.callout)
-            .labelStyle(.titleAndIcon)
-    }
-
-    private func countsRow() -> some View {
-        Group {
-            if let t = app.streaks.generalToday {
-                HStack(spacing: 6) {
-                    Image(systemName: "checkmark.seal.fill")
-                        .foregroundStyle(.green)
-                        .font(.system(size: 12, weight: .semibold))
-                    Text("\(t.completedGood)/\(t.totalActiveGood)")
-                        .dsFont(.caption)
-                        .foregroundStyle(.green)
-                    Image(systemName: "exclamationmark.triangle.fill")
-                        .foregroundStyle(.red)
-                        .font(.system(size: 12, weight: .semibold))
-                    Text("\(t.totalBadCount ?? (t.hasUnforgivenBad ? 1 : 0))")
-                        .dsFont(.caption)
-                        .foregroundStyle(.red)
+                VStack(alignment: .leading, spacing: 4) {
+                    HStack(spacing: 8) {
+                        Image(systemName: "checkmark.seal.fill")
+                            .foregroundStyle(.green)
+                            .font(.system(size: 12, weight: .semibold))
+                        Text("\(today.completedGood)/\(today.totalActiveGood)")
+                            .dsFont(.caption)
+                            .foregroundStyle(.green)
+                        Image(systemName: "exclamationmark.triangle.fill")
+                            .foregroundStyle(.red)
+                            .font(.system(size: 12, weight: .semibold))
+                        Text("\(today.totalBadCount ?? (today.hasUnforgivenBad ? 1 : 0))")
+                            .dsFont(.caption)
+                            .foregroundStyle(.red)
+                    }
+                    DSProgressBar(
+                        value: Double(value),
+                        total: Double(total),
+                        label: nil,
+                        showPercentage: true,
+                        tintColor: (today.unforgivenBadCount ?? 0) > 0 ? Color.red : .green
+                    )
                 }
             }
         }
