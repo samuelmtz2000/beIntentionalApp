@@ -30,9 +30,10 @@ struct PlayerHeader: View {
                     
                     Spacer()
                     
-                    // Stats (Life, Coins, Streak)
-                    VStack(alignment: .trailing, spacing: 4) {
-                        statsRow(profile: p)
+                    // Stats (right column, top→bottom): Heart, Coins, Streak
+                    VStack(alignment: .trailing, spacing: 6) {
+                        lifeRow(profile: p)
+                        coinsRow(profile: p)
                         streakIndicator()
                     }
                 } else {
@@ -81,20 +82,26 @@ struct PlayerHeader: View {
     }
     
     private func statsRow(profile: Profile) -> some View {
-        HStack(spacing: 12) {
+        VStack(alignment: .trailing, spacing: 0) { EmptyView() }
+    }
+
+    private func lifeRow(profile: Profile) -> some View {
+        Group {
             if profile.life <= 0 {
-                Text("💀")
-                    .font(.callout)
+                Text("💀").font(.callout)
             } else {
                 Label("\(max(profile.life, 0))", systemImage: "heart.fill")
                     .foregroundStyle(.red)
                     .font(.callout)
             }
-            
-            Label("\(profile.coins)", systemImage: "creditcard")
-                .font(.callout)
         }
         .labelStyle(.titleAndIcon)
+    }
+
+    private func coinsRow(profile: Profile) -> some View {
+        Label("\(profile.coins)", systemImage: "creditcard")
+            .font(.callout)
+            .labelStyle(.titleAndIcon)
     }
 
     private func streakIndicator() -> some View {
